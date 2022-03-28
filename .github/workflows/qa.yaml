@@ -1,4 +1,4 @@
-name: test
+name: QA
 
 on:
   push:
