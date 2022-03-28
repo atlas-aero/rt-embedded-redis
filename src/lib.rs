@@ -54,7 +54,7 @@ pub mod commands;
 ///
 /// Creating a new connection requires the following two things:
 /// * A network stack implementing [embedded-nal](<https://docs.rs/embedded-nal/latest/embedded_nal/>)
-/// * A clock implementing [embedded-time](<https://docs.rs/embedded-time/latest/embedded_time/>)
+/// * A clock implementing [embedded-time](<https://docs.rs/embedded-time/latest/embedded_time/>). Optional if no Timeout is configured.
 /// ```
 ///# use core::str::FromStr;
 ///# use embedded_nal::SocketAddr;
