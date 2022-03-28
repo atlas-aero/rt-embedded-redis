@@ -14,7 +14,7 @@ documentation = "https://docs.rs/embedded-redis"
 embedded-nal = "0.6.0"
 embedded-time = "0.12.1"
 nb = "1.0.0"
-redis-protocol = { git = "https://github.com/marius-meissner/redis-protocol.rs", branch = "no_std_support", default-features = false, features = ["libm", "hashbrown", "alloc"] }
+redis-protocol-mm = { version = "4.1.0", default-features = false, features = ["libm", "hashbrown", "alloc"] }
 bytes = { version = "1.1.0", default-features = false }
 
 [dev-dependencies]
