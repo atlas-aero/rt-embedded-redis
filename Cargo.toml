@@ -1,0 +1,20 @@
+[package]
+name = "embedded-redis"
+description = "A no_std Redis client"
+keywords = ["redis", "network", "no_std", "database"]
+authors = ["PEGASUS GmbH <info@pegasus-aero.de>"]
+license = "MIT OR Apache-2.0"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+embedded-nal = "0.6.0"
+embedded-time = "0.12.1"
+nb = "1.0.0"
+redis-protocol = { git = "https://github.com/marius-meissner/redis-protocol.rs", branch = "no_std_support", default-features = false, features = ["libm", "hashbrown", "alloc"] }
+bytes = { version = "1.1.0", default-features = false }
+
+[dev-dependencies]
+mockall = { version = "0.11.0" }
+std-embedded-nal = "0.1.2"
+std-embedded-time = "0.1.0"
