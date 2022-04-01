@@ -91,14 +91,15 @@ pub mod commands;
 ///#
 ///# let server_address = SocketAddr::from_str("127.0.0.1:6379").unwrap();
 /// // Password only authentication
-/// let mut connection_handler = ConnectionHandler::resp2(server_address)
-///     .auth(Credentials::password_only("secret123!"));
+/// let mut connection_handler = ConnectionHandler::resp2(server_address);
+/// connection_handler.auth(Credentials::password_only("secret123!"));
+///
 /// # let _client = connection_handler.connect(&mut network_stack, Some(&clock));
 ///# let server_address = SocketAddr::from_str("127.0.0.1:6379").unwrap();
 ///
 /// // ACL based authentication
-/// let mut connection_handler = ConnectionHandler::resp2(server_address)
-///     .auth(Credentials::acl("user01", "secret123!"));
+/// let mut connection_handler = ConnectionHandler::resp2(server_address);
+/// connection_handler.auth(Credentials::acl("user01", "secret123!"));
 /// # let _client = connection_handler.connect(&mut network_stack, Some(&clock));
 /// ```
 /// ### Timeout
@@ -117,8 +118,8 @@ pub mod commands;
 ///# let clock = StandardClock::default();
 ///#
 ///# let server_address = SocketAddr::from_str("127.0.0.1:6379").unwrap();
-/// let mut connection_handler = ConnectionHandler::resp2(server_address)
-///     .timeout(500_000.microseconds());
+/// let mut connection_handler = ConnectionHandler::resp2(server_address);
+/// connection_handler.timeout(500_000.microseconds());
 /// # let _client = connection_handler.connect(&mut network_stack, Some(&clock)).unwrap();
 /// ```
 ///

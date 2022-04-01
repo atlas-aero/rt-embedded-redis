@@ -44,8 +44,8 @@ fn test_resp2_connect_auth_failed() {
         .response_error()
         .into_mock();
 
-    let mut handler = ConnectionHandler::resp2(SocketAddr::from_str("127.0.0.1:6379").unwrap())
-        .auth(Credentials::password_only("secret"));
+    let mut handler = ConnectionHandler::resp2(SocketAddr::from_str("127.0.0.1:6379").unwrap());
+    handler.auth(Credentials::password_only("secret"));
     let result = handler.connect(&mut stack, Some(&clock));
 
     assert_eq!(
@@ -65,8 +65,8 @@ fn test_resp3_connect_auth_failed() {
         .response_error()
         .into_mock();
 
-    let mut handler = ConnectionHandler::resp3(SocketAddr::from_str("127.0.0.1:6379").unwrap())
-        .auth(Credentials::password_only("secret"));
+    let mut handler = ConnectionHandler::resp3(SocketAddr::from_str("127.0.0.1:6379").unwrap());
+    handler.auth(Credentials::password_only("secret"));
     let result = handler.connect(&mut stack, Some(&clock));
 
     assert_eq!(
@@ -88,8 +88,8 @@ fn test_resp3_connect_hello_failed() {
         .response_error()
         .into_mock();
 
-    let mut handler = ConnectionHandler::resp3(SocketAddr::from_str("127.0.0.1:6379").unwrap())
-        .auth(Credentials::password_only("secret"));
+    let mut handler = ConnectionHandler::resp3(SocketAddr::from_str("127.0.0.1:6379").unwrap());
+    handler.auth(Credentials::password_only("secret"));
     let result = handler.connect(&mut stack, Some(&clock));
 
     assert_eq!(
@@ -111,8 +111,8 @@ fn test_resp3_connect_hello_response() {
         .response_hello()
         .into_mock();
 
-    let mut handler = ConnectionHandler::resp3(SocketAddr::from_str("127.0.0.1:6379").unwrap())
-        .auth(Credentials::password_only("secret"));
+    let mut handler = ConnectionHandler::resp3(SocketAddr::from_str("127.0.0.1:6379").unwrap());
+    handler.auth(Credentials::password_only("secret"));
     let result = handler.connect(&mut stack, Some(&clock)).unwrap();
 
     assert_eq!("redis", result.get_hello_response().server);
@@ -139,8 +139,8 @@ fn test_resp2_connect_auth_failed_socket_closed() {
         .response_ok()
         .into_mock();
 
-    let mut handler = ConnectionHandler::resp2(SocketAddr::from_str("127.0.0.1:6379").unwrap())
-        .auth(Credentials::password_only("secret"));
+    let mut handler = ConnectionHandler::resp2(SocketAddr::from_str("127.0.0.1:6379").unwrap());
+    handler.auth(Credentials::password_only("secret"));
 
     // Authentication fails, so socket is expected to be closed on next connect try
     handler.connect(&mut stack, Some(&clock)).unwrap_err();
@@ -164,8 +164,8 @@ fn test_resp3_connect_auth_failed_socket_closed() {
         .response_hello()
         .into_mock();
 
-    let mut handler = ConnectionHandler::resp3(SocketAddr::from_str("127.0.0.1:6379").unwrap())
-        .auth(Credentials::password_only("secret"));
+    let mut handler = ConnectionHandler::resp3(SocketAddr::from_str("127.0.0.1:6379").unwrap());
+    handler.auth(Credentials::password_only("secret"));
 
     // Authentication fails, so socket is expected to be closed on next connect try
     handler.connect(&mut stack, Some(&clock)).unwrap_err();
@@ -203,8 +203,8 @@ fn test_connect_resp3_socket_reused() {
         .expect_is_connected(167, true)
         .into_mock();
 
-    let mut handler = ConnectionHandler::resp3(SocketAddr::from_str("127.0.0.1:6379").unwrap())
-        .auth(Credentials::acl("test", "secret"));
+    let mut handler = ConnectionHandler::resp3(SocketAddr::from_str("127.0.0.1:6379").unwrap());
+    handler.auth(Credentials::acl("test", "secret"));
 
     // Authentication fails, so socket is expected to be closed on next connect try
     handler.connect(&mut stack, Some(&clock)).unwrap();

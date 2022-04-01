@@ -240,13 +240,13 @@ where
     HelloCommand: Command<<P as Protocol>::FrameType>,
 {
     /// Sets the max. duration waiting for Redis responses
-    pub fn timeout(mut self, timeout: Microseconds) -> Self {
+    pub fn timeout(&mut self, timeout: Microseconds) -> &mut Self {
         self.timeout = timeout;
         self
     }
 
     /// Sets the authentication credentials
-    pub fn auth(mut self, credentials: Credentials) -> Self {
+    pub fn auth(&mut self, credentials: Credentials) -> &mut Self {
         self.authentication = Some(credentials);
         self
     }
