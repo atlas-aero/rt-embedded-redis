@@ -1,6 +1,6 @@
 pub use client::{Client, CommandErrors, RedisClient};
 pub use future::Future;
-pub use handler::{ConnectionError, ConnectionHandler, Credentials, RedisConnectionHandler};
+pub use handler::{ConnectHandler, ConnectionError, ConnectionHandler, Credentials, RedisConnectionHandler};
 pub use protocol::{Resp2, Resp3};
 
 pub(crate) mod buffer;

@@ -55,10 +55,7 @@ impl Credentials {
     }
 }
 
-/// Trait for Redis connection handler.
-///
-/// Exists mainly to facilitate use in other crates, especially in relation to unit tests.
-pub trait RedisConnectionHandler<N: TcpClientStack, P: Protocol>
+pub trait ConnectHandler<N: TcpClientStack, P: Protocol>
 where
     HelloCommand: Command<<P as Protocol>::FrameType>,
 {
@@ -68,7 +65,15 @@ where
         network: &'a mut N,
         clock: Option<&'a C>,
     ) -> Result<Client<'a, N, C, P>, ConnectionError>;
+}
 
+/// Trait for Redis connection handler.
+///
+/// Exists mainly to facilitate use in other crates, especially in relation to unit tests.
+pub trait RedisConnectionHandler<N: TcpClientStack, P: Protocol>: ConnectHandler<N, P>
+where
+    HelloCommand: Command<<P as Protocol>::FrameType>,
+{
     /// See [ConnectionHandler#method.disconnect]
     fn disconnect(&mut self, network: &mut N);
 
@@ -126,7 +131,7 @@ impl<N: TcpClientStack> ConnectionHandler<N, Resp3> {
     }
 }
 
-impl<N: TcpClientStack, P: Protocol> RedisConnectionHandler<N, P> for ConnectionHandler<N, P>
+impl<N: TcpClientStack, P: Protocol> ConnectHandler<N, P> for ConnectionHandler<N, P>
 where
     AuthCommand: Command<<P as Protocol>::FrameType>,
     HelloCommand: Command<<P as Protocol>::FrameType>,
@@ -167,7 +172,13 @@ where
 
         self.new_client(network, clock)
     }
+}
 
+impl<N: TcpClientStack, P: Protocol> RedisConnectionHandler<N, P> for ConnectionHandler<N, P>
+where
+    AuthCommand: Command<<P as Protocol>::FrameType>,
+    HelloCommand: Command<<P as Protocol>::FrameType>,
+{
     /// Disconnects the connection
     fn disconnect(&mut self, network: &mut N) {
         if self.socket.is_none() {
