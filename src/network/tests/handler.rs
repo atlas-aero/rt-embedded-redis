@@ -2,9 +2,9 @@ use crate::network::client::CommandErrors;
 use crate::network::handler::ConnectionError::{
     AuthenticationError, ProtocolSwitchError, TcpConnectionFailed, TcpSocketError,
 };
-use crate::network::handler::{ConnectHandler, ConnectionHandler, Credentials};
+use crate::network::handler::{ConnectionHandler, Credentials, RedisConnectHandler};
 use crate::network::tests::mocks::{NetworkMockBuilder, TestClock};
-use crate::network::RedisConnectionHandler;
+use crate::network::ConfigurableConnectionHandler;
 use alloc::string::ToString;
 use alloc::vec;
 use core::str::FromStr;
