@@ -41,6 +41,16 @@ pub enum CommandErrors {
     ErrorResponse(String),
 }
 
+/// Trait for Redis connection handler.
+///
+/// Exists mainly to facilitate use in other crates, especially in relation to unit tests.
+pub trait RedisClient<'a, N: TcpClientStack, C: Clock, P: Protocol> {
+    /// Sends the given command non blocking
+    fn send<Cmd>(&'a self, command: Cmd) -> Result<Future<N, C, P, Cmd>, CommandErrors>
+    where
+        Cmd: Command<P::FrameType>;
+}
+
 /// Client to execute Redis commands
 ///
 /// The functionality of the client is best explained by a [command example](crate::commands::get).
@@ -58,13 +68,13 @@ where
     pub(crate) hello_response: Option<&'a <HelloCommand as Command<<P as Protocol>::FrameType>>::Response>,
 }
 
-impl<'a, 'b, N: TcpClientStack, C: Clock, P: Protocol> Client<'a, N, C, P>
+impl<'a, 'b, N: TcpClientStack, C: Clock, P: Protocol> RedisClient<'a, N, C, P> for Client<'a, N, C, P>
 where
     AuthCommand: Command<<P as Protocol>::FrameType>,
     HelloCommand: Command<<P as Protocol>::FrameType>,
 {
     /// Sends the given command non-blocking
-    pub fn send<Cmd>(&'a self, command: Cmd) -> Result<Future<N, C, P, Cmd>, CommandErrors>
+    fn send<Cmd>(&'a self, command: Cmd) -> Result<Future<N, C, P, Cmd>, CommandErrors>
     where
         Cmd: Command<P::FrameType>,
     {
@@ -78,7 +88,13 @@ where
             Timeout::new(self.clock, self.timeout_duration)?,
         ))
     }
+}
 
+impl<'a, 'b, N: TcpClientStack, C: Clock, P: Protocol> Client<'a, N, C, P>
+where
+    AuthCommand: Command<<P as Protocol>::FrameType>,
+    HelloCommand: Command<<P as Protocol>::FrameType>,
+{
     /// Authenticates blocking with the given credentials during client initialization
     pub(crate) fn auth(&'a self, credentials: Option<Credentials>) -> Result<(), ConnectionError> {
         if credentials.is_some() {

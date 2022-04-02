@@ -2,10 +2,10 @@ use crate::commands::hello::HelloCommand;
 use crate::commands::set::SetCommand;
 use crate::commands::Command;
 use crate::network::buffer::Network;
-use crate::network::client::Client;
 use crate::network::client::CommandErrors::{
     CommandResponseViolation, ErrorResponse, InvalidFuture, ProtocolViolation, TcpError, Timeout, TimerError,
 };
+use crate::network::client::{Client, RedisClient};
 use crate::network::handler::ConnectionError::{AuthenticationError, ProtocolSwitchError};
 use crate::network::handler::Credentials;
 use crate::network::protocol::{Protocol, Resp2, Resp3};

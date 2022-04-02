@@ -9,7 +9,7 @@
 //!# use std_embedded_nal::Stack;
 //!# use std_embedded_time::StandardClock;
 //!# use embedded_redis::commands::publish::PublishCommand;
-//!# use embedded_redis::network::{ConnectionHandler, RedisConnectionHandler};
+//!# use embedded_redis::network::*;
 //!#
 //! let mut stack = Stack::default();
 //! let clock = StandardClock::default();
@@ -30,7 +30,7 @@
 //!# use embedded_nal::SocketAddr;
 //!# use std_embedded_nal::Stack;
 //!# use std_embedded_time::StandardClock;
-//!# use embedded_redis::network::{ConnectionHandler, RedisConnectionHandler};
+//!# use embedded_redis::network::*;
 //!#
 //!# let mut stack = Stack::default();
 //!# let clock = StandardClock::default();
@@ -44,7 +44,7 @@ use crate::commands::auth::AuthCommand;
 use crate::commands::builder::{CommandBuilder, ToInteger};
 use crate::commands::hello::HelloCommand;
 use crate::commands::Command;
-use crate::network::client::{Client, CommandErrors};
+use crate::network::client::{Client, CommandErrors, RedisClient};
 use crate::network::future::Future;
 use crate::network::protocol::Protocol;
 use bytes::Bytes;

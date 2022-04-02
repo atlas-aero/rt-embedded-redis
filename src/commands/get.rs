@@ -11,7 +11,7 @@
 //!# use std_embedded_time::StandardClock;
 //!# use embedded_redis::commands::get::GetCommand;
 //!# use embedded_redis::commands::set::SetCommand;
-//!# use embedded_redis::network::{ConnectionHandler, RedisConnectionHandler};
+//!# use embedded_redis::network::*;
 //!#
 //! let mut stack = Stack::default();
 //! let clock = StandardClock::default();
@@ -34,7 +34,7 @@
 //!# use std_embedded_time::StandardClock;
 //!# use embedded_redis::commands::get::GetCommand;
 //!# use embedded_redis::commands::set::SetCommand;
-//!# use embedded_redis::network::{ConnectionHandler, RedisConnectionHandler};
+//!# use embedded_redis::network::*;
 //!#
 //!# let mut stack = Stack::default();
 //!# let clock = StandardClock::default();
@@ -56,7 +56,7 @@
 //!# use std_embedded_time::StandardClock;
 //!# use embedded_redis::commands::get::GetCommand;
 //!# use embedded_redis::commands::set::SetCommand;
-//!# use embedded_redis::network::{ConnectionHandler, RedisConnectionHandler};
+//!# use embedded_redis::network::*;
 //!#
 //!# let mut stack = Stack::default();
 //!# let clock = StandardClock::default();
@@ -82,7 +82,7 @@
 //!# use std_embedded_nal::Stack;
 //!# use std_embedded_time::StandardClock;
 //!# use embedded_redis::commands::set::SetCommand;
-//!# use embedded_redis::network::{ConnectionHandler, RedisConnectionHandler};
+//!# use embedded_redis::network::*;
 //!#
 //!# let mut stack = Stack::default();
 //!# let clock = StandardClock::default();
@@ -99,7 +99,7 @@ use crate::commands::auth::AuthCommand;
 use crate::commands::builder::{CommandBuilder, IsNullFrame, ToStringBytes};
 use crate::commands::hello::HelloCommand;
 use crate::commands::Command;
-use crate::network::client::{Client, CommandErrors};
+use crate::network::client::{Client, CommandErrors, RedisClient};
 use crate::network::future::Future;
 use crate::network::protocol::Protocol;
 use alloc::string::String;

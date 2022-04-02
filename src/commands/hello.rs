@@ -15,7 +15,7 @@
 //!# use std_embedded_nal::Stack;
 //!# use std_embedded_time::StandardClock;
 //!# use embedded_redis::commands::hello::HelloCommand;
-//!# use embedded_redis::network::{ConnectionHandler, RedisConnectionHandler};
+//!# use embedded_redis::network::*;
 //!#
 //! let mut stack = Stack::default();
 //! let clock = StandardClock::default();

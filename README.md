@@ -23,7 +23,7 @@ use core::str::FromStr;
 use embedded_nal::SocketAddr;
 use std_embedded_nal::Stack;
 use std_embedded_time::StandardClock;
-use embedded_redis::network::ConnectionHandler;
+use embedded_redis::network::*;
 
 let mut stack = Stack::default();
 let clock = StandardClock::default();
