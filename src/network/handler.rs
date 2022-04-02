@@ -55,6 +55,30 @@ impl Credentials {
     }
 }
 
+/// Trait for Redis connection handler.
+///
+/// Exists mainly to facilitate use in other crates, especially in relation to unit tests.
+pub trait RedisConnectionHandler<N: TcpClientStack, P: Protocol>
+where
+    HelloCommand: Command<<P as Protocol>::FrameType>,
+{
+    /// See [ConnectionHandler#method.connect]
+    fn connect<'a, C: Clock>(
+        &'a mut self,
+        network: &'a mut N,
+        clock: Option<&'a C>,
+    ) -> Result<Client<'a, N, C, P>, ConnectionError>;
+
+    /// See [ConnectionHandler#method.disconnect]
+    fn disconnect(&mut self, network: &mut N);
+
+    /// See [ConnectionHandler#method.timeout]
+    fn timeout(&mut self, timeout: Microseconds) -> &mut Self;
+
+    /// See [ConnectionHandler#method.auth]
+    fn auth(&mut self, credentials: Credentials) -> &mut Self;
+}
+
 /// Connection handler for Redis client
 ///
 /// While the Client is not Send, the connection handler is.
@@ -102,23 +126,11 @@ impl<N: TcpClientStack> ConnectionHandler<N, Resp3> {
     }
 }
 
-impl<N: TcpClientStack, P: Protocol> ConnectionHandler<N, P>
+impl<N: TcpClientStack, P: Protocol> RedisConnectionHandler<N, P> for ConnectionHandler<N, P>
 where
     AuthCommand: Command<<P as Protocol>::FrameType>,
     HelloCommand: Command<<P as Protocol>::FrameType>,
 {
-    fn new(remote: SocketAddr, protocol: P) -> Self {
-        ConnectionHandler {
-            remote,
-            authentication: None,
-            socket: None,
-            auth_failed: false,
-            timeout: 0.microseconds(),
-            protocol,
-            hello_response: None,
-        }
-    }
-
     /// Returns a Redis client. Caches the connection for future reuse.
     /// The client has the same lifetime as the network reference.
     ///
@@ -135,7 +147,7 @@ where
     /// * `clock`: Borrow of embedded-time clock
     ///
     /// returns: Result<Client<N, C, P>, ConnectionError>
-    pub fn connect<'a, C: Clock>(
+    fn connect<'a, C: Clock>(
         &'a mut self,
         network: &'a mut N,
         clock: Option<&'a C>,
@@ -154,6 +166,46 @@ where
         }
 
         self.new_client(network, clock)
+    }
+
+    /// Disconnects the connection
+    fn disconnect(&mut self, network: &mut N) {
+        if self.socket.is_none() {
+            return;
+        }
+
+        let _ = network.close(self.socket.take().unwrap());
+        self.auth_failed = false;
+    }
+
+    /// Sets the max. duration waiting for Redis responses
+    fn timeout(&mut self, timeout: Microseconds) -> &mut Self {
+        self.timeout = timeout;
+        self
+    }
+
+    /// Sets the authentication credentials
+    fn auth(&mut self, credentials: Credentials) -> &mut Self {
+        self.authentication = Some(credentials);
+        self
+    }
+}
+
+impl<N: TcpClientStack, P: Protocol> ConnectionHandler<N, P>
+where
+    AuthCommand: Command<<P as Protocol>::FrameType>,
+    HelloCommand: Command<<P as Protocol>::FrameType>,
+{
+    fn new(remote: SocketAddr, protocol: P) -> Self {
+        ConnectionHandler {
+            remote,
+            authentication: None,
+            socket: None,
+            auth_failed: false,
+            timeout: 0.microseconds(),
+            protocol,
+            hello_response: None,
+        }
     }
 
     /// Creates and authenticates a new client
@@ -189,16 +241,6 @@ where
         }
     }
 
-    /// Disconnects the connection
-    pub fn disconnect(&mut self, network: &mut N) {
-        if self.socket.is_none() {
-            return;
-        }
-
-        let _ = network.close(self.socket.take().unwrap());
-        self.auth_failed = false;
-    }
-
     /// Creates a new TCP connection
     fn connect_socket(&mut self, network: &mut N) -> Result<(), ConnectionError> {
         let socket_result = network.socket();
@@ -232,22 +274,5 @@ where
             clock,
             hello_response: self.hello_response.as_ref(),
         }
-    }
-}
-
-impl<N: TcpClientStack, P: Protocol> ConnectionHandler<N, P>
-where
-    HelloCommand: Command<<P as Protocol>::FrameType>,
-{
-    /// Sets the max. duration waiting for Redis responses
-    pub fn timeout(&mut self, timeout: Microseconds) -> &mut Self {
-        self.timeout = timeout;
-        self
-    }
-
-    /// Sets the authentication credentials
-    pub fn auth(&mut self, credentials: Credentials) -> &mut Self {
-        self.authentication = Some(credentials);
-        self
     }
 }

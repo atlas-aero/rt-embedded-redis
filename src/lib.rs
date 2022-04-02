@@ -10,7 +10,7 @@
 //!# use embedded_nal::SocketAddr;
 //!# use std_embedded_nal::Stack;
 //!# use std_embedded_time::StandardClock;
-//!# use embedded_redis::network::ConnectionHandler;
+//!# use embedded_redis::network::{ConnectionHandler, RedisConnectionHandler};
 //!#
 //! let mut stack = Stack::default();
 //! let clock = StandardClock::default();
@@ -60,7 +60,7 @@ pub mod commands;
 ///# use embedded_nal::SocketAddr;
 ///# use std_embedded_nal::Stack;
 ///# use std_embedded_time::StandardClock;
-///# use embedded_redis::network::ConnectionHandler;
+///# use embedded_redis::network::{ConnectionHandler, RedisConnectionHandler};
 ///#
 /// let mut network_stack = Stack::default();
 /// let clock = StandardClock::default();
@@ -84,7 +84,7 @@ pub mod commands;
 ///# use embedded_nal::SocketAddr;
 ///# use std_embedded_nal::Stack;
 ///# use std_embedded_time::StandardClock;
-///# use embedded_redis::network::{ConnectionHandler, Credentials};
+///# use embedded_redis::network::{ConnectionHandler, Credentials, RedisConnectionHandler};
 ///#
 ///# let mut network_stack = Stack::default();
 ///# let clock = StandardClock::default();
@@ -111,7 +111,7 @@ pub mod commands;
 ///# use embedded_nal::SocketAddr;
 ///# use std_embedded_nal::Stack;
 ///# use std_embedded_time::StandardClock;
-///# use embedded_redis::network::{ConnectionHandler, Credentials};
+///# use embedded_redis::network::{ConnectionHandler, Credentials, RedisConnectionHandler};
 ///# use embedded_time::duration::Extensions;
 ///#
 ///# let mut network_stack = Stack::default();
@@ -139,7 +139,7 @@ pub mod commands;
 ///# use std_embedded_nal::Stack;
 ///# use std_embedded_time::StandardClock;
 ///# use embedded_redis::commands::set::SetCommand;
-///# use embedded_redis::network::ConnectionHandler;
+///# use embedded_redis::network::{ConnectionHandler, RedisConnectionHandler};
 ///#
 ///# let mut stack = Stack::default();
 ///# let clock = StandardClock::default();
@@ -164,7 +164,7 @@ pub mod commands;
 ///# use std_embedded_nal::Stack;
 ///# use std_embedded_time::StandardClock;
 ///# use embedded_redis::commands::set::SetCommand;
-///# use embedded_redis::network::ConnectionHandler;
+///# use embedded_redis::network::{ConnectionHandler, RedisConnectionHandler};
 ///#
 ///# let mut stack = Stack::default();
 ///# let clock = StandardClock::default();

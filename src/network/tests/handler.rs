@@ -4,6 +4,7 @@ use crate::network::handler::ConnectionError::{
 };
 use crate::network::handler::{ConnectionHandler, Credentials};
 use crate::network::tests::mocks::{NetworkMockBuilder, TestClock};
+use crate::network::RedisConnectionHandler;
 use alloc::string::ToString;
 use alloc::vec;
 use core::str::FromStr;

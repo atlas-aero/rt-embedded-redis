@@ -11,7 +11,7 @@
 //!# use std_embedded_time::StandardClock;
 //!# use embedded_redis::commands::get::GetCommand;
 //!# use embedded_redis::commands::set::SetCommand;
-//!# use embedded_redis::network::ConnectionHandler;
+//!# use embedded_redis::network::{ConnectionHandler, RedisConnectionHandler};
 //!#
 //! let mut stack = Stack::default();
 //! let clock = StandardClock::default();
@@ -34,7 +34,7 @@
 //!# use std_embedded_time::StandardClock;
 //!# use embedded_redis::commands::get::GetCommand;
 //!# use embedded_redis::commands::set::SetCommand;
-//!# use embedded_redis::network::ConnectionHandler;
+//!# use embedded_redis::network::{ConnectionHandler, RedisConnectionHandler};
 //!#
 //!# let mut stack = Stack::default();
 //!# let clock = StandardClock::default();
@@ -56,7 +56,7 @@
 //!# use std_embedded_time::StandardClock;
 //!# use embedded_redis::commands::get::GetCommand;
 //!# use embedded_redis::commands::set::SetCommand;
-//!# use embedded_redis::network::ConnectionHandler;
+//!# use embedded_redis::network::{ConnectionHandler, RedisConnectionHandler};
 //!#
 //!# let mut stack = Stack::default();
 //!# let clock = StandardClock::default();
@@ -82,7 +82,7 @@
 //!# use std_embedded_nal::Stack;
 //!# use std_embedded_time::StandardClock;
 //!# use embedded_redis::commands::set::SetCommand;
-//!# use embedded_redis::network::ConnectionHandler;
+//!# use embedded_redis::network::{ConnectionHandler, RedisConnectionHandler};
 //!#
 //!# let mut stack = Stack::default();
 //!# let clock = StandardClock::default();

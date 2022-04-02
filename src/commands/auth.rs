@@ -12,7 +12,7 @@
 //!# use std_embedded_nal::Stack;
 //!# use std_embedded_time::StandardClock;
 //!# use embedded_redis::commands::auth::AuthCommand;
-//!# use embedded_redis::network::{ConnectionHandler, Credentials};
+//!# use embedded_redis::network::{ConnectionHandler, Credentials, RedisConnectionHandler};
 //!#
 //! let mut stack = Stack::default();
 //! let clock = StandardClock::default();
@@ -36,7 +36,7 @@
 //!# use std_embedded_nal::Stack;
 //!# use std_embedded_time::StandardClock;
 //!# use embedded_redis::commands::auth::AuthCommand;
-//!# use embedded_redis::network::{ConnectionHandler, Credentials};
+//!# use embedded_redis::network::{ConnectionHandler, Credentials, RedisConnectionHandler};
 //!#
 //! let mut stack = Stack::default();
 //! let clock = StandardClock::default();
@@ -63,7 +63,7 @@
 //!# use std_embedded_nal::Stack;
 //!# use std_embedded_time::StandardClock;
 //!# use embedded_redis::commands::auth::AuthCommand;
-//!# use embedded_redis::network::CommandErrors;
+//!# use embedded_redis::network::{CommandErrors, RedisConnectionHandler};
 //!# use embedded_redis::network::{ConnectionHandler, Credentials};
 //!#
 //!# let mut stack = Stack::default();
