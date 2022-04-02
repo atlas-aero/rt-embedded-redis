@@ -96,7 +96,7 @@
 //!# use embedded_nal::SocketAddr;
 //!# use std_embedded_nal::Stack;
 //!# use std_embedded_time::StandardClock;
-//!# use embedded_redis::commands::set::SetCommand;
+//!# use embedded_redis::commands::set::{SetCommand, SetShorthand};
 //!# use embedded_redis::network::*;
 //!#
 //!# let mut stack = Stack::default();
@@ -345,14 +345,32 @@ impl<R> SetCommand<R> {
     }
 }
 
-impl<'a, N: TcpClientStack, C: Clock, P: Protocol> Client<'a, N, C, P>
+pub trait SetShorthand<'a, N: TcpClientStack, C: Clock, P: Protocol>
+{
+    /// Shorthand for [SetCommand]
+    /// For using options of SET command, use [SetCommand] directly instead
+    fn set<K, V>(
+        &'a self,
+        key: K,
+        value: V,
+    ) -> Result<Future<'a, N, C, P, SetCommand<ConfirmationResponse>>, CommandErrors>
+        where
+            <P as Protocol>::FrameType: ToStringBytes,
+            <P as Protocol>::FrameType: ToStringOption,
+            <P as Protocol>::FrameType: IsNullFrame,
+            <P as Protocol>::FrameType: From<CommandBuilder>,
+            Bytes: From<K>,
+            Bytes: From<V>;
+}
+
+impl<'a, N: TcpClientStack, C: Clock, P: Protocol> SetShorthand<'a, N, C, P> for Client<'a, N, C, P>
 where
     AuthCommand: Command<<P as Protocol>::FrameType>,
     HelloCommand: Command<<P as Protocol>::FrameType>,
 {
     /// Shorthand for [SetCommand]
     /// For using options of SET command, use [SetCommand] directly instead
-    pub fn set<K, V>(
+    fn set<K, V>(
         &'a self,
         key: K,
         value: V,

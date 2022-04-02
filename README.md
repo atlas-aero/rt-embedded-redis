@@ -22,8 +22,9 @@ Both RESP2 and RESP3 protocol are supported.
 use core::str::FromStr;
 use embedded_nal::SocketAddr;
 use std_embedded_nal::Stack;
-use std_embedded_time::StandardClock;
+use std_embedded_time::StandardClock; 
 use embedded_redis::network::*;
+use embedded_redis::commands::set::SetShorthand;
 
 let mut stack = Stack::default();
 let clock = StandardClock::default();

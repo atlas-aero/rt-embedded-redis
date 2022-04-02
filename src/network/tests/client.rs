@@ -1,5 +1,5 @@
 use crate::commands::hello::HelloCommand;
-use crate::commands::set::SetCommand;
+use crate::commands::set::{SetCommand, SetShorthand};
 use crate::commands::Command;
 use crate::network::buffer::Network;
 use crate::network::client::CommandErrors::{
