@@ -81,6 +81,7 @@
 //!# use embedded_nal::SocketAddr;
 //!# use std_embedded_nal::Stack;
 //!# use std_embedded_time::StandardClock;
+//! use embedded_redis::commands::get::GetShorthand;
 //!# use embedded_redis::commands::set::SetCommand;
 //!# use embedded_redis::network::*;
 //!#
@@ -183,13 +184,13 @@ where
     }
 }
 
-impl<'a, N: TcpClientStack, C: Clock, P: Protocol> Client<'a, N, C, P>
+pub trait GetShorthand<'a, N: TcpClientStack, C: Clock, P: Protocol>: RedisClient<'a, N, C, P>
 where
     AuthCommand: Command<<P as Protocol>::FrameType>,
     HelloCommand: Command<<P as Protocol>::FrameType>,
 {
     /// Shorthand for [GetCommand]
-    pub fn get<K>(&'a self, key: K) -> Result<Future<'a, N, C, P, GetCommand>, CommandErrors>
+    fn get<K>(&'a self, key: K) -> Result<Future<'a, N, C, P, GetCommand>, CommandErrors>
     where
         <P as Protocol>::FrameType: ToStringBytes,
         <P as Protocol>::FrameType: IsNullFrame,
@@ -198,4 +199,11 @@ where
     {
         self.send(GetCommand::new(key))
     }
+}
+
+impl<'a, N: TcpClientStack, C: Clock, P: Protocol> GetShorthand<'a, N, C, P> for Client<'a, N, C, P>
+where
+    AuthCommand: Command<<P as Protocol>::FrameType>,
+    HelloCommand: Command<<P as Protocol>::FrameType>,
+{
 }

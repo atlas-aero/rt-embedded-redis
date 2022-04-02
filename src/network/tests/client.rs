@@ -1,3 +1,4 @@
+use crate::commands::get::GetShorthand;
 use crate::commands::hello::HelloCommand;
 use crate::commands::set::{SetCommand, SetShorthand};
 use crate::commands::Command;

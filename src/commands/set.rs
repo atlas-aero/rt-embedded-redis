@@ -345,25 +345,7 @@ impl<R> SetCommand<R> {
     }
 }
 
-pub trait SetShorthand<'a, N: TcpClientStack, C: Clock, P: Protocol>
-{
-    /// Shorthand for [SetCommand]
-    /// For using options of SET command, use [SetCommand] directly instead
-    fn set<K, V>(
-        &'a self,
-        key: K,
-        value: V,
-    ) -> Result<Future<'a, N, C, P, SetCommand<ConfirmationResponse>>, CommandErrors>
-        where
-            <P as Protocol>::FrameType: ToStringBytes,
-            <P as Protocol>::FrameType: ToStringOption,
-            <P as Protocol>::FrameType: IsNullFrame,
-            <P as Protocol>::FrameType: From<CommandBuilder>,
-            Bytes: From<K>,
-            Bytes: From<V>;
-}
-
-impl<'a, N: TcpClientStack, C: Clock, P: Protocol> SetShorthand<'a, N, C, P> for Client<'a, N, C, P>
+pub trait SetShorthand<'a, N: TcpClientStack, C: Clock, P: Protocol>: RedisClient<'a, N, C, P>
 where
     AuthCommand: Command<<P as Protocol>::FrameType>,
     HelloCommand: Command<<P as Protocol>::FrameType>,
@@ -385,4 +367,11 @@ where
     {
         self.send(SetCommand::new(key, value))
     }
+}
+
+impl<'a, N: TcpClientStack, C: Clock, P: Protocol> SetShorthand<'a, N, C, P> for Client<'a, N, C, P>
+where
+    AuthCommand: Command<<P as Protocol>::FrameType>,
+    HelloCommand: Command<<P as Protocol>::FrameType>,
+{
 }
