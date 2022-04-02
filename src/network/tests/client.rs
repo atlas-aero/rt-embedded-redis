@@ -6,7 +6,7 @@ use crate::network::buffer::Network;
 use crate::network::client::CommandErrors::{
     CommandResponseViolation, ErrorResponse, InvalidFuture, ProtocolViolation, TcpError, Timeout, TimerError,
 };
-use crate::network::client::{Client, RedisClient};
+use crate::network::client::{Client, RedisCommandClient};
 use crate::network::handler::ConnectionError::{AuthenticationError, ProtocolSwitchError};
 use crate::network::handler::Credentials;
 use crate::network::protocol::{Protocol, Resp2, Resp3};

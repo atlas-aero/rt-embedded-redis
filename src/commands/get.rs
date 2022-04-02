@@ -100,7 +100,7 @@ use crate::commands::auth::AuthCommand;
 use crate::commands::builder::{CommandBuilder, IsNullFrame, ToStringBytes};
 use crate::commands::hello::HelloCommand;
 use crate::commands::Command;
-use crate::network::client::{Client, CommandErrors, RedisClient};
+use crate::network::client::{Client, CommandErrors, RedisCommandClient};
 use crate::network::future::Future;
 use crate::network::protocol::Protocol;
 use alloc::string::String;
@@ -184,7 +184,8 @@ where
     }
 }
 
-pub trait GetShorthand<'a, N: TcpClientStack, C: Clock, P: Protocol>: RedisClient<'a, N, C, P>
+pub trait GetShorthand<'a, N: TcpClientStack, C: Clock, P: Protocol>:
+    RedisCommandClient<'a, N, C, P>
 where
     AuthCommand: Command<<P as Protocol>::FrameType>,
     HelloCommand: Command<<P as Protocol>::FrameType>,

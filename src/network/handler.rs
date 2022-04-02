@@ -1,11 +1,13 @@
 use crate::commands::auth::AuthCommand;
+use crate::commands::get::GetShorthand;
 use crate::commands::hello::HelloCommand;
+use crate::commands::set::SetShorthand;
 use crate::commands::Command;
 use crate::network::buffer::Network;
 use crate::network::client::{Client, CommandErrors};
 use crate::network::handler::ConnectionError::{TcpConnectionFailed, TcpSocketError};
 use crate::network::protocol::{Protocol, Resp2, Resp3};
-use crate::network::RedisClient;
+use crate::network::RedisCommandClient;
 use alloc::string::{String, ToString};
 use core::cell::RefCell;
 use embedded_nal::{SocketAddr, TcpClientStack};
@@ -56,14 +58,15 @@ impl Credentials {
     }
 }
 
-/// Trait for connecting Redis clients
+/// (Sub-)trait for connecting Redis clients
 ///
 /// Exists mainly to facilitate use in other crates, especially in relation to unit tests.
 pub trait RedisConnectHandler<'a, C: Clock, N: TcpClientStack, P: Protocol>
 where
+    AuthCommand: Command<<P as Protocol>::FrameType>,
     HelloCommand: Command<<P as Protocol>::FrameType>,
 {
-    type ClientType: RedisClient<'a, N, C, P>;
+    type ClientType: RedisCommandClient<'a, N, C, P> + SetShorthand<'a, N, C, P> + GetShorthand<'a, N, C, P>;
 
     /// See [ConnectionHandler#method.connect]
     fn connect(
@@ -73,7 +76,7 @@ where
     ) -> Result<Self::ClientType, ConnectionError>;
 }
 
-/// Trait for disconnecting Redis clients
+/// (Sub-)trait for disconnecting Redis clients
 ///
 /// Exists mainly to facilitate use in other crates, especially in relation to unit tests.
 pub trait RedisDisconnectHandler<N: TcpClientStack, P: Protocol> {
@@ -81,7 +84,7 @@ pub trait RedisDisconnectHandler<N: TcpClientStack, P: Protocol> {
     fn disconnect(&mut self, network: &mut N);
 }
 
-/// Trait for connection handler configuration
+/// (Sub-)trait for connection handler configuration
 ///
 /// Exists mainly to facilitate use in other crates, especially in relation to unit tests.
 pub trait ConfigurableConnectionHandler {
@@ -90,6 +93,15 @@ pub trait ConfigurableConnectionHandler {
 
     /// See [ConnectionHandler#method.auth]
     fn auth(&mut self, credentials: Credentials) -> &mut Self;
+}
+
+/// Trait combining all connection handler traits
+pub trait RedisConnectionHandler<'a, C: Clock, N: TcpClientStack, P: Protocol>:
+    RedisConnectHandler<'a, C, N, P> + RedisDisconnectHandler<N, P> + ConfigurableConnectionHandler
+where
+    AuthCommand: Command<<P as Protocol>::FrameType>,
+    HelloCommand: Command<<P as Protocol>::FrameType>,
+{
 }
 
 /// Connection handler for Redis client

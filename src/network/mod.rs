@@ -1,8 +1,8 @@
-pub use client::{Client, CommandErrors, RedisClient};
+pub use client::{Client, CommandErrors, RedisCommandClient};
 pub use future::Future;
 pub use handler::{
     ConfigurableConnectionHandler, ConnectionError, ConnectionHandler, Credentials, RedisConnectHandler,
-    RedisDisconnectHandler,
+    RedisConnectionHandler, RedisDisconnectHandler,
 };
 pub use protocol::{Resp2, Resp3};
 

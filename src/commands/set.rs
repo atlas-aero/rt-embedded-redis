@@ -121,7 +121,7 @@ use crate::commands::auth::AuthCommand;
 use crate::commands::builder::{CommandBuilder, IsNullFrame, ToStringBytes, ToStringOption};
 use crate::commands::hello::HelloCommand;
 use crate::commands::Command;
-use crate::network::client::{Client, CommandErrors, RedisClient};
+use crate::network::client::{Client, CommandErrors, RedisCommandClient};
 use crate::network::future::Future;
 use crate::network::protocol::Protocol;
 use alloc::string::ToString;
@@ -345,7 +345,8 @@ impl<R> SetCommand<R> {
     }
 }
 
-pub trait SetShorthand<'a, N: TcpClientStack, C: Clock, P: Protocol>: RedisClient<'a, N, C, P>
+pub trait SetShorthand<'a, N: TcpClientStack, C: Clock, P: Protocol>:
+    RedisCommandClient<'a, N, C, P>
 where
     AuthCommand: Command<<P as Protocol>::FrameType>,
     HelloCommand: Command<<P as Protocol>::FrameType>,

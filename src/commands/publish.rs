@@ -44,7 +44,7 @@ use crate::commands::auth::AuthCommand;
 use crate::commands::builder::{CommandBuilder, ToInteger};
 use crate::commands::hello::HelloCommand;
 use crate::commands::Command;
-use crate::network::client::{Client, CommandErrors, RedisClient};
+use crate::network::client::{Client, CommandErrors, RedisCommandClient};
 use crate::network::future::Future;
 use crate::network::protocol::Protocol;
 use bytes::Bytes;

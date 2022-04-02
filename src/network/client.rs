@@ -41,10 +41,10 @@ pub enum CommandErrors {
     ErrorResponse(String),
 }
 
-/// Trait for Redis connection handler.
+/// Trait for sending general command
 ///
 /// Exists mainly to facilitate use in other crates, especially in relation to unit tests.
-pub trait RedisClient<'a, N: TcpClientStack, C: Clock, P: Protocol> {
+pub trait RedisCommandClient<'a, N: TcpClientStack, C: Clock, P: Protocol> {
     /// Sends the given command non blocking
     fn send<Cmd>(&'a self, command: Cmd) -> Result<Future<N, C, P, Cmd>, CommandErrors>
     where
@@ -68,7 +68,7 @@ where
     pub(crate) hello_response: Option<&'a <HelloCommand as Command<<P as Protocol>::FrameType>>::Response>,
 }
 
-impl<'a, 'b, N: TcpClientStack, C: Clock, P: Protocol> RedisClient<'a, N, C, P> for Client<'a, N, C, P>
+impl<'a, 'b, N: TcpClientStack, C: Clock, P: Protocol> RedisCommandClient<'a, N, C, P> for Client<'a, N, C, P>
 where
     AuthCommand: Command<<P as Protocol>::FrameType>,
     HelloCommand: Command<<P as Protocol>::FrameType>,
