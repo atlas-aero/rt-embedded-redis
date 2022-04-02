@@ -1,14 +1,19 @@
+use crate::commands::hello::HelloCommand;
 use crate::commands::helpers::{CmdStr, RespInt};
+use crate::commands::Command;
+use crate::network::buffer::Network;
+use crate::network::protocol::Protocol;
 use crate::network::tests::mocks::MockTcpError::Error1;
+use crate::network::Client;
 use alloc::string::{String, ToString};
-use alloc::vec;
 use alloc::vec::Vec;
+use alloc::{format, vec};
 use bytes::{Bytes, BytesMut};
 use core::cell::RefCell;
 use embedded_nal::SocketAddr;
 use embedded_nal::TcpClientStack;
 use embedded_time::clock::Error;
-use embedded_time::duration::Duration;
+use embedded_time::duration::{Duration, Extensions};
 use embedded_time::fixed_point::FixedPoint;
 use embedded_time::fraction::Fraction;
 use embedded_time::timer::param::{Armed, OneShot};
@@ -20,7 +25,7 @@ use redis_protocol::resp3::types::{Frame as Resp3Frame, FrameMap};
 use std::io::Write;
 
 #[derive(Debug)]
-pub(crate) struct SocketMock {
+pub struct SocketMock {
     pub id: i32,
 }
 
@@ -31,13 +36,13 @@ impl SocketMock {
 }
 
 #[derive(Debug, PartialEq)]
-pub(crate) enum MockTcpError {
+pub enum MockTcpError {
     Error1,
 }
 
 mock! {
     #[derive(Debug)]
-    pub(crate) NetworkStack {}
+    pub NetworkStack {}
 
     impl TcpClientStack for NetworkStack {
         type TcpSocket = SocketMock;
@@ -69,7 +74,7 @@ mock! {
     }
 }
 
-pub(crate) struct NetworkMockBuilder {
+pub struct NetworkMockBuilder {
     stack: MockNetworkStack,
 }
 
@@ -210,9 +215,9 @@ impl NetworkMockBuilder {
     }
 
     /// Prepares custom response data
-    pub fn response_string(mut self) -> Self {
+    pub fn response_string(mut self, data: &'static str) -> Self {
         self.stack.expect_receive().times(1).returning(move |_, mut buffer: &mut [u8]| {
-            buffer.write(b"$13\r\ntest_response\r\n").unwrap();
+            buffer.write(format!("${}\r\n{}\r\n", data.len(), data).as_bytes()).unwrap();
             nb::Result::Ok(20)
         });
         self
@@ -252,7 +257,7 @@ impl NetworkMockBuilder {
     }
 }
 
-pub(crate) struct MockFrames {}
+pub struct MockFrames {}
 
 impl MockFrames {
     pub fn hello() -> Resp3Frame {
@@ -319,5 +324,22 @@ impl TestClock {
         TestClock {
             next_instants: RefCell::new(next_instants),
         }
+    }
+}
+
+pub fn create_mocked_client<'a, P: Protocol>(
+    network_stack: &'a mut MockNetworkStack,
+    socket: &'a mut SocketMock,
+    clock: &'a TestClock,
+    protocol: P,
+) -> Client<'a, MockNetworkStack, TestClock, P>
+where
+    HelloCommand: Command<<P as Protocol>::FrameType>,
+{
+    Client {
+        network: Network::new(RefCell::new(network_stack), RefCell::new(socket), protocol),
+        timeout_duration: 0.microseconds(),
+        clock: Some(&clock),
+        hello_response: None,
     }
 }

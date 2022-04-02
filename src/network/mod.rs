@@ -11,5 +11,7 @@ pub(crate) mod protocol;
 pub(crate) mod response;
 pub(crate) mod timeout;
 
-#[cfg(test)]
 pub(crate) mod tests;
+
+#[cfg(feature = "mock")]
+pub use tests::mocks::{create_mocked_client, MockFrames, MockNetworkStack, NetworkMockBuilder};

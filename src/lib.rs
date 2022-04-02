@@ -22,7 +22,7 @@
 //! let future = client.set("key", "value").unwrap();
 //! let response = future.wait().unwrap();
 //! ```
-#![cfg_attr(not(test), no_std)]
+#![cfg_attr(all(not(test), not(feature = "mock")), no_std)]
 #![cfg_attr(feature = "strict", deny(warnings))]
 
 extern crate alloc;
