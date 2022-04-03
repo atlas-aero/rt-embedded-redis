@@ -705,6 +705,31 @@ fn test_shorthand_get_bytes_argument() {
 }
 
 #[test]
+fn test_shorthand_get_multi() {
+    let clock = TestClock::new(vec![]);
+
+    let mut network = NetworkMockBuilder::new()
+        .send(897, "*2\r\n$3\r\nGET\r\n$4\r\nkey1\r\n")
+        .response_string("value1")
+        .send(897, "*2\r\n$3\r\nGET\r\n$4\r\nkey2\r\n")
+        .response_string("value2")
+        .send(897, "*2\r\n$3\r\nGET\r\n$4\r\nkey3\r\n")
+        .response_string("value3")
+        .into_mock();
+
+    let mut socket = SocketMock::new(897);
+    let client = create_mocked_client(&mut network, &mut socket, &clock, Resp2 {});
+
+    let response1 = client.get(Bytes::from_static(b"key1")).unwrap().wait();
+    let response2 = client.get(Bytes::from_static(b"key2")).unwrap().wait();
+    let response3 = client.get(Bytes::from_static(b"key3")).unwrap().wait();
+
+    assert_eq!("value1", response1.unwrap().unwrap().as_string().unwrap());
+    assert_eq!("value2", response2.unwrap().unwrap().as_string().unwrap());
+    assert_eq!("value3", response3.unwrap().unwrap().as_string().unwrap());
+}
+
+#[test]
 fn test_shorthand_set_str_argument() {
     let clock = TestClock::new(vec![]);
 

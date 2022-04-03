@@ -62,7 +62,7 @@ impl<P: Protocol> ResponseBuffer<P> {
         }
 
         if self.frame_count == 0 {
-            self.frame_offset = self.frames.len();
+            self.frame_offset += self.frames.len();
             self.frames.clear();
         }
 
@@ -163,5 +163,10 @@ impl<P: Protocol> ResponseBuffer<P> {
     #[cfg(test)]
     pub fn pending_frame_count(&self) -> usize {
         self.frame_count
+    }
+
+    #[cfg(test)]
+    pub fn frame_offset(&self) -> usize {
+        self.frame_offset
     }
 }

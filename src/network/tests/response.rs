@@ -168,20 +168,25 @@ fn test_take_frame_all_frames_taken() {
     let mut buffer = ResponseBuffer::new(Resp2 {});
     buffer.append(b"+OK\r\n");
     buffer.append(b"+OK\r\n");
+    buffer.append(b"+OK\r\n");
 
-    assert_eq!(2, buffer.pending_frame_count());
+    assert_eq!(3, buffer.pending_frame_count());
     assert_eq!(true, buffer.take_frame(0).is_some());
     assert_eq!(true, buffer.take_frame(1).is_some());
+    assert_eq!(true, buffer.take_frame(2).is_some());
     assert_eq!(0, buffer.pending_frame_count());
+    assert_eq!(3, buffer.frame_offset());
 
+    buffer.append(b"+OK\r\n");
     buffer.append(b"+OK\r\n");
 
     // Next assertions assert that offset is correctly applied
-    assert_eq!(true, buffer.is_complete(2));
-    assert_eq!(true, buffer.take_frame(2).is_some());
+    assert_eq!(true, buffer.is_complete(3));
+    assert_eq!(true, buffer.take_frame(3).is_some());
 
-    assert_eq!(false, buffer.is_complete(3));
-    assert_eq!(false, buffer.take_frame(3).is_some());
+    assert_eq!(true, buffer.is_complete(4));
+    assert_eq!(true, buffer.take_frame(4).is_some());
+    assert_eq!(5, buffer.frame_offset());
 }
 
 #[test]
