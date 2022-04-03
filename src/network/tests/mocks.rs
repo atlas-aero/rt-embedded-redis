@@ -8,7 +8,7 @@ use crate::network::Client;
 use alloc::string::{String, ToString};
 use alloc::vec::Vec;
 use alloc::{format, vec};
-use bytes::{Bytes, BytesMut};
+use bytes::{BufMut, Bytes, BytesMut};
 use core::cell::RefCell;
 use embedded_nal::SocketAddr;
 use embedded_nal::TcpClientStack;
@@ -239,6 +239,22 @@ impl NetworkMockBuilder {
         self.stack.expect_receive().times(1).returning(move |_, mut buffer: &mut [u8]| {
             buffer.write(b"$-1\r\n").unwrap();
             nb::Result::Ok(20)
+        });
+        self
+    }
+
+    /// Prepares binary response
+    #[allow(unused)]
+    pub fn response_binary(mut self, data: &'static [u8]) -> Self {
+        let mut frame = vec![b'$'];
+        frame.put_slice(data.len().to_string().as_bytes());
+        frame.put_slice(b"\r\n");
+        frame.put_slice(data);
+        frame.put_slice(b"\r\n");
+
+        self.stack.expect_receive().times(1).returning(move |_, mut buffer: &mut [u8]| {
+            buffer.write(&frame).unwrap();
+            nb::Result::Ok(frame.len())
         });
         self
     }
