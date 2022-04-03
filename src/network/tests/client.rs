@@ -794,3 +794,19 @@ fn test_shorthand_publish() {
     let response = client.publish("colors", "orange").unwrap().wait().unwrap();
     assert_eq!(3, response);
 }
+
+#[test]
+fn test_shorthand_ping() {
+    let clock = TestClock::new(vec![]);
+
+    let mut network = NetworkMockBuilder::new()
+        .send(164, "*1\r\n$4\r\nPING\r\n")
+        .response_string("PONG")
+        .into_mock();
+
+    let mut socket = SocketMock::new(164);
+    let client = create_mocked_client(&mut network, &mut socket, &clock, Resp2 {});
+
+    let response = client.ping().unwrap().wait().unwrap();
+    assert_eq!((), response);
+}
