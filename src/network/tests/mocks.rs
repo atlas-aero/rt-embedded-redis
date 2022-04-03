@@ -217,8 +217,9 @@ impl NetworkMockBuilder {
     /// Prepares custom response data
     pub fn response_string(mut self, data: &'static str) -> Self {
         self.stack.expect_receive().times(1).returning(move |_, mut buffer: &mut [u8]| {
-            buffer.write(format!("${}\r\n{}\r\n", data.len(), data).as_bytes()).unwrap();
-            nb::Result::Ok(20)
+            let frame = format!("${}\r\n{}\r\n", data.len(), data);
+            buffer.write(frame.as_bytes()).unwrap();
+            nb::Result::Ok(frame.len())
         });
         self
     }
@@ -228,7 +229,7 @@ impl NetworkMockBuilder {
     pub fn response_null_resp3(mut self) -> Self {
         self.stack.expect_receive().times(1).returning(move |_, mut buffer: &mut [u8]| {
             buffer.write(b"_\r\n").unwrap();
-            nb::Result::Ok(20)
+            nb::Result::Ok(3)
         });
         self
     }
@@ -238,7 +239,7 @@ impl NetworkMockBuilder {
     pub fn response_null_resp2(mut self) -> Self {
         self.stack.expect_receive().times(1).returning(move |_, mut buffer: &mut [u8]| {
             buffer.write(b"$-1\r\n").unwrap();
-            nb::Result::Ok(20)
+            nb::Result::Ok(5)
         });
         self
     }
