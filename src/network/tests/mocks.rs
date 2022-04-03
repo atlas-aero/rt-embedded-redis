@@ -223,6 +223,26 @@ impl NetworkMockBuilder {
         self
     }
 
+    /// Prepares RESP3 Null response
+    #[allow(unused)]
+    pub fn response_null_resp3(mut self) -> Self {
+        self.stack.expect_receive().times(1).returning(move |_, mut buffer: &mut [u8]| {
+            buffer.write(b"_\r\n").unwrap();
+            nb::Result::Ok(20)
+        });
+        self
+    }
+
+    /// Prepares RESP2 Null string response
+    #[allow(unused)]
+    pub fn response_null_resp2(mut self) -> Self {
+        self.stack.expect_receive().times(1).returning(move |_, mut buffer: &mut [u8]| {
+            buffer.write(b"$-1\r\n").unwrap();
+            nb::Result::Ok(20)
+        });
+        self
+    }
+
     /// Simulates correct HELLO response
     pub fn response_hello(mut self) -> Self {
         let frame = MockFrames::hello();
