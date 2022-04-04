@@ -1,5 +1,7 @@
 use crate::commands::auth::AuthCommand;
+use crate::commands::builder::{CommandBuilder, ToStringOption};
 use crate::commands::hello::HelloCommand;
+use crate::commands::ping::PingCommand;
 use crate::commands::Command;
 use crate::network::buffer::Network;
 use crate::network::client::{Client, CommandErrors};
@@ -84,6 +86,9 @@ where
     /// RESP3 requires Redis version >= 6.0
     protocol: P,
 
+    /// Use PING command for testing connection
+    use_ping: bool,
+
     /// Response to HELLO command, only used for RESP3
     pub(crate) hello_response: Option<<HelloCommand as Command<<P as Protocol>::FrameType>>::Response>,
 }
@@ -106,6 +111,9 @@ impl<N: TcpClientStack, P: Protocol> ConnectionHandler<N, P>
 where
     AuthCommand: Command<<P as Protocol>::FrameType>,
     HelloCommand: Command<<P as Protocol>::FrameType>,
+    PingCommand: Command<<P as Protocol>::FrameType>,
+    <P as Protocol>::FrameType: ToStringOption,
+    <P as Protocol>::FrameType: From<CommandBuilder>,
 {
     fn new(remote: SocketAddr, protocol: P) -> Self {
         ConnectionHandler {
@@ -115,6 +123,7 @@ where
             auth_failed: false,
             timeout: 0.microseconds(),
             protocol,
+            use_ping: false,
             hello_response: None,
         }
     }
@@ -146,7 +155,7 @@ where
         }
 
         // Check if cached socket is still connected
-        self.test_socket(network);
+        self.test_socket(network, clock);
 
         // Reuse existing connection
         if self.socket.is_some() {
@@ -179,7 +188,7 @@ where
     }
 
     /// Tests if the cached socket is still connected, if not it's closed
-    fn test_socket<'a>(&'a mut self, network: &'a mut N) {
+    fn test_socket<'a, C: Clock>(&'a mut self, network: &'a mut N, clock: Option<&'a C>) {
         if self.socket.is_none() {
             return;
         }
@@ -187,6 +196,20 @@ where
         if !network.is_connected(self.socket.as_ref().unwrap()).unwrap_or(false) {
             self.disconnect(network);
         }
+
+        if self.use_ping && self.ping(network, clock).is_err() {
+            self.disconnect(network);
+        }
+    }
+
+    /// Sends ping command for testing the socket
+    fn ping<'a, C: Clock>(
+        &'a mut self,
+        network: &'a mut N,
+        clock: Option<&'a C>,
+    ) -> Result<(), CommandErrors> {
+        self.create_client(network, clock).ping()?.wait()?;
+        Ok(())
     }
 
     /// Disconnects the connection
@@ -248,6 +271,12 @@ where
     /// Sets the authentication credentials
     pub fn auth(&mut self, credentials: Credentials) -> &mut Self {
         self.authentication = Some(credentials);
+        self
+    }
+
+    /// Using PING command for testing connections
+    pub fn use_ping(&mut self) -> &mut Self {
+        self.use_ping = true;
         self
     }
 }

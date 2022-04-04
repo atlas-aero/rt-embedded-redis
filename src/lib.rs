@@ -122,6 +122,31 @@ pub mod commands;
 /// connection_handler.timeout(500_000.microseconds());
 /// # let _client = connection_handler.connect(&mut network_stack, Some(&clock)).unwrap();
 /// ```
+/// ### Ping
+///
+/// Optionally, the PING command can also be used to test the connection.
+/// PING is then used every time `connect()` is called after the socket has been cached.
+///
+/// It is recommended to use this option only if a Timeout is configured.
+///
+/// ```
+///# use core::str::FromStr;
+///# use embedded_nal::SocketAddr;
+///# use std_embedded_nal::Stack;
+///# use std_embedded_time::StandardClock;
+///# use embedded_redis::network::{ConnectionHandler, Credentials};
+///# use embedded_time::duration::Extensions;
+///#
+///# let mut network_stack = Stack::default();
+///# let clock = StandardClock::default();
+///#
+///# let server_address = SocketAddr::from_str("127.0.0.1:6379").unwrap();
+/// let mut connection_handler = ConnectionHandler::resp2(server_address);
+/// connection_handler.timeout(500_000.microseconds());
+/// connection_handler.use_ping();
+/// # let _client = connection_handler.connect(&mut network_stack, Some(&clock)).unwrap();
+/// # let _client = connection_handler.connect(&mut network_stack, Some(&clock)).unwrap();
+/// ```
 ///
 /// ### Concurrency
 ///
