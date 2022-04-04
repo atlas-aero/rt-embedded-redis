@@ -214,4 +214,27 @@ pub mod commands;
 /// In the event of a timeout error, all remaining futures will be invalidated, as the assignment of
 /// responses can no longer be guaranteed. In case of a invalidated future [InvalidFuture](crate::network::CommandErrors::InvalidFuture)
 /// error is returned when calling `wait()`.
+///
+/// ### Clean state
+///
+/// If the futures are not waited for, it is recommended to call the `close` method before client goes out-of-scope.
+/// This ensures a clean state if a new client is later created with the same network connection.
+///
+/// ````
+///# use core::str::FromStr;
+///# use embedded_nal::SocketAddr;
+///# use std_embedded_nal::Stack;
+///# use std_embedded_time::StandardClock;
+///# use embedded_redis::commands::set::SetCommand;
+///# use embedded_redis::network::ConnectionHandler;
+///#
+///# let mut stack = Stack::default();
+///# let clock = StandardClock::default();
+///#
+///# let mut connection_handler = ConnectionHandler::resp2(SocketAddr::from_str("127.0.0.1:6379").unwrap());
+///# let client = connection_handler.connect(&mut stack, Some(&clock)).unwrap();
+///#
+/// let _ = client.set("key", "value");
+/// client.close();
+/// ````
 pub mod network;

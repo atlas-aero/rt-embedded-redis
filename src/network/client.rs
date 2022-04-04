@@ -106,6 +106,24 @@ where
 
         Ok(None)
     }
+
+    /// Waiting on any dropped futures to leave a clean state
+    pub fn close(&self) {
+        if !self.network.remaining_dropped_futures() {
+            return;
+        }
+
+        let timer = match Timeout::new(self.clock, self.timeout_duration) {
+            Ok(timer) => timer,
+            Err(_) => {
+                return;
+            }
+        };
+
+        while self.network.remaining_dropped_futures() && !timer.expired().unwrap_or(true) {
+            self.network.handle_dropped_futures();
+        }
+    }
 }
 
 impl<'a, 'b, N: TcpClientStack, C: Clock> Client<'a, N, C, Resp3> {

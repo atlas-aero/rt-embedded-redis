@@ -132,7 +132,7 @@ impl<'a, N: TcpClientStack, P: Protocol> Network<'a, N, P> {
     }
 
     /// Drops response data of dropped futures
-    fn handle_dropped_futures(&self) {
+    pub fn handle_dropped_futures(&self) {
         if self.dropped_futures.borrow().is_empty() {
             return;
         }
@@ -154,6 +154,11 @@ impl<'a, N: TcpClientStack, P: Protocol> Network<'a, N, P> {
 
             true
         })
+    }
+
+    /// Returns true if there are any remaining dropped futures
+    pub fn remaining_dropped_futures(&self) -> bool {
+        !self.dropped_futures.borrow().is_empty()
     }
 
     /// Receives all pending socket data

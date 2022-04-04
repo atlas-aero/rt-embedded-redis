@@ -655,6 +655,63 @@ fn test_future_dropped_invalidated() {
 }
 
 #[test]
+fn test_close_timeout() {
+    let clock = TestClock::new(vec![
+        100, // Timer creation in future
+        101, // Timer creation in close
+        200, // Before first receive() call
+        210, // Before second receive() call
+        300, // Before third receive() call
+    ]);
+
+    let mut network = NetworkMockBuilder::new()
+        .send(164, "")
+        .response_no_data()
+        .response_no_data()
+        .into_mock();
+
+    let mut socket = SocketMock::new(164);
+    let client = Client {
+        network: Network::new(RefCell::new(&mut network), RefCell::new(&mut socket), Resp2 {}),
+        timeout_duration: 150.microseconds(),
+        clock: Some(&clock),
+        hello_response: None,
+    };
+
+    {
+        let _ = client.send(SetCommand::new("key", "value"));
+    }
+
+    assert_eq!(1, client.network.get_dropped_future_count());
+    client.close();
+    assert_eq!(1, client.network.get_dropped_future_count());
+}
+
+#[test]
+fn test_close_handled_dropped_futures() {
+    let clock = TestClock::new(vec![]);
+
+    let mut network = NetworkMockBuilder::new()
+        .send(164, "")
+        .response_no_data()
+        .response_ok()
+        .response_no_data()
+        .into_mock();
+
+    let mut socket = SocketMock::new(164);
+    let client = create_mocked_client(&mut network, &mut socket, &clock, Resp2 {});
+
+    {
+        let _ = client.send(SetCommand::new("key", "value"));
+    }
+
+    assert_eq!(1, client.network.get_dropped_future_count());
+    client.close();
+    assert_eq!(0, client.network.get_dropped_future_count());
+    assert_eq!(0, client.network.get_pending_frame_count());
+}
+
+#[test]
 fn test_shorthand_get_str_argument() {
     let clock = TestClock::new(vec![]);
 
