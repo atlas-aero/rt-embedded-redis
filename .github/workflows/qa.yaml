@@ -50,10 +50,10 @@ jobs:
         run: cargo test
 
       - name: Build default features
-        run: cargo build --release
+        run: cargo build --release --features strict
 
       - name: Build mock feature
-        run: cargo build --release --features mock
+        run: cargo build --release --features mock,strict
 
   no_std_builds:
     name: Build no_std targets
@@ -82,7 +82,7 @@ jobs:
         uses: Swatinem/rust-cache@v1
 
       - name: Build
-        run: cargo build --release --target ${{ matrix.target }}
+        run: cargo build --release --target ${{ matrix.target }} --features strict
 
   code_style:
     name: Check code style
@@ -119,3 +119,6 @@ jobs:
 
       - name: Check documentation
         run: cargo rustdoc --all-features -- -D warnings
+
+      - name: Clippy
+        run: cargo clippy --all-targets --all-features -- -D warnings

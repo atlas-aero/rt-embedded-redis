@@ -28,3 +28,5 @@ mockall = { version = "0.11.0" }
 default = []
 # Enables some mocking utilties
 mock = ["mockall"]
+# Fails on warnings
+strict = []
