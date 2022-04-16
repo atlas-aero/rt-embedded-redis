@@ -6,7 +6,7 @@ use embedded_time::duration::Extensions;
 #[test]
 fn test_new_missing_clock() {
     let timeout: Timeout<TestClock> = Timeout::new(None, 100.microseconds()).unwrap();
-    assert_eq!(false, timeout.expired().unwrap());
+    assert!(!timeout.expired().unwrap());
 }
 
 #[test]
@@ -14,7 +14,7 @@ fn test_new_zero_duration() {
     let clock = TestClock::new(vec![]);
     let timeout = Timeout::new(Some(&clock), 0.microseconds()).unwrap();
 
-    assert_eq!(false, timeout.expired().unwrap());
+    assert!(!timeout.expired().unwrap());
 }
 
 #[test]
@@ -30,7 +30,7 @@ fn test_expired_true() {
     let clock = TestClock::new(vec![100, 300]);
     let timeout = Timeout::new(Some(&clock), 100.microseconds()).unwrap();
 
-    assert_eq!(true, timeout.expired().unwrap());
+    assert!(timeout.expired().unwrap());
 }
 
 #[test]
@@ -38,7 +38,7 @@ fn test_expired_false() {
     let clock = TestClock::new(vec![100, 150]);
     let timeout = Timeout::new(Some(&clock), 100.microseconds()).unwrap();
 
-    assert_eq!(false, timeout.expired().unwrap());
+    assert!(!timeout.expired().unwrap());
 }
 
 #[test]

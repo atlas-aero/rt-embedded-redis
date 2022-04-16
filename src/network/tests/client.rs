@@ -49,7 +49,7 @@ fn test_resp2_init_send_tcp_error() {
 fn test_resp2_init_correct_message_sent() {
     let clock = TestClock::new(vec![]);
 
-    let mut network = NetworkMockBuilder::new()
+    let mut network = NetworkMockBuilder::default()
         .send(164, "*2\r\n$4\r\nAUTH\r\n$9\r\nsecret123\r\n")
         .response_ok()
         .into_mock();
@@ -64,7 +64,7 @@ fn test_resp2_init_correct_message_sent() {
 fn test_resp2_init_receive_tcp_error() {
     let clock = TestClock::new(vec![]);
 
-    let mut network = NetworkMockBuilder::new().send(1, "").receive_tcp_error().into_mock();
+    let mut network = NetworkMockBuilder::default().send(1, "").receive_tcp_error().into_mock();
 
     let mut socket = SocketMock::new(1);
     let client = create_mocked_client(&mut network, &mut socket, &clock, Resp2 {});
@@ -77,7 +77,7 @@ fn test_resp2_init_receive_tcp_error() {
 fn test_resp2_init_negative_response() {
     let clock = TestClock::new(vec![]);
 
-    let mut network = NetworkMockBuilder::new().send(1, "").response_error().into_mock();
+    let mut network = NetworkMockBuilder::default().send(1, "").response_error().into_mock();
 
     let mut socket = SocketMock::new(1);
     let client = create_mocked_client(&mut network, &mut socket, &clock, Resp2 {});
@@ -93,7 +93,7 @@ fn test_resp2_init_negative_response() {
 fn test_resp2_init_response_split() {
     let clock = TestClock::new(vec![]);
 
-    let mut network = NetworkMockBuilder::new()
+    let mut network = NetworkMockBuilder::default()
         .send(164, "")
         .response("+O")
         .response_no_data()
@@ -110,7 +110,7 @@ fn test_resp2_init_response_split() {
 fn test_resp3_init_not_auth_just_hello() {
     let clock = TestClock::new(vec![]);
 
-    let mut network = NetworkMockBuilder::new().send_hello(164).response_hello().into_mock();
+    let mut network = NetworkMockBuilder::default().send_hello(164).response_hello().into_mock();
 
     let mut socket = SocketMock::new(164);
     let client = create_mocked_client(&mut network, &mut socket, &clock, Resp3 {});
@@ -122,7 +122,7 @@ fn test_resp3_init_not_auth_just_hello() {
 fn test_resp3_init_auth_password_only() {
     let clock = TestClock::new(vec![]);
 
-    let mut network = NetworkMockBuilder::new()
+    let mut network = NetworkMockBuilder::default()
         .send(164, "*2\r\n$4\r\nAUTH\r\n$9\r\nsecret123\r\n")
         .send_hello(164)
         .response_ok()
@@ -139,7 +139,7 @@ fn test_resp3_init_auth_password_only() {
 fn test_resp3_init_auth_acl() {
     let clock = TestClock::new(vec![]);
 
-    let mut network = NetworkMockBuilder::new()
+    let mut network = NetworkMockBuilder::default()
         .send(164, "*3\r\n$4\r\nAUTH\r\n$6\r\nuser01\r\n$9\r\nsecret123\r\n")
         .send_hello(164)
         .response_ok()
@@ -156,7 +156,7 @@ fn test_resp3_init_auth_acl() {
 fn test_resp3_init_auth_failure() {
     let clock = TestClock::new(vec![]);
 
-    let mut network = NetworkMockBuilder::new().send(164, "").response_error().into_mock();
+    let mut network = NetworkMockBuilder::default().send(164, "").response_error().into_mock();
 
     let mut socket = SocketMock::new(164);
     let client = create_mocked_client(&mut network, &mut socket, &clock, Resp3 {});
@@ -172,7 +172,7 @@ fn test_resp3_init_auth_failure() {
 fn test_resp3_init_hello_tcp_tx_error() {
     let clock = TestClock::new(vec![]);
 
-    let mut network = NetworkMockBuilder::new().send_error().into_mock();
+    let mut network = NetworkMockBuilder::default().send_error().into_mock();
 
     let mut socket = SocketMock::new(164);
     let client = create_mocked_client(&mut network, &mut socket, &clock, Resp3 {});
@@ -185,7 +185,7 @@ fn test_resp3_init_hello_tcp_tx_error() {
 fn test_resp3_init_hello_tcp_rx_error() {
     let clock = TestClock::new(vec![]);
 
-    let mut network = NetworkMockBuilder::new().send(164, "").receive_tcp_error().into_mock();
+    let mut network = NetworkMockBuilder::default().send(164, "").receive_tcp_error().into_mock();
 
     let mut socket = SocketMock::new(164);
     let client = create_mocked_client(&mut network, &mut socket, &clock, Resp3 {});
@@ -198,7 +198,7 @@ fn test_resp3_init_hello_tcp_rx_error() {
 fn test_resp3_init_hello_error_response() {
     let clock = TestClock::new(vec![]);
 
-    let mut network = NetworkMockBuilder::new().send(164, "").response_error().into_mock();
+    let mut network = NetworkMockBuilder::default().send(164, "").response_error().into_mock();
 
     let mut socket = SocketMock::new(164);
     let client = create_mocked_client(&mut network, &mut socket, &clock, Resp3 {});
@@ -218,7 +218,7 @@ fn test_timeout_expired() {
         300, // Second receive() call
     ]);
 
-    let mut network = NetworkMockBuilder::new()
+    let mut network = NetworkMockBuilder::default()
         .send(164, "")
         .response_no_data()
         .response_no_data()
@@ -243,7 +243,7 @@ fn test_timeout_timer_error() {
         200, // First receive() call
     ]);
 
-    let mut network = NetworkMockBuilder::new()
+    let mut network = NetworkMockBuilder::default()
         .send(164, "")
         .response_no_data()
         .response_no_data()
@@ -269,7 +269,7 @@ fn test_timeout_not_expired() {
         300, // Second receive() call
     ]);
 
-    let mut network = NetworkMockBuilder::new()
+    let mut network = NetworkMockBuilder::default()
         .send(164, "")
         .response_no_data()
         .response_no_data()
@@ -291,7 +291,7 @@ fn test_timeout_not_expired() {
 fn test_set_ok_response() {
     let clock = TestClock::new(vec![]);
 
-    let mut network = NetworkMockBuilder::new()
+    let mut network = NetworkMockBuilder::default()
         .send(164, "*3\r\n$3\r\nSET\r\n$8\r\ntest_key\r\n$4\r\ntest\r\n")
         .response_no_data()
         .response_ok()
@@ -300,15 +300,14 @@ fn test_set_ok_response() {
     let mut socket = SocketMock::new(164);
     let client = create_mocked_client(&mut network, &mut socket, &clock, Resp2 {});
 
-    let response = client.send(SetCommand::new("test_key", "test")).unwrap().wait().unwrap();
-    assert_eq!((), response);
+    client.send(SetCommand::new("test_key", "test")).unwrap().wait().unwrap();
 }
 
 #[test]
 fn test_set_error_response() {
     let clock = TestClock::new(vec![]);
 
-    let mut network = NetworkMockBuilder::new().send(164, "").response_error().into_mock();
+    let mut network = NetworkMockBuilder::default().send(164, "").response_error().into_mock();
 
     let mut socket = SocketMock::new(164);
     let client = create_mocked_client(&mut network, &mut socket, &clock, Resp2 {});
@@ -321,7 +320,7 @@ fn test_set_error_response() {
 fn test_set_unknown_response() {
     let clock = TestClock::new(vec![]);
 
-    let mut network = NetworkMockBuilder::new().send(164, "").response("+UNKNOWN\r\n").into_mock();
+    let mut network = NetworkMockBuilder::default().send(164, "").response("+UNKNOWN\r\n").into_mock();
 
     let mut socket = SocketMock::new(164);
     let client = create_mocked_client(&mut network, &mut socket, &clock, Resp2 {});
@@ -334,7 +333,10 @@ fn test_set_unknown_response() {
 fn test_faulty_response() {
     let clock = TestClock::new(vec![]);
 
-    let mut network = NetworkMockBuilder::new().send(164, "").response("UNDEFINED\r\n").into_mock();
+    let mut network = NetworkMockBuilder::default()
+        .send(164, "")
+        .response("UNDEFINED\r\n")
+        .into_mock();
 
     let mut socket = SocketMock::new(164);
     let client = create_mocked_client(&mut network, &mut socket, &clock, Resp2 {});
@@ -347,7 +349,7 @@ fn test_faulty_response() {
 fn test_future_ready_true() {
     let clock = TestClock::new(vec![]);
 
-    let mut network = NetworkMockBuilder::new().send(164, "").response_ok().into_mock();
+    let mut network = NetworkMockBuilder::default().send(164, "").response_ok().into_mock();
 
     let mut socket = SocketMock::new(164);
     let client = create_mocked_client(&mut network, &mut socket, &clock, Resp2 {});
@@ -355,14 +357,14 @@ fn test_future_ready_true() {
     let mut future = client.send(SetCommand::new("first", "future")).unwrap();
 
     assert!(future.ready());
-    assert_eq!((), future.wait().unwrap());
+    future.wait().unwrap();
 }
 
 #[test]
 fn test_future_not_ready_no_data_received() {
     let clock = TestClock::new(vec![]);
 
-    let mut network = NetworkMockBuilder::new().send(164, "").response_no_data().into_mock();
+    let mut network = NetworkMockBuilder::default().send(164, "").response_no_data().into_mock();
 
     let mut socket = SocketMock::new(164);
     let client = create_mocked_client(&mut network, &mut socket, &clock, Resp2 {});
@@ -375,7 +377,7 @@ fn test_future_not_ready_no_data_received() {
 fn test_future_not_ready_incomplete_frame() {
     let clock = TestClock::new(vec![]);
 
-    let mut network = NetworkMockBuilder::new()
+    let mut network = NetworkMockBuilder::default()
         .send(164, "")
         .response("+O")
         .response_no_data()
@@ -393,7 +395,7 @@ fn test_future_not_ready_incomplete_frame() {
 fn test_future_ready_error() {
     let clock = TestClock::new(vec![]);
 
-    let mut network = NetworkMockBuilder::new().send(164, "").receive_tcp_error().into_mock();
+    let mut network = NetworkMockBuilder::default().send(164, "").receive_tcp_error().into_mock();
 
     let mut socket = SocketMock::new(164);
     let client = create_mocked_client(&mut network, &mut socket, &clock, Resp2 {});
@@ -409,7 +411,7 @@ fn test_future_ready_error() {
 fn test_multiple_responses_future_wait_in_order() {
     let clock = TestClock::new(vec![]);
 
-    let mut network = NetworkMockBuilder::new()
+    let mut network = NetworkMockBuilder::default()
         .send(164, "")
         .send(164, "")
         .response_error()
@@ -425,7 +427,7 @@ fn test_multiple_responses_future_wait_in_order() {
     let second = client.send(SetCommand::new("second", "future")).unwrap();
 
     assert_eq!(ErrorResponse("Error".to_string()), first.wait().unwrap_err());
-    assert_eq!((), second.wait().unwrap());
+    second.wait().unwrap();
 }
 
 #[test]
@@ -433,7 +435,7 @@ fn test_multiple_responses_future_wait_in_order() {
 fn test_multiple_responses_future_wait_crossed() {
     let clock = TestClock::new(vec![]);
 
-    let mut network = NetworkMockBuilder::new()
+    let mut network = NetworkMockBuilder::default()
         .send(164, "")
         .send(164, "")
         .response_error()
@@ -448,7 +450,7 @@ fn test_multiple_responses_future_wait_crossed() {
     let first = client.send(SetCommand::new("first", "future")).unwrap();
     let second = client.send(SetCommand::new("second", "future")).unwrap();
 
-    assert_eq!((), second.wait().unwrap());
+    second.wait().unwrap();
     assert_eq!(ErrorResponse("Error".to_string()), first.wait().unwrap_err());
 }
 
@@ -456,7 +458,7 @@ fn test_multiple_responses_future_wait_crossed() {
 fn test_multiple_responses_partly_complete() {
     let clock = TestClock::new(vec![]);
 
-    let mut network = NetworkMockBuilder::new()
+    let mut network = NetworkMockBuilder::default()
         .send(164, "")
         .send(164, "")
         .response_ok()
@@ -472,7 +474,7 @@ fn test_multiple_responses_partly_complete() {
 
     assert!(first.ready());
     assert!(!second.ready());
-    assert_eq!((), first.wait().unwrap());
+    first.wait().unwrap();
 }
 
 #[test]
@@ -484,7 +486,7 @@ fn test_futures_invalidated_on_timeout() {
         300, // Second receive() call
     ]);
 
-    let mut network = NetworkMockBuilder::new()
+    let mut network = NetworkMockBuilder::default()
         .send(164, "")
         .send(164, "")
         .response_no_data()
@@ -509,7 +511,7 @@ fn test_futures_invalidated_on_timeout() {
 fn test_future_invalidated_on_faulty_response() {
     let clock = TestClock::new(vec![]);
 
-    let mut network = NetworkMockBuilder::new()
+    let mut network = NetworkMockBuilder::default()
         .send(164, "")
         .send(164, "")
         .send(164, "")
@@ -529,7 +531,7 @@ fn test_future_invalidated_on_faulty_response() {
     assert_eq!(InvalidFuture, second.wait().unwrap_err());
 
     let third = client.send(SetCommand::new("third", "future")).unwrap();
-    assert_eq!((), third.wait().unwrap());
+    third.wait().unwrap();
 }
 
 /// Tests dropped future, which wait() method was not called.
@@ -539,7 +541,7 @@ fn test_future_invalidated_on_faulty_response() {
 fn test_future_dropped_received_at_send() {
     let clock = TestClock::new(vec![]);
 
-    let mut network = NetworkMockBuilder::new()
+    let mut network = NetworkMockBuilder::default()
         .send(164, "")
         .send(164, "")
         .response_ok()
@@ -568,7 +570,7 @@ fn test_future_dropped_received_at_send() {
 fn test_future_dropped_received_at_next_future() {
     let clock = TestClock::new(vec![]);
 
-    let mut network = NetworkMockBuilder::new()
+    let mut network = NetworkMockBuilder::default()
         .send(164, "")
         .send(164, "")
         .send(164, "")
@@ -620,7 +622,7 @@ fn test_future_dropped_invalidated() {
         450, // Receive() call of third future
     ]);
 
-    let mut network = NetworkMockBuilder::new()
+    let mut network = NetworkMockBuilder::default()
         .send(164, "")
         .send(164, "")
         .send(164, "")
@@ -664,7 +666,7 @@ fn test_close_timeout() {
         300, // Before third receive() call
     ]);
 
-    let mut network = NetworkMockBuilder::new()
+    let mut network = NetworkMockBuilder::default()
         .send(164, "")
         .response_no_data()
         .response_no_data()
@@ -691,7 +693,7 @@ fn test_close_timeout() {
 fn test_close_handled_dropped_futures() {
     let clock = TestClock::new(vec![]);
 
-    let mut network = NetworkMockBuilder::new()
+    let mut network = NetworkMockBuilder::default()
         .send(164, "")
         .response_no_data()
         .response_ok()
@@ -715,7 +717,7 @@ fn test_close_handled_dropped_futures() {
 fn test_shorthand_get_str_argument() {
     let clock = TestClock::new(vec![]);
 
-    let mut network = NetworkMockBuilder::new()
+    let mut network = NetworkMockBuilder::default()
         .send(164, "*2\r\n$3\r\nGET\r\n$3\r\nkey\r\n")
         .response_string("test_response")
         .into_mock();
@@ -733,7 +735,7 @@ fn test_shorthand_get_str_argument() {
 fn test_shorthand_get_string_argument() {
     let clock = TestClock::new(vec![]);
 
-    let mut network = NetworkMockBuilder::new()
+    let mut network = NetworkMockBuilder::default()
         .send(164, "*2\r\n$3\r\nGET\r\n$8\r\ntest_key\r\n")
         .response_string("test_response")
         .into_mock();
@@ -749,7 +751,7 @@ fn test_shorthand_get_string_argument() {
 fn test_shorthand_get_bytes_argument() {
     let clock = TestClock::new(vec![]);
 
-    let mut network = NetworkMockBuilder::new()
+    let mut network = NetworkMockBuilder::default()
         .send(164, "*2\r\n$3\r\nGET\r\n$8\r\ntest_key\r\n")
         .response_string("test_response")
         .into_mock();
@@ -765,7 +767,7 @@ fn test_shorthand_get_bytes_argument() {
 fn test_shorthand_get_multi() {
     let clock = TestClock::new(vec![]);
 
-    let mut network = NetworkMockBuilder::new()
+    let mut network = NetworkMockBuilder::default()
         .send(897, "*2\r\n$3\r\nGET\r\n$4\r\nkey1\r\n")
         .response_string("value1")
         .send(897, "*2\r\n$3\r\nGET\r\n$4\r\nkey2\r\n")
@@ -790,7 +792,7 @@ fn test_shorthand_get_multi() {
 fn test_shorthand_set_str_argument() {
     let clock = TestClock::new(vec![]);
 
-    let mut network = NetworkMockBuilder::new()
+    let mut network = NetworkMockBuilder::default()
         .send(164, "*3\r\n$3\r\nSET\r\n$3\r\nkey\r\n$5\r\nvalue\r\n")
         .response_ok()
         .into_mock();
@@ -798,15 +800,14 @@ fn test_shorthand_set_str_argument() {
     let mut socket = SocketMock::new(164);
     let client = create_mocked_client(&mut network, &mut socket, &clock, Resp2 {});
 
-    let response = client.set("key", "value").unwrap().wait().unwrap();
-    assert_eq!((), response);
+    client.set("key", "value").unwrap().wait().unwrap();
 }
 
 #[test]
 fn test_shorthand_set_string_argument() {
     let clock = TestClock::new(vec![]);
 
-    let mut network = NetworkMockBuilder::new()
+    let mut network = NetworkMockBuilder::default()
         .send(164, "*3\r\n$3\r\nSET\r\n$3\r\nkey\r\n$5\r\nvalue\r\n")
         .response_ok()
         .into_mock();
@@ -814,15 +815,14 @@ fn test_shorthand_set_string_argument() {
     let mut socket = SocketMock::new(164);
     let client = create_mocked_client(&mut network, &mut socket, &clock, Resp2 {});
 
-    let response = client.set("key".to_string(), "value".to_string()).unwrap().wait().unwrap();
-    assert_eq!((), response);
+    client.set("key".to_string(), "value".to_string()).unwrap().wait().unwrap();
 }
 
 #[test]
 fn test_shorthand_set_bytes_argument() {
     let clock = TestClock::new(vec![]);
 
-    let mut network = NetworkMockBuilder::new()
+    let mut network = NetworkMockBuilder::default()
         .send(164, "*3\r\n$3\r\nSET\r\n$3\r\nkey\r\n$5\r\nvalue\r\n")
         .response_ok()
         .into_mock();
@@ -832,15 +832,14 @@ fn test_shorthand_set_bytes_argument() {
 
     let key = Bytes::from_static(b"key");
     let value = Bytes::from_static(b"value");
-    let response = client.set(key, value).unwrap().wait().unwrap();
-    assert_eq!((), response);
+    client.set(key, value).unwrap().wait().unwrap();
 }
 
 #[test]
 fn test_shorthand_publish() {
     let clock = TestClock::new(vec![]);
 
-    let mut network = NetworkMockBuilder::new()
+    let mut network = NetworkMockBuilder::default()
         .send(164, "*3\r\n$7\r\nPUBLISH\r\n$6\r\ncolors\r\n$6\r\norange\r\n")
         .response(":3\r\n")
         .into_mock();
@@ -856,7 +855,7 @@ fn test_shorthand_publish() {
 fn test_shorthand_ping() {
     let clock = TestClock::new(vec![]);
 
-    let mut network = NetworkMockBuilder::new()
+    let mut network = NetworkMockBuilder::default()
         .send(164, "*1\r\n$4\r\nPING\r\n")
         .response_string("PONG")
         .into_mock();
@@ -864,6 +863,5 @@ fn test_shorthand_ping() {
     let mut socket = SocketMock::new(164);
     let client = create_mocked_client(&mut network, &mut socket, &clock, Resp2 {});
 
-    let response = client.ping().unwrap().wait().unwrap();
-    assert_eq!((), response);
+    client.ping().unwrap().wait().unwrap();
 }

@@ -14,7 +14,7 @@ use embedded_time::duration::Extensions;
 fn test_connect_new_socket_fails() {
     let clock = TestClock::new(vec![]);
 
-    let mut stack = NetworkMockBuilder::new().socket_error().into_mock();
+    let mut stack = NetworkMockBuilder::default().socket_error().into_mock();
 
     let mut handler = ConnectionHandler::resp2(SocketAddr::from_str("127.0.0.1:6379").unwrap());
     let result = handler.connect(&mut stack, Some(&clock));
@@ -26,7 +26,11 @@ fn test_connect_new_socket_fails() {
 fn test_connect_new_connection_fail() {
     let clock = TestClock::new(vec![]);
 
-    let mut stack = NetworkMockBuilder::new().socket(167).connect_error(167).close(167).into_mock();
+    let mut stack = NetworkMockBuilder::default()
+        .socket(167)
+        .connect_error(167)
+        .close(167)
+        .into_mock();
 
     let mut handler = ConnectionHandler::resp2(SocketAddr::from_str("127.0.0.1:6379").unwrap());
     let result = handler.connect(&mut stack, Some(&clock));
@@ -38,7 +42,7 @@ fn test_connect_new_connection_fail() {
 fn test_resp2_connect_auth_failed() {
     let clock = TestClock::new(vec![]);
 
-    let mut stack = NetworkMockBuilder::new()
+    let mut stack = NetworkMockBuilder::default()
         .socket(167)
         .connect(167)
         .send(167, "")
@@ -59,7 +63,7 @@ fn test_resp2_connect_auth_failed() {
 fn test_resp3_connect_auth_failed() {
     let clock = TestClock::new(vec![]);
 
-    let mut stack = NetworkMockBuilder::new()
+    let mut stack = NetworkMockBuilder::default()
         .socket(167)
         .connect(167)
         .send(167, "")
@@ -80,7 +84,7 @@ fn test_resp3_connect_auth_failed() {
 fn test_resp3_connect_hello_failed() {
     let clock = TestClock::new(vec![]);
 
-    let mut stack = NetworkMockBuilder::new()
+    let mut stack = NetworkMockBuilder::default()
         .socket(167)
         .connect(167)
         .send(167, "")
@@ -103,7 +107,7 @@ fn test_resp3_connect_hello_failed() {
 fn test_resp3_connect_hello_response() {
     let clock = TestClock::new(vec![]);
 
-    let mut stack = NetworkMockBuilder::new()
+    let mut stack = NetworkMockBuilder::default()
         .socket(167)
         .connect(167)
         .send(167, "")
@@ -129,7 +133,7 @@ fn test_resp3_connect_hello_response() {
 fn test_resp2_connect_auth_failed_socket_closed() {
     let clock = TestClock::new(vec![]);
 
-    let mut stack = NetworkMockBuilder::new()
+    let mut stack = NetworkMockBuilder::default()
         .socket(167)
         .connect(167)
         .send_error()
@@ -152,7 +156,7 @@ fn test_resp2_connect_auth_failed_socket_closed() {
 fn test_resp3_connect_auth_failed_socket_closed() {
     let clock = TestClock::new(vec![]);
 
-    let mut stack = NetworkMockBuilder::new()
+    let mut stack = NetworkMockBuilder::default()
         .socket(167)
         .connect(167)
         .send_error()
@@ -177,7 +181,7 @@ fn test_resp3_connect_auth_failed_socket_closed() {
 fn test_connect_resp2_socket_reused() {
     let clock = TestClock::new(vec![]);
 
-    let mut stack = NetworkMockBuilder::new()
+    let mut stack = NetworkMockBuilder::default()
         .socket(167)
         .connect(167)
         .expect_is_connected(167, true)
@@ -194,7 +198,7 @@ fn test_connect_resp2_socket_reused() {
 fn test_connect_resp3_socket_reused() {
     let clock = TestClock::new(vec![]);
 
-    let mut stack = NetworkMockBuilder::new()
+    let mut stack = NetworkMockBuilder::default()
         .socket(167)
         .connect(167)
         .send(167, "") // Auth
@@ -224,7 +228,7 @@ fn test_connect_resp3_socket_reused() {
 fn test_connect_socket_is_connected_error() {
     let clock = TestClock::new(vec![]);
 
-    let mut stack = NetworkMockBuilder::new()
+    let mut stack = NetworkMockBuilder::default()
         .socket(167)
         .connect(167)
         .expect_is_connected_error(167)
@@ -243,7 +247,7 @@ fn test_connect_socket_is_connected_error() {
 fn test_connect_socket_ping_tcp_error() {
     let clock = TestClock::new(vec![]);
 
-    let mut stack = NetworkMockBuilder::new()
+    let mut stack = NetworkMockBuilder::default()
         .socket(167)
         .connect(167)
         .expect_is_connected(167, true)
@@ -264,7 +268,7 @@ fn test_connect_socket_ping_tcp_error() {
 fn test_connect_socket_ping_tcp_error_response() {
     let clock = TestClock::new(vec![]);
 
-    let mut stack = NetworkMockBuilder::new()
+    let mut stack = NetworkMockBuilder::default()
         .socket(167)
         .connect(167)
         .expect_is_connected(167, true)
@@ -290,7 +294,7 @@ fn test_connect_socket_ping_timeout() {
         300, // Second receive() call
     ]);
 
-    let mut stack = NetworkMockBuilder::new()
+    let mut stack = NetworkMockBuilder::default()
         .socket(167)
         .connect(167)
         .expect_is_connected(167, true)
@@ -314,7 +318,7 @@ fn test_connect_socket_ping_timeout() {
 fn test_connect_socket_ping_successful() {
     let clock = TestClock::new(vec![]);
 
-    let mut stack = NetworkMockBuilder::new()
+    let mut stack = NetworkMockBuilder::default()
         .socket(167)
         .connect(167)
         .expect_is_connected(167, true)
@@ -333,7 +337,7 @@ fn test_connect_socket_ping_successful() {
 fn test_connect_cached_socket_not_connected() {
     let clock = TestClock::new(vec![]);
 
-    let mut stack = NetworkMockBuilder::new()
+    let mut stack = NetworkMockBuilder::default()
         .socket(167)
         .connect(167)
         .expect_is_connected(167, false)

@@ -18,7 +18,6 @@
 //! let client = connection_handler.connect(&mut stack, Some(&clock)).unwrap();
 //!
 //! let response = client.ping().unwrap().wait().unwrap();
-//! assert_eq!((), response)
 //! ```
 //! # Verbose command
 //! Sending a `PingCommand` as alternative to client shorthand.
@@ -38,7 +37,6 @@
 //!#
 //! let command = PingCommand::new(None);
 //! let response = client.send(command).unwrap().wait().unwrap();
-//! assert_eq!((), response)
 //! ```
 //! # Custom argument
 //! Optionally, a user-defined argument can be specified.
@@ -60,7 +58,6 @@
 //!#
 //! let command = PingCommand::new(Some("hello world".into()));
 //! let response = client.send(command).unwrap().wait().unwrap();
-//! assert_eq!((), response)
 //! ```
 use crate::commands::auth::AuthCommand;
 use crate::commands::builder::{CommandBuilder, ToStringOption};

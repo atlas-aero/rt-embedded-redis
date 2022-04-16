@@ -115,13 +115,13 @@ fn test_encode_all_options() {
 #[test]
 fn test_eval_response_resp2_no_options_success() {
     let command = SetCommand::new("test_key", "value123");
-    assert_eq!((), command.eval_response(MockFrames::ok_resp2()).unwrap());
+    command.eval_response(MockFrames::ok_resp2()).unwrap();
 }
 
 #[test]
 fn test_eval_response_resp3_no_options_success() {
     let command = SetCommand::new("test_key", "value123");
-    assert_eq!((), command.eval_response(MockFrames::ok_resp3()).unwrap());
+    command.eval_response(MockFrames::ok_resp3()).unwrap();
 }
 
 #[test]
@@ -143,13 +143,13 @@ fn test_eval_response_resp3_no_options_invalid_response() {
 #[test]
 fn test_eval_response_resp2_expiration_success() {
     let command = SetCommand::new("test_key", "value123").expires(ExpirationPolicy::Seconds(120));
-    assert_eq!((), command.eval_response(MockFrames::ok_resp2()).unwrap());
+    command.eval_response(MockFrames::ok_resp2()).unwrap();
 }
 
 #[test]
 fn test_eval_response_resp3_expiration_success() {
     let command = SetCommand::new("test_key", "value123").expires(ExpirationPolicy::Seconds(120));
-    assert_eq!((), command.eval_response(MockFrames::ok_resp3()).unwrap());
+    command.eval_response(MockFrames::ok_resp3()).unwrap();
 }
 
 #[test]
@@ -271,31 +271,26 @@ where
 
 fn assert_resp2_command(expected: Vec<&'static str>, frame: Resp2Frame) {
     assert!(frame.is_array());
-    match frame {
-        Resp2Frame::Array(array) => {
-            assert_eq!(expected.len(), array.len());
+    if let Resp2Frame::Array(array) = frame {
+        assert_eq!(expected.len(), array.len());
 
-            for item in expected.iter().enumerate() {
-                assert_eq!(
-                    item.1.to_string(),
-                    array.get(item.0).unwrap().to_string().unwrap()
-                );
-            }
+        for item in expected.iter().enumerate() {
+            assert_eq!(
+                item.1.to_string(),
+                array.get(item.0).unwrap().to_string().unwrap()
+            );
         }
-        _ => {}
     }
 }
 
 fn assert_resp3_command(expected: Vec<&'static str>, frame: Resp3Frame) {
     assert!(frame.is_array());
-    match frame {
-        Frame::Array { data, attributes: _ } => {
-            assert_eq!(expected.len(), data.len());
 
-            for item in expected.iter().enumerate() {
-                assert_eq!(item.1.to_string(), data.get(item.0).unwrap().to_string().unwrap());
-            }
+    if let Frame::Array { data, attributes: _ } = frame {
+        assert_eq!(expected.len(), data.len());
+
+        for item in expected.iter().enumerate() {
+            assert_eq!(item.1.to_string(), data.get(item.0).unwrap().to_string().unwrap());
         }
-        _ => {}
     }
 }

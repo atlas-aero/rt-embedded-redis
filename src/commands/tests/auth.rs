@@ -11,13 +11,10 @@ fn test_resp2_encode_no_username() {
     let frame: Resp2Frame = command.encode();
 
     assert!(frame.is_array());
-    match frame {
-        Resp2Frame::Array(array) => {
-            assert_eq!(2, array.len());
-            assert_eq!("AUTH", array.get(0).unwrap().to_string().unwrap());
-            assert_eq!("secret123!", array.get(1).unwrap().to_string().unwrap());
-        }
-        _ => {}
+    if let Resp2Frame::Array(array) = frame {
+        assert_eq!(2, array.len());
+        assert_eq!("AUTH", array.get(0).unwrap().to_string().unwrap());
+        assert_eq!("secret123!", array.get(1).unwrap().to_string().unwrap());
     }
 }
 
@@ -27,14 +24,11 @@ fn test_resp2_encode_username() {
     let frame: Resp2Frame = command.encode();
 
     assert!(frame.is_array());
-    match frame {
-        Resp2Frame::Array(array) => {
-            assert_eq!(3, array.len());
-            assert_eq!("AUTH", array.get(0).unwrap().to_string().unwrap());
-            assert_eq!("test_user", array.get(1).unwrap().to_string().unwrap());
-            assert_eq!("secret123!", array.get(2).unwrap().to_string().unwrap());
-        }
-        _ => {}
+    if let Resp2Frame::Array(array) = frame {
+        assert_eq!(3, array.len());
+        assert_eq!("AUTH", array.get(0).unwrap().to_string().unwrap());
+        assert_eq!("test_user", array.get(1).unwrap().to_string().unwrap());
+        assert_eq!("secret123!", array.get(2).unwrap().to_string().unwrap());
     }
 }
 
@@ -44,15 +38,12 @@ fn test_resp3_encode_no_username() {
     let frame: Resp3Frame = command.encode();
 
     assert!(frame.is_array());
-    match frame {
-        Frame::Array { data, attributes } => {
-            assert_eq!(2, data.len());
-            assert!(attributes.is_none());
+    if let Frame::Array { data, attributes } = frame {
+        assert_eq!(2, data.len());
+        assert!(attributes.is_none());
 
-            assert_eq!("AUTH", data.get(0).unwrap().to_string().unwrap());
-            assert_eq!("secret123!", data.get(1).unwrap().to_string().unwrap());
-        }
-        _ => {}
+        assert_eq!("AUTH", data.get(0).unwrap().to_string().unwrap());
+        assert_eq!("secret123!", data.get(1).unwrap().to_string().unwrap());
     }
 }
 
@@ -62,16 +53,13 @@ fn test_resp3_encode_username() {
     let frame: Resp3Frame = command.encode();
 
     assert!(frame.is_array());
-    match frame {
-        Frame::Array { data, attributes } => {
-            assert_eq!(3, data.len());
-            assert!(attributes.is_none());
+    if let Frame::Array { data, attributes } = frame {
+        assert_eq!(3, data.len());
+        assert!(attributes.is_none());
 
-            assert_eq!("AUTH", data.get(0).unwrap().to_string().unwrap());
-            assert_eq!("user01", data.get(1).unwrap().to_string().unwrap());
-            assert_eq!("secret123!", data.get(2).unwrap().to_string().unwrap());
-        }
-        _ => {}
+        assert_eq!("AUTH", data.get(0).unwrap().to_string().unwrap());
+        assert_eq!("user01", data.get(1).unwrap().to_string().unwrap());
+        assert_eq!("secret123!", data.get(2).unwrap().to_string().unwrap());
     }
 }
 

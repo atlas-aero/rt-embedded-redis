@@ -80,12 +80,6 @@ pub struct NetworkMockBuilder {
 
 /// Helper for constructing network layer mock
 impl NetworkMockBuilder {
-    pub fn new() -> Self {
-        NetworkMockBuilder {
-            stack: MockNetworkStack::new(),
-        }
-    }
-
     /// Simulates a error while fetching socket
     pub fn socket_error(mut self) -> Self {
         self.stack.expect_socket().times(1).returning(move || Err(Error1));
@@ -181,7 +175,7 @@ impl NetworkMockBuilder {
     /// Simulates a Redis error response
     pub fn response_error(mut self) -> Self {
         self.stack.expect_receive().times(1).returning(move |_, mut buffer: &mut [u8]| {
-            buffer.write(b"-Error\r\n").unwrap();
+            let _ = buffer.write(b"-Error\r\n").unwrap();
             nb::Result::Ok(8)
         });
         self
@@ -199,7 +193,7 @@ impl NetworkMockBuilder {
     /// Prepares network stack to respond with OK
     pub fn response_ok(mut self) -> Self {
         self.stack.expect_receive().times(1).returning(move |_, mut buffer: &mut [u8]| {
-            buffer.write(b"+OK\r\n").unwrap();
+            let _ = buffer.write(b"+OK\r\n").unwrap();
             nb::Result::Ok(5)
         });
         self
@@ -208,7 +202,7 @@ impl NetworkMockBuilder {
     /// Prepares custom response data
     pub fn response(mut self, data: &'static str) -> Self {
         self.stack.expect_receive().times(1).returning(move |_, mut buffer: &mut [u8]| {
-            buffer.write(data.as_bytes()).unwrap();
+            let _ = buffer.write(data.as_bytes()).unwrap();
             nb::Result::Ok(data.len())
         });
         self
@@ -218,7 +212,7 @@ impl NetworkMockBuilder {
     pub fn response_string(mut self, data: &'static str) -> Self {
         self.stack.expect_receive().times(1).returning(move |_, mut buffer: &mut [u8]| {
             let frame = format!("${}\r\n{}\r\n", data.len(), data);
-            buffer.write(frame.as_bytes()).unwrap();
+            let _ = buffer.write(frame.as_bytes()).unwrap();
             nb::Result::Ok(frame.len())
         });
         self
@@ -228,7 +222,7 @@ impl NetworkMockBuilder {
     #[allow(unused)]
     pub fn response_null_resp3(mut self) -> Self {
         self.stack.expect_receive().times(1).returning(move |_, mut buffer: &mut [u8]| {
-            buffer.write(b"_\r\n").unwrap();
+            let _ = buffer.write(b"_\r\n").unwrap();
             nb::Result::Ok(3)
         });
         self
@@ -238,7 +232,7 @@ impl NetworkMockBuilder {
     #[allow(unused)]
     pub fn response_null_resp2(mut self) -> Self {
         self.stack.expect_receive().times(1).returning(move |_, mut buffer: &mut [u8]| {
-            buffer.write(b"$-1\r\n").unwrap();
+            let _ = buffer.write(b"$-1\r\n").unwrap();
             nb::Result::Ok(5)
         });
         self
@@ -254,7 +248,7 @@ impl NetworkMockBuilder {
         frame.put_slice(b"\r\n");
 
         self.stack.expect_receive().times(1).returning(move |_, mut buffer: &mut [u8]| {
-            buffer.write(&frame).unwrap();
+            let _ = buffer.write(&frame).unwrap();
             nb::Result::Ok(frame.len())
         });
         self
@@ -273,7 +267,7 @@ impl NetworkMockBuilder {
 
         for chunk in byte_chunks {
             self.stack.expect_receive().times(1).returning(move |_, mut buffer: &mut [u8]| {
-                buffer.write(chunk.as_ref()).unwrap();
+                let _ = buffer.write(chunk.as_ref()).unwrap();
                 nb::Result::Ok(chunk.len())
             });
         }
@@ -291,6 +285,14 @@ impl NetworkMockBuilder {
 
     pub fn into_mock(self) -> MockNetworkStack {
         self.stack
+    }
+}
+
+impl Default for NetworkMockBuilder {
+    fn default() -> Self {
+        Self {
+            stack: MockNetworkStack::new(),
+        }
     }
 }
 

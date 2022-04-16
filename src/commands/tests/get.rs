@@ -12,13 +12,10 @@ fn test_encode_resp2() {
     let frame: Resp2Frame = GetCommand::new("test_key").encode();
 
     assert!(frame.is_array());
-    match frame {
-        Resp2Frame::Array(array) => {
-            assert_eq!(2, array.len());
-            assert_eq!("GET", array[0].to_string().unwrap());
-            assert_eq!("test_key", array[1].to_string().unwrap());
-        }
-        _ => {}
+    if let Resp2Frame::Array(array) = frame {
+        assert_eq!(2, array.len());
+        assert_eq!("GET", array[0].to_string().unwrap());
+        assert_eq!("test_key", array[1].to_string().unwrap());
     }
 }
 
@@ -27,13 +24,10 @@ fn test_encode_resp3() {
     let frame: Resp3Frame = GetCommand::new("test_key").encode();
 
     assert!(frame.is_array());
-    match frame {
-        Resp3Frame::Array { data, attributes: _ } => {
-            assert_eq!(2, data.len());
-            assert_eq!("GET", data[0].to_string().unwrap());
-            assert_eq!("test_key", data[1].to_string().unwrap());
-        }
-        _ => {}
+    if let Resp3Frame::Array { data, attributes: _ } = frame {
+        assert_eq!(2, data.len());
+        assert_eq!("GET", data[0].to_string().unwrap());
+        assert_eq!("test_key", data[1].to_string().unwrap());
     }
 }
 
