@@ -30,7 +30,7 @@
 //! assert_eq!("Hello World!", response.to_string().unwrap());
 //! ```
 use crate::commands::builder::CommandBuilder;
-use crate::commands::Command;
+use crate::commands::{Command, ResponseTypeError};
 
 /// Abstraction for arbitrary commands.
 pub struct CustomCommand {
@@ -53,7 +53,7 @@ where
         self.builder.clone().into()
     }
 
-    fn eval_response(&self, frame: F) -> Result<Self::Response, ()> {
+    fn eval_response(&self, frame: F) -> Result<Self::Response, ResponseTypeError> {
         Ok(frame)
     }
 }

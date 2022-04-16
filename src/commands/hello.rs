@@ -31,7 +31,7 @@
 //! assert_eq!("master", response.role);
 //! ```
 use crate::commands::helpers::{CmdStr, RespMap};
-use crate::commands::Command;
+use crate::commands::{Command, ResponseTypeError};
 use alloc::string::String;
 use alloc::vec::Vec;
 use redis_protocol::resp2::types::Frame as Resp2Frame;
@@ -50,7 +50,7 @@ impl Command<Resp3Frame> for HelloCommand {
         }
     }
 
-    fn eval_response(&self, frame: Resp3Frame) -> Result<Self::Response, ()> {
+    fn eval_response(&self, frame: Resp3Frame) -> Result<Self::Response, ResponseTypeError> {
         HelloResponse::try_from(frame)
     }
 }
@@ -62,7 +62,7 @@ impl Command<Resp2Frame> for HelloCommand {
         unimplemented!("Command requires RESP3");
     }
 
-    fn eval_response(&self, _frame: Resp2Frame) -> Result<Self::Response, ()> {
+    fn eval_response(&self, _frame: Resp2Frame) -> Result<Self::Response, ResponseTypeError> {
         unimplemented!("Command requires RESP3");
     }
 }
@@ -80,26 +80,26 @@ pub struct HelloResponse {
 }
 
 impl TryFrom<Resp3Frame> for HelloResponse {
-    type Error = ();
+    type Error = ResponseTypeError;
 
     fn try_from(frame: Resp3Frame) -> Result<Self, Self::Error> {
         let map = match frame {
             Resp3Frame::Map { data, attributes: _ } => data,
-            _ => return Err(()),
+            _ => return Err(ResponseTypeError {}),
         };
 
         let map_cmd = RespMap::new(&map);
 
         Ok(HelloResponse {
-            server: map_cmd.find_string("server").ok_or(())?,
-            version: map_cmd.find_string("version").ok_or(())?,
-            protocol: map_cmd.find_integer("proto").ok_or(())?,
-            id: map_cmd.find_integer("id").ok_or(())?,
-            mode: map_cmd.find_string("mode").ok_or(())?,
-            role: map_cmd.find_string("role").ok_or(())?,
-            modules: match map.get(&CmdStr::new("modules").to_blob()).ok_or(())? {
+            server: map_cmd.find_string("server").ok_or(ResponseTypeError {})?,
+            version: map_cmd.find_string("version").ok_or(ResponseTypeError {})?,
+            protocol: map_cmd.find_integer("proto").ok_or(ResponseTypeError {})?,
+            id: map_cmd.find_integer("id").ok_or(ResponseTypeError {})?,
+            mode: map_cmd.find_string("mode").ok_or(ResponseTypeError {})?,
+            role: map_cmd.find_string("role").ok_or(ResponseTypeError {})?,
+            modules: match map.get(&CmdStr::new("modules").to_blob()).ok_or(ResponseTypeError {})? {
                 Resp3Frame::Array { data, attributes: _ } => data.clone(),
-                _ => return Err(()),
+                _ => return Err(ResponseTypeError {}),
             },
         })
     }

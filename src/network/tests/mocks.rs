@@ -352,7 +352,7 @@ impl Clock for TestClock {
     where
         Dur: FixedPoint,
     {
-        Timer::new(&self, duration)
+        Timer::new(self, duration)
     }
 }
 
@@ -376,7 +376,7 @@ where
     Client {
         network: Network::new(RefCell::new(network_stack), RefCell::new(socket), protocol),
         timeout_duration: 0.microseconds(),
-        clock: Some(&clock),
+        clock: Some(clock),
         hello_response: None,
     }
 }

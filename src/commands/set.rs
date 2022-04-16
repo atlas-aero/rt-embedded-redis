@@ -120,7 +120,7 @@
 use crate::commands::auth::AuthCommand;
 use crate::commands::builder::{CommandBuilder, IsNullFrame, ToStringBytes, ToStringOption};
 use crate::commands::hello::HelloCommand;
-use crate::commands::Command;
+use crate::commands::{Command, ResponseTypeError};
 use crate::network::client::{Client, CommandErrors};
 use crate::network::future::Future;
 use crate::network::protocol::Protocol;
@@ -240,9 +240,9 @@ where
         self.get_builder().into()
     }
 
-    fn eval_response(&self, frame: F) -> Result<Self::Response, ()> {
-        if frame.to_string_option().ok_or(())? != "OK" {
-            return Err(());
+    fn eval_response(&self, frame: F) -> Result<Self::Response, ResponseTypeError> {
+        if frame.to_string_option().ok_or(ResponseTypeError {})? != "OK" {
+            return Err(ResponseTypeError {});
         }
 
         Ok(())
@@ -259,16 +259,16 @@ where
         self.get_builder().into()
     }
 
-    fn eval_response(&self, frame: F) -> Result<Self::Response, ()> {
+    fn eval_response(&self, frame: F) -> Result<Self::Response, ResponseTypeError> {
         if frame.is_null_frame() {
             return Ok(None);
         }
 
-        if frame.to_string_option().ok_or(())? == "OK" {
+        if frame.to_string_option().ok_or(ResponseTypeError {})? == "OK" {
             return Ok(Some(()));
         }
 
-        Err(())
+        Err(ResponseTypeError {})
     }
 }
 
@@ -282,12 +282,12 @@ where
         self.get_builder().into()
     }
 
-    fn eval_response(&self, frame: F) -> Result<Self::Response, ()> {
+    fn eval_response(&self, frame: F) -> Result<Self::Response, ResponseTypeError> {
         if frame.is_null_frame() {
             return Ok(None);
         }
 
-        Ok(Some(frame.to_string_bytes().ok_or(())?))
+        Ok(Some(frame.to_string_bytes().ok_or(ResponseTypeError {})?))
     }
 }
 

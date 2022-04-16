@@ -65,7 +65,7 @@
 use crate::commands::auth::AuthCommand;
 use crate::commands::builder::{CommandBuilder, ToStringOption};
 use crate::commands::hello::HelloCommand;
-use crate::commands::Command;
+use crate::commands::{Command, ResponseTypeError};
 use crate::network::protocol::Protocol;
 use crate::network::{Client, CommandErrors, Future};
 use bytes::Bytes;
@@ -83,7 +83,7 @@ impl PingCommand {
     }
 }
 
-const PONG: Bytes = Bytes::from_static(b"PONG");
+static PONG: Bytes = Bytes::from_static(b"PONG");
 
 impl<F> Command<F> for PingCommand
 where
@@ -95,13 +95,13 @@ where
         CommandBuilder::new("PING").arg_option(self.argument.as_ref()).into()
     }
 
-    fn eval_response(&self, frame: F) -> Result<Self::Response, ()> {
-        let response = frame.to_string_option().ok_or(())?;
+    fn eval_response(&self, frame: F) -> Result<Self::Response, ResponseTypeError> {
+        let response = frame.to_string_option().ok_or(ResponseTypeError {})?;
         let pong = &PONG;
         let expected = self.argument.as_ref().unwrap_or(pong);
 
         if response.as_bytes() != expected.as_ref() {
-            return Err(());
+            return Err(ResponseTypeError {});
         }
 
         Ok(())

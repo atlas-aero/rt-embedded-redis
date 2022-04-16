@@ -11,6 +11,10 @@ pub mod set;
 #[cfg(test)]
 pub(crate) mod tests;
 
+/// Error in case Redis response type does not match specification
+#[derive(Debug)]
+pub struct ResponseTypeError {}
+
 /// Generic command structure. F is either [Resp2Frame](redis_protocol::resp2::types::Frame) or
 /// [Resp3Frame](redis_protocol::resp3::types::Frame)
 pub trait Command<F> {
@@ -29,5 +33,5 @@ pub trait Command<F> {
     ///
     /// Returns Error only in case of protocol violation (e.g. received an array for an command
     /// that only returns strings)
-    fn eval_response(&self, frame: F) -> Result<Self::Response, ()>;
+    fn eval_response(&self, frame: F) -> Result<Self::Response, ResponseTypeError>;
 }

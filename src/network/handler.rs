@@ -230,7 +230,7 @@ where
         }
 
         let mut socket = socket_result.unwrap();
-        if network.connect(&mut socket, self.remote.clone()).is_err() {
+        if network.connect(&mut socket, self.remote).is_err() {
             let _ = network.close(socket);
             return Err(TcpConnectionFailed);
         };
@@ -251,7 +251,7 @@ where
                 RefCell::new(self.socket.as_mut().unwrap()),
                 self.protocol.clone(),
             ),
-            timeout_duration: self.timeout.clone(),
+            timeout_duration: self.timeout,
             clock,
             hello_response: self.hello_response.as_ref(),
         }

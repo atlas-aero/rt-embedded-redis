@@ -26,6 +26,7 @@
 #![cfg_attr(feature = "strict", deny(warnings))]
 
 extern crate alloc;
+extern crate core;
 
 /// # Redis command abstractions
 ///

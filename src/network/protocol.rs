@@ -64,12 +64,13 @@ impl Protocol for Resp3 {
         match resp3::decode::streaming::decode(data) {
             Ok(option) => match option {
                 None => Ok(None),
-                Some(decoded) => match decoded {
-                    (frame, size) => match frame {
+                Some(decoded) => {
+                    let (frame, size) = decoded;
+                    match frame {
                         DecodedFrame::Streaming(_) => Ok(None),
                         DecodedFrame::Complete(complete_frame) => Ok(Some((complete_frame, size))),
-                    },
-                },
+                    }
+                }
             },
             Err(error) => Err(error),
         }

@@ -43,7 +43,7 @@
 use crate::commands::auth::AuthCommand;
 use crate::commands::builder::{CommandBuilder, ToInteger};
 use crate::commands::hello::HelloCommand;
-use crate::commands::Command;
+use crate::commands::{Command, ResponseTypeError};
 use crate::network::client::{Client, CommandErrors};
 use crate::network::future::Future;
 use crate::network::protocol::Protocol;
@@ -81,8 +81,8 @@ where
         CommandBuilder::new("PUBLISH").arg(&self.channel).arg(&self.message).into()
     }
 
-    fn eval_response(&self, frame: F) -> Result<Self::Response, ()> {
-        frame.to_integer().ok_or(())
+    fn eval_response(&self, frame: F) -> Result<Self::Response, ResponseTypeError> {
+        frame.to_integer().ok_or(ResponseTypeError {})
     }
 }
 

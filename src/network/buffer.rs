@@ -84,8 +84,8 @@ impl<'a, N: TcpClientStack, P: Protocol> Network<'a, N, P> {
         };
 
         let identity = Identity {
-            series: self.current_series.borrow().clone(),
-            index: self.next_index.borrow().clone(),
+            series: *self.current_series.borrow(),
+            index: *self.next_index.borrow(),
         };
         *self.next_index.borrow_mut() += 1;
         Ok(identity)

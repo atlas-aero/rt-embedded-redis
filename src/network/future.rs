@@ -100,8 +100,8 @@ impl<'a, N: TcpClientStack, C: Clock, P: Protocol, Cmd: Command<P::FrameType>> F
         while !self.network.is_complete(&self.id)? {
             let result = self.network.receive_chunk();
 
-            if result.is_err() {
-                match result.unwrap_err() {
+            if let Err(error) = result {
+                match error {
                     nb::Error::Other(_) => {
                         return Err(CommandErrors::TcpError);
                     }

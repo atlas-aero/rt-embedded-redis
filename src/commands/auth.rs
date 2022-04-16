@@ -79,7 +79,7 @@
 //! ```
 
 use crate::commands::builder::{CommandBuilder, ToStringOption};
-use crate::commands::Command;
+use crate::commands::{Command, ResponseTypeError};
 use crate::network::handler::Credentials;
 use bytes::Bytes;
 
@@ -97,8 +97,8 @@ impl AuthCommand {
         P: Into<Bytes>,
     {
         let mut user_bytes = None;
-        if username.is_some() {
-            user_bytes = Some(username.unwrap().into());
+        if let Some(bytes) = username {
+            user_bytes = Some(bytes.into());
         }
 
         AuthCommand {
@@ -121,9 +121,9 @@ where
             .into()
     }
 
-    fn eval_response(&self, frame: F) -> Result<Self::Response, ()> {
-        if frame.to_string_option().ok_or(())? != "OK" {
-            return Err(());
+    fn eval_response(&self, frame: F) -> Result<Self::Response, ResponseTypeError> {
+        if frame.to_string_option().ok_or(ResponseTypeError {})? != "OK" {
+            return Err(ResponseTypeError {});
         }
 
         Ok(())

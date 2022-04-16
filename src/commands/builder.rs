@@ -39,7 +39,7 @@ use redis_protocol::resp2::types::Frame as Resp2Frame;
 use redis_protocol::resp3::types::Frame as Resp3Frame;
 
 /// Builder for constructing RESP2/3 frames
-#[derive(Clone)]
+#[derive(Clone, Default)]
 pub struct CommandBuilder {
     pub(crate) elements: Vec<Bytes>,
 }
@@ -64,8 +64,8 @@ impl CommandBuilder {
 
     /// Adds a static argument
     pub fn arg_static_option(mut self, arg: Option<&'static str>) -> Self {
-        if arg.is_some() {
-            self.elements.push(Bytes::from_static(arg.unwrap().as_bytes()));
+        if let Some(arg_str) = arg {
+            self.elements.push(Bytes::from_static(arg_str.as_bytes()));
         }
         self
     }
@@ -85,8 +85,8 @@ impl CommandBuilder {
 
     /// Just adding byte if option is Some
     pub fn arg_option(mut self, arg: Option<&Bytes>) -> Self {
-        if arg.is_some() {
-            self.elements.push(arg.unwrap().clone());
+        if let Some(inner) = arg {
+            self.elements.push(inner.clone());
         }
         self
     }
@@ -120,15 +120,9 @@ impl From<CommandBuilder> for Resp3Frame {
     }
 }
 
-impl Default for CommandBuilder {
-    fn default() -> Self {
-        CommandBuilder { elements: vec![] }
-    }
-}
-
-impl Into<CustomCommand> for CommandBuilder {
-    fn into(self) -> CustomCommand {
-        CustomCommand::new(self)
+impl From<CommandBuilder> for CustomCommand {
+    fn from(builder: CommandBuilder) -> Self {
+        CustomCommand::new(builder)
     }
 }
 

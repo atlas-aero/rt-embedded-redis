@@ -98,7 +98,7 @@
 use crate::commands::auth::AuthCommand;
 use crate::commands::builder::{CommandBuilder, IsNullFrame, ToStringBytes};
 use crate::commands::hello::HelloCommand;
-use crate::commands::Command;
+use crate::commands::{Command, ResponseTypeError};
 use crate::network::client::{Client, CommandErrors};
 use crate::network::future::Future;
 use crate::network::protocol::Protocol;
@@ -174,12 +174,14 @@ where
         CommandBuilder::new("GET").arg(&self.key).into()
     }
 
-    fn eval_response(&self, frame: F) -> Result<Self::Response, ()> {
+    fn eval_response(&self, frame: F) -> Result<Self::Response, ResponseTypeError> {
         if frame.is_null_frame() {
             return Ok(None);
         }
 
-        Ok(Some(GetResponse::new(frame.to_string_bytes().ok_or(())?)))
+        Ok(Some(GetResponse::new(
+            frame.to_string_bytes().ok_or(ResponseTypeError {})?,
+        )))
     }
 }
 
