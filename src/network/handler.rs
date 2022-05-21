@@ -194,7 +194,7 @@ where
         }
 
         if !network.is_connected(self.socket.as_ref().unwrap()).unwrap_or(false) {
-            self.disconnect(network);
+            return self.disconnect(network);
         }
 
         if self.use_ping && self.ping(network, clock).is_err() {

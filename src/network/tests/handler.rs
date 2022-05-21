@@ -334,7 +334,7 @@ fn test_connect_socket_ping_successful() {
 }
 
 #[test]
-fn test_connect_cached_socket_not_connected() {
+fn test_connect_cached_socket_not_connected_without_ping() {
     let clock = TestClock::new(vec![]);
 
     let mut stack = NetworkMockBuilder::default()
@@ -347,6 +347,26 @@ fn test_connect_cached_socket_not_connected() {
         .into_mock();
 
     let mut handler = ConnectionHandler::resp2(SocketAddr::from_str("127.0.0.1:6379").unwrap());
+
+    handler.connect(&mut stack, Some(&clock)).unwrap();
+    handler.connect(&mut stack, Some(&clock)).unwrap();
+}
+
+#[test]
+fn test_connect_cached_socket_not_connected_with_ping() {
+    let clock = TestClock::new(vec![]);
+
+    let mut stack = NetworkMockBuilder::default()
+        .socket(167)
+        .connect(167)
+        .expect_is_connected(167, false)
+        .close(167)
+        .socket(297)
+        .connect(297)
+        .into_mock();
+
+    let mut handler = ConnectionHandler::resp2(SocketAddr::from_str("127.0.0.1:6379").unwrap());
+    handler.use_ping();
 
     handler.connect(&mut stack, Some(&clock)).unwrap();
     handler.connect(&mut stack, Some(&clock)).unwrap();
