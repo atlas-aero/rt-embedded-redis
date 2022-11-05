@@ -1,3 +1,5 @@
+#[cfg(all(test, feature = "benchmarks"))]
+mod benchmarks;
 #[cfg(test)]
 mod client;
 #[cfg(test)]

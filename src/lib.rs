@@ -24,6 +24,9 @@
 //! ```
 #![cfg_attr(all(not(test), not(feature = "mock")), no_std)]
 #![cfg_attr(feature = "strict", deny(warnings))]
+#![cfg_attr(feature = "benchmarks", feature(test))]
+#[cfg(feature = "benchmarks")]
+extern crate test;
 
 extern crate alloc;
 extern crate core;

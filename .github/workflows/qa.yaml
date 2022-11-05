@@ -55,6 +55,28 @@ jobs:
       - name: Build mock feature
         run: cargo build --release --features mock,strict
 
+  benchmark:
+    name: Run benchmarks
+    runs-on: ubuntu-latest
+    steps:
+      - name: checkout
+        uses: actions/checkout@v2
+
+      - name: Install Rust
+        uses: actions-rs/toolchain@v1
+        with:
+          profile: minimal
+          toolchain: nightly
+          default: true
+          components: rustfmt
+
+      - name: Start Redis
+        uses: supercharge/redis-github-action@1.4.0
+        with:
+          redis-version: 6
+
+      - run: cargo bench --features benchmarks
+
   no_std_builds:
     name: Build no_std targets
     runs-on: ubuntu-latest
@@ -118,7 +140,7 @@ jobs:
         uses: Swatinem/rust-cache@v1
 
       - name: Check documentation
-        run: cargo rustdoc --all-features -- -D warnings
+        run: cargo rustdoc --features mock,strict -- -D warnings
 
   clippy:
     name: Linting
@@ -137,4 +159,4 @@ jobs:
         uses: Swatinem/rust-cache@v1
 
       - name: Clippy
-        run: cargo clippy --all-targets --all-features -- -D warnings
+        run: cargo clippy --all-targets --features mock,strict -- -D warnings
