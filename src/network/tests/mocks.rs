@@ -35,7 +35,7 @@ impl SocketMock {
     }
 }
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, Eq, PartialEq)]
 pub enum MockTcpError {
     Error1,
 }

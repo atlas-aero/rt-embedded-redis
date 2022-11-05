@@ -13,7 +13,7 @@ use embedded_time::duration::Microseconds;
 use embedded_time::Clock;
 
 /// Error handling for command execution
-#[derive(Debug, PartialEq, Clone)]
+#[derive(Debug, Eq, PartialEq, Clone)]
 pub enum CommandErrors {
     /// No response within expected time frame
     /// *Is recommended to create a new client/connection in this case*.
@@ -58,7 +58,7 @@ where
     pub(crate) hello_response: Option<&'a <HelloCommand as Command<<P as Protocol>::FrameType>>::Response>,
 }
 
-impl<'a, 'b, N: TcpClientStack, C: Clock, P: Protocol> Client<'a, N, C, P>
+impl<'a, N: TcpClientStack, C: Clock, P: Protocol> Client<'a, N, C, P>
 where
     AuthCommand: Command<<P as Protocol>::FrameType>,
     HelloCommand: Command<<P as Protocol>::FrameType>,
@@ -126,7 +126,7 @@ where
     }
 }
 
-impl<'a, 'b, N: TcpClientStack, C: Clock> Client<'a, N, C, Resp3> {
+impl<'a, N: TcpClientStack, C: Clock> Client<'a, N, C, Resp3> {
     /// Returns the response to HELLO command executed during connection initialization
     /// [Client HELLO response]
     pub fn get_hello_response(&self) -> &HelloResponse {
@@ -149,7 +149,7 @@ fn hello_error(error: CommandErrors) -> ConnectionError {
     ConnectionError::ProtocolSwitchError(error)
 }
 
-impl<'a, 'b, N: TcpClientStack, C: Clock, P: Protocol> Debug for Client<'a, N, C, P>
+impl<'a, N: TcpClientStack, C: Clock, P: Protocol> Debug for Client<'a, N, C, P>
 where
     HelloCommand: Command<<P as Protocol>::FrameType>,
 {

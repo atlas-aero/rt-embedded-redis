@@ -2,7 +2,7 @@ use embedded_time::duration::{Extensions, Microseconds};
 use embedded_time::timer::param::{OneShot, Running};
 use embedded_time::{Clock, Timer};
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, Eq, PartialEq)]
 pub enum TimeoutError {
     TimerStartFailed,
     TimerError,

@@ -15,7 +15,7 @@ use embedded_time::duration::Microseconds;
 use embedded_time::Clock;
 
 /// Error handling for connection management
-#[derive(Debug, PartialEq)]
+#[derive(Debug, Eq, PartialEq)]
 pub enum ConnectionError {
     /// Unable to get a socket from network layer
     TcpSocketError,
