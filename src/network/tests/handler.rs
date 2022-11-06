@@ -17,7 +17,7 @@ fn test_connect_new_socket_fails() {
     let mut stack = NetworkMockBuilder::default().socket_error().into_mock();
 
     let mut handler = ConnectionHandler::resp2(SocketAddr::from_str("127.0.0.1:6379").unwrap());
-    let result = handler.connect(&mut stack, Some(&clock));
+    let result = handler.connect::<TestClock, 8>(&mut stack, Some(&clock));
 
     assert_eq!(TcpSocketError, result.unwrap_err());
 }
@@ -33,7 +33,7 @@ fn test_connect_new_connection_fail() {
         .into_mock();
 
     let mut handler = ConnectionHandler::resp2(SocketAddr::from_str("127.0.0.1:6379").unwrap());
-    let result = handler.connect(&mut stack, Some(&clock));
+    let result = handler.connect::<TestClock, 8>(&mut stack, Some(&clock));
 
     assert_eq!(TcpConnectionFailed, result.unwrap_err());
 }
@@ -51,7 +51,7 @@ fn test_resp2_connect_auth_failed() {
 
     let mut handler = ConnectionHandler::resp2(SocketAddr::from_str("127.0.0.1:6379").unwrap());
     handler.auth(Credentials::password_only("secret"));
-    let result = handler.connect(&mut stack, Some(&clock));
+    let result = handler.connect::<TestClock, 8>(&mut stack, Some(&clock));
 
     assert_eq!(
         AuthenticationError(CommandErrors::ErrorResponse("Error".to_string())),
@@ -72,7 +72,7 @@ fn test_resp3_connect_auth_failed() {
 
     let mut handler = ConnectionHandler::resp3(SocketAddr::from_str("127.0.0.1:6379").unwrap());
     handler.auth(Credentials::password_only("secret"));
-    let result = handler.connect(&mut stack, Some(&clock));
+    let result = handler.connect::<TestClock, 8>(&mut stack, Some(&clock));
 
     assert_eq!(
         AuthenticationError(CommandErrors::ErrorResponse("Error".to_string())),
@@ -95,7 +95,7 @@ fn test_resp3_connect_hello_failed() {
 
     let mut handler = ConnectionHandler::resp3(SocketAddr::from_str("127.0.0.1:6379").unwrap());
     handler.auth(Credentials::password_only("secret"));
-    let result = handler.connect(&mut stack, Some(&clock));
+    let result = handler.connect::<TestClock, 8>(&mut stack, Some(&clock));
 
     assert_eq!(
         ProtocolSwitchError(CommandErrors::ErrorResponse("Error".to_string())),
@@ -118,7 +118,7 @@ fn test_resp3_connect_hello_response() {
 
     let mut handler = ConnectionHandler::resp3(SocketAddr::from_str("127.0.0.1:6379").unwrap());
     handler.auth(Credentials::password_only("secret"));
-    let result = handler.connect(&mut stack, Some(&clock)).unwrap();
+    let result = handler.connect::<TestClock, 8>(&mut stack, Some(&clock)).unwrap();
 
     assert_eq!("redis", result.get_hello_response().server);
     assert_eq!("6.0.0", result.get_hello_response().version);
@@ -148,8 +148,8 @@ fn test_resp2_connect_auth_failed_socket_closed() {
     handler.auth(Credentials::password_only("secret"));
 
     // Authentication fails, so socket is expected to be closed on next connect try
-    handler.connect(&mut stack, Some(&clock)).unwrap_err();
-    handler.connect(&mut stack, Some(&clock)).unwrap();
+    handler.connect::<TestClock, 8>(&mut stack, Some(&clock)).unwrap_err();
+    handler.connect::<TestClock, 8>(&mut stack, Some(&clock)).unwrap();
 }
 
 #[test]
@@ -173,8 +173,8 @@ fn test_resp3_connect_auth_failed_socket_closed() {
     handler.auth(Credentials::password_only("secret"));
 
     // Authentication fails, so socket is expected to be closed on next connect try
-    handler.connect(&mut stack, Some(&clock)).unwrap_err();
-    handler.connect(&mut stack, Some(&clock)).unwrap();
+    handler.connect::<TestClock, 8>(&mut stack, Some(&clock)).unwrap_err();
+    handler.connect::<TestClock, 8>(&mut stack, Some(&clock)).unwrap();
 }
 
 #[test]
@@ -190,8 +190,8 @@ fn test_connect_resp2_socket_reused() {
     let mut handler = ConnectionHandler::resp2(SocketAddr::from_str("127.0.0.1:6379").unwrap());
 
     // Authentication fails, so socket is expected to be closed on next connect try
-    handler.connect(&mut stack, Some(&clock)).unwrap();
-    handler.connect(&mut stack, Some(&clock)).unwrap();
+    handler.connect::<TestClock, 8>(&mut stack, Some(&clock)).unwrap();
+    handler.connect::<TestClock, 8>(&mut stack, Some(&clock)).unwrap();
 }
 
 #[test]
@@ -212,8 +212,8 @@ fn test_connect_resp3_socket_reused() {
     handler.auth(Credentials::acl("test", "secret"));
 
     // Authentication fails, so socket is expected to be closed on next connect try
-    handler.connect(&mut stack, Some(&clock)).unwrap();
-    let client = handler.connect(&mut stack, Some(&clock)).unwrap();
+    handler.connect::<TestClock, 8>(&mut stack, Some(&clock)).unwrap();
+    let client = handler.connect::<TestClock, 8>(&mut stack, Some(&clock)).unwrap();
 
     assert_eq!("redis", client.get_hello_response().server);
     assert_eq!("6.0.0", client.get_hello_response().version);
@@ -239,8 +239,8 @@ fn test_connect_socket_is_connected_error() {
 
     let mut handler = ConnectionHandler::resp2(SocketAddr::from_str("127.0.0.1:6379").unwrap());
 
-    handler.connect(&mut stack, Some(&clock)).unwrap();
-    handler.connect(&mut stack, Some(&clock)).unwrap();
+    handler.connect::<TestClock, 8>(&mut stack, Some(&clock)).unwrap();
+    handler.connect::<TestClock, 8>(&mut stack, Some(&clock)).unwrap();
 }
 
 #[test]
@@ -260,8 +260,8 @@ fn test_connect_socket_ping_tcp_error() {
     let mut handler = ConnectionHandler::resp2(SocketAddr::from_str("127.0.0.1:6379").unwrap());
     handler.use_ping();
 
-    handler.connect(&mut stack, Some(&clock)).unwrap();
-    handler.connect(&mut stack, Some(&clock)).unwrap();
+    handler.connect::<TestClock, 8>(&mut stack, Some(&clock)).unwrap();
+    handler.connect::<TestClock, 8>(&mut stack, Some(&clock)).unwrap();
 }
 
 #[test]
@@ -282,8 +282,8 @@ fn test_connect_socket_ping_tcp_error_response() {
     let mut handler = ConnectionHandler::resp2(SocketAddr::from_str("127.0.0.1:6379").unwrap());
     handler.use_ping();
 
-    handler.connect(&mut stack, Some(&clock)).unwrap();
-    handler.connect(&mut stack, Some(&clock)).unwrap();
+    handler.connect::<TestClock, 8>(&mut stack, Some(&clock)).unwrap();
+    handler.connect::<TestClock, 8>(&mut stack, Some(&clock)).unwrap();
 }
 
 #[test]
@@ -310,8 +310,8 @@ fn test_connect_socket_ping_timeout() {
     handler.timeout(150.microseconds());
     handler.use_ping();
 
-    handler.connect(&mut stack, Some(&clock)).unwrap();
-    handler.connect(&mut stack, Some(&clock)).unwrap();
+    handler.connect::<TestClock, 8>(&mut stack, Some(&clock)).unwrap();
+    handler.connect::<TestClock, 8>(&mut stack, Some(&clock)).unwrap();
 }
 
 #[test]
@@ -329,8 +329,8 @@ fn test_connect_socket_ping_successful() {
     let mut handler = ConnectionHandler::resp2(SocketAddr::from_str("127.0.0.1:6379").unwrap());
     handler.use_ping();
 
-    handler.connect(&mut stack, Some(&clock)).unwrap();
-    handler.connect(&mut stack, Some(&clock)).unwrap();
+    handler.connect::<TestClock, 8>(&mut stack, Some(&clock)).unwrap();
+    handler.connect::<TestClock, 8>(&mut stack, Some(&clock)).unwrap();
 }
 
 #[test]
@@ -348,8 +348,8 @@ fn test_connect_cached_socket_not_connected_without_ping() {
 
     let mut handler = ConnectionHandler::resp2(SocketAddr::from_str("127.0.0.1:6379").unwrap());
 
-    handler.connect(&mut stack, Some(&clock)).unwrap();
-    handler.connect(&mut stack, Some(&clock)).unwrap();
+    handler.connect::<TestClock, 8>(&mut stack, Some(&clock)).unwrap();
+    handler.connect::<TestClock, 8>(&mut stack, Some(&clock)).unwrap();
 }
 
 #[test]
@@ -368,6 +368,6 @@ fn test_connect_cached_socket_not_connected_with_ping() {
     let mut handler = ConnectionHandler::resp2(SocketAddr::from_str("127.0.0.1:6379").unwrap());
     handler.use_ping();
 
-    handler.connect(&mut stack, Some(&clock)).unwrap();
-    handler.connect(&mut stack, Some(&clock)).unwrap();
+    handler.connect::<TestClock, 8>(&mut stack, Some(&clock)).unwrap();
+    handler.connect::<TestClock, 8>(&mut stack, Some(&clock)).unwrap();
 }

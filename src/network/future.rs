@@ -20,11 +20,18 @@ pub(crate) struct Identity {
 }
 
 /// Non-blocking response management
-pub struct Future<'a, N: TcpClientStack, C: Clock, P: Protocol, Cmd: Command<P::FrameType>> {
+pub struct Future<
+    'a,
+    N: TcpClientStack,
+    C: Clock,
+    P: Protocol,
+    Cmd: Command<P::FrameType>,
+    const F_COUNT: usize,
+> {
     id: Identity,
     command: Cmd,
     protocol: P,
-    network: &'a Network<'a, N, P>,
+    network: &'a Network<'a, N, P, F_COUNT>,
     timeout: Timeout<'a, C>,
 
     /// Cached error during work of ready(). Will be returned on wait() call.
@@ -34,14 +41,16 @@ pub struct Future<'a, N: TcpClientStack, C: Clock, P: Protocol, Cmd: Command<P::
     wait_called: bool,
 }
 
-impl<'a, N: TcpClientStack, C: Clock, P: Protocol, Cmd: Command<P::FrameType>> Future<'a, N, C, P, Cmd> {
+impl<'a, N: TcpClientStack, C: Clock, P: Protocol, Cmd: Command<P::FrameType>, const F_COUNT: usize>
+    Future<'a, N, C, P, Cmd, F_COUNT>
+{
     pub(crate) fn new(
         id: Identity,
         command: Cmd,
         protocol: P,
-        network: &'a Network<'a, N, P>,
+        network: &'a Network<'a, N, P, F_COUNT>,
         timeout: Timeout<'a, C>,
-    ) -> Future<'a, N, C, P, Cmd> {
+    ) -> Future<'a, N, C, P, Cmd, F_COUNT> {
         Self {
             id,
             command,
@@ -123,8 +132,8 @@ impl<'a, N: TcpClientStack, C: Clock, P: Protocol, Cmd: Command<P::FrameType>> F
     }
 }
 
-impl<'a, N: TcpClientStack, C: Clock, P: Protocol, Cmd: Command<P::FrameType>> Drop
-    for Future<'a, N, C, P, Cmd>
+impl<'a, N: TcpClientStack, C: Clock, P: Protocol, Cmd: Command<P::FrameType>, const F_COUNT: usize> Drop
+    for Future<'a, N, C, P, Cmd, F_COUNT>
 {
     fn drop(&mut self) {
         if !self.wait_called {

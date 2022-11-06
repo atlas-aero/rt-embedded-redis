@@ -17,7 +17,7 @@
 //! let clock = StandardClock::default();
 //!
 //! let mut connection_handler = ConnectionHandler::resp2(SocketAddr::from_str("127.0.0.1:6379").unwrap());
-//! let client = connection_handler.connect(&mut stack, Some(&clock)).unwrap();
+//! let client = connection_handler.connect::<_, 8>(&mut stack, Some(&clock)).unwrap();
 //!#
 //!# let _ = client.send(SetCommand::new("test_key", "test_value")).unwrap().wait();
 //!
@@ -40,7 +40,7 @@
 //!# let clock = StandardClock::default();
 //!#
 //!# let mut connection_handler = ConnectionHandler::resp2(SocketAddr::from_str("127.0.0.1:6379").unwrap());
-//!# let client = connection_handler.connect(&mut stack, Some(&clock)).unwrap();
+//!# let client = connection_handler.connect::<_, 8>(&mut stack, Some(&clock)).unwrap();
 //!#
 //! let command = GetCommand::static_key("missing_key");
 //! let response = client.send(command).unwrap().wait().unwrap();
@@ -62,7 +62,7 @@
 //!# let clock = StandardClock::default();
 //!#
 //!# let mut connection_handler = ConnectionHandler::resp2(SocketAddr::from_str("127.0.0.1:6379").unwrap());
-//!# let client = connection_handler.connect(&mut stack, Some(&clock)).unwrap();
+//!# let client = connection_handler.connect::<_, 8>(&mut stack, Some(&clock)).unwrap();
 //!#
 //!# let _ = client.send(SetCommand::new("test_key", "test_value")).unwrap().wait();
 //!#
@@ -88,7 +88,7 @@
 //!# let clock = StandardClock::default();
 //!#
 //!# let mut connection_handler = ConnectionHandler::resp2(SocketAddr::from_str("127.0.0.1:6379").unwrap());
-//!# let client = connection_handler.connect(&mut stack, Some(&clock)).unwrap();
+//!# let client = connection_handler.connect::<_, 8>(&mut stack, Some(&clock)).unwrap();
 //!#
 //!# let _ = client.send(SetCommand::new("test_key", "test_value")).unwrap().wait();
 //!#
@@ -185,13 +185,13 @@ where
     }
 }
 
-impl<'a, N: TcpClientStack, C: Clock, P: Protocol> Client<'a, N, C, P>
+impl<'a, N: TcpClientStack, C: Clock, P: Protocol, const F_COUNT: usize> Client<'a, N, C, P, F_COUNT>
 where
     AuthCommand: Command<<P as Protocol>::FrameType>,
     HelloCommand: Command<<P as Protocol>::FrameType>,
 {
     /// Shorthand for [GetCommand]
-    pub fn get<K>(&'a self, key: K) -> Result<Future<'a, N, C, P, GetCommand>, CommandErrors>
+    pub fn get<K>(&'a self, key: K) -> Result<Future<'a, N, C, P, GetCommand, F_COUNT>, CommandErrors>
     where
         <P as Protocol>::FrameType: ToStringBytes,
         <P as Protocol>::FrameType: IsNullFrame,

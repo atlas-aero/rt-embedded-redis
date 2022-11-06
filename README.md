@@ -18,7 +18,7 @@ Both RESP2 and RESP3 protocol are supported.
 * [Custom commands](https://docs.rs/embedded-redis/latest/embedded_redis/commands/custom/index.html)
 
 ## Example
-```rust
+```Rust
 use core::str::FromStr;
 use embedded_nal::SocketAddr;
 use std_embedded_nal::Stack;
@@ -30,7 +30,7 @@ let clock = StandardClock::default();
 
 let server_address = SocketAddr::from_str("127.0.0.1:6379").unwrap();
 let mut connection_handler = ConnectionHandler::resp2(server_address);
-let client = connection_handler.connect(&mut stack, Some(&clock)).unwrap();
+let client = connection_handler.connect::<_, 8>(&mut stack, Some(&clock)).unwrap();
 
 let future = client.set("key", "value").unwrap();
 let response = future.wait().unwrap();

@@ -15,7 +15,7 @@
 //! let clock = StandardClock::default();
 //!
 //! let mut connection_handler = ConnectionHandler::resp2(SocketAddr::from_str("127.0.0.1:6379").unwrap());
-//! let client = connection_handler.connect(&mut stack, Some(&clock)).unwrap();
+//! let client = connection_handler.connect::<_, 8>(&mut stack, Some(&clock)).unwrap();
 //!
 //! let command = PublishCommand::new("channel", "message");
 //! let response = client.send(command).unwrap().wait().unwrap();
@@ -36,7 +36,7 @@
 //!# let clock = StandardClock::default();
 //!#
 //!# let mut connection_handler = ConnectionHandler::resp2(SocketAddr::from_str("127.0.0.1:6379").unwrap());
-//!# let client = connection_handler.connect(&mut stack, Some(&clock)).unwrap();
+//!# let client = connection_handler.connect::<_, 8>(&mut stack, Some(&clock)).unwrap();
 //!#
 //! let _ = client.publish("channel", "message");
 //! ```
@@ -86,7 +86,7 @@ where
     }
 }
 
-impl<'a, N: TcpClientStack, C: Clock, P: Protocol> Client<'a, N, C, P>
+impl<'a, N: TcpClientStack, C: Clock, P: Protocol, const F_COUNT: usize> Client<'a, N, C, P, F_COUNT>
 where
     AuthCommand: Command<<P as Protocol>::FrameType>,
     HelloCommand: Command<<P as Protocol>::FrameType>,
@@ -96,7 +96,7 @@ where
         &'a self,
         channel: K,
         message: V,
-    ) -> Result<Future<'a, N, C, P, PublishCommand>, CommandErrors>
+    ) -> Result<Future<'a, N, C, P, PublishCommand, F_COUNT>, CommandErrors>
     where
         <P as Protocol>::FrameType: ToInteger,
         <P as Protocol>::FrameType: From<CommandBuilder>,

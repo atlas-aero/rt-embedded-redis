@@ -144,11 +144,11 @@ where
     /// * `clock`: Borrow of embedded-time clock
     ///
     /// returns: Result<Client<N, C, P>, ConnectionError>
-    pub fn connect<'a, C: Clock>(
+    pub fn connect<'a, C: Clock, const F_COUNT: usize>(
         &'a mut self,
         network: &'a mut N,
         clock: Option<&'a C>,
-    ) -> Result<Client<'a, N, C, P>, ConnectionError> {
+    ) -> Result<Client<'a, N, C, P, F_COUNT>, ConnectionError> {
         // Previous socket is maybe faulty, so we are closing it here
         if self.auth_failed {
             self.disconnect(network);
@@ -166,14 +166,14 @@ where
     }
 
     /// Creates and authenticates a new client
-    fn new_client<'a, C: Clock>(
+    fn new_client<'a, C: Clock, const F_COUNT: usize>(
         &'a mut self,
         network: &'a mut N,
         clock: Option<&'a C>,
-    ) -> Result<Client<'a, N, C, P>, ConnectionError> {
+    ) -> Result<Client<'a, N, C, P, F_COUNT>, ConnectionError> {
         self.connect_socket(network)?;
         let credentials = self.authentication.clone();
-        let client = self.create_client(network, clock);
+        let client: Client<N, C, P, F_COUNT> = self.create_client(network, clock);
 
         match client.init(credentials) {
             Ok(response) => {
@@ -208,7 +208,7 @@ where
         network: &'a mut N,
         clock: Option<&'a C>,
     ) -> Result<(), CommandErrors> {
-        self.create_client(network, clock).ping()?.wait()?;
+        self.create_client::<_, 1>(network, clock).ping()?.wait()?;
         Ok(())
     }
 
@@ -240,11 +240,11 @@ where
     }
 
     /// Creates a new client instance
-    fn create_client<'a, C: Clock>(
+    fn create_client<'a, C: Clock, const F_COUNT: usize>(
         &'a mut self,
         stack: &'a mut N,
         clock: Option<&'a C>,
-    ) -> Client<'a, N, C, P> {
+    ) -> Client<'a, N, C, P, F_COUNT> {
         Client {
             network: Network::new(
                 RefCell::new(stack),

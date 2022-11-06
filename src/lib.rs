@@ -17,7 +17,7 @@
 //!
 //! let server_address = SocketAddr::from_str("127.0.0.1:6379").unwrap();
 //! let mut connection_handler = ConnectionHandler::resp2(server_address);
-//! let client = connection_handler.connect(&mut stack, Some(&clock)).unwrap();
+//! let client = connection_handler.connect::<_, 8>(&mut stack, Some(&clock)).unwrap();
 //!
 //! let future = client.set("key", "value").unwrap();
 //! let response = future.wait().unwrap();
@@ -59,6 +59,9 @@ pub mod commands;
 /// Creating a new connection requires the following two things:
 /// * A network stack implementing [embedded-nal](<https://docs.rs/embedded-nal/latest/embedded_nal/>)
 /// * A clock implementing [embedded-time](<https://docs.rs/embedded-time/latest/embedded_time/>). Optional if no Timeout is configured.
+///
+/// During the connection setup, the maximum number of parallel futures must be set as generic const (8 in the following example).
+/// The reason is that the buffer is stack allocated for better performance and stability.
 /// ```
 ///# use core::str::FromStr;
 ///# use embedded_nal::SocketAddr;
@@ -71,11 +74,11 @@ pub mod commands;
 ///
 /// // RESP2 protocol
 /// let mut connection_handler = ConnectionHandler::resp2(SocketAddr::from_str("127.0.0.1:6379").unwrap());
-/// let _client = connection_handler.connect(&mut network_stack, Some(&clock)).unwrap();
+/// let _client = connection_handler.connect::<_, 8>(&mut network_stack, Some(&clock)).unwrap();
 ///
 /// // RESP3 protocol
 /// let mut connection_handler = ConnectionHandler::resp3(SocketAddr::from_str("127.0.0.1:6379").unwrap());
-/// let _client = connection_handler.connect(&mut network_stack, Some(&clock)).unwrap();
+/// let _client = connection_handler.connect::<_, 8>(&mut network_stack, Some(&clock)).unwrap();
 /// ```
 ///
 /// ConnectionHandler is caching the connection, so later recreation of new Clients is cheap.
@@ -98,13 +101,13 @@ pub mod commands;
 /// let mut connection_handler = ConnectionHandler::resp2(server_address);
 /// connection_handler.auth(Credentials::password_only("secret123!"));
 ///
-/// # let _client = connection_handler.connect(&mut network_stack, Some(&clock));
+/// # let _client = connection_handler.connect::<_, 8>(&mut network_stack, Some(&clock));
 ///# let server_address = SocketAddr::from_str("127.0.0.1:6379").unwrap();
 ///
 /// // ACL based authentication
 /// let mut connection_handler = ConnectionHandler::resp2(server_address);
 /// connection_handler.auth(Credentials::acl("user01", "secret123!"));
-/// # let _client = connection_handler.connect(&mut network_stack, Some(&clock));
+/// # let _client = connection_handler.connect::<_, 8>(&mut network_stack, Some(&clock));
 /// ```
 /// ### Timeout
 ///
@@ -124,7 +127,7 @@ pub mod commands;
 ///# let server_address = SocketAddr::from_str("127.0.0.1:6379").unwrap();
 /// let mut connection_handler = ConnectionHandler::resp2(server_address);
 /// connection_handler.timeout(500_000.microseconds());
-/// # let _client = connection_handler.connect(&mut network_stack, Some(&clock)).unwrap();
+/// # let _client = connection_handler.connect::<_, 8>(&mut network_stack, Some(&clock)).unwrap();
 /// ```
 /// ### Ping
 ///
@@ -148,8 +151,8 @@ pub mod commands;
 /// let mut connection_handler = ConnectionHandler::resp2(server_address);
 /// connection_handler.timeout(500_000.microseconds());
 /// connection_handler.use_ping();
-/// # let _client = connection_handler.connect(&mut network_stack, Some(&clock)).unwrap();
-/// # let _client = connection_handler.connect(&mut network_stack, Some(&clock)).unwrap();
+/// # let _client = connection_handler.connect::<_, 8>(&mut network_stack, Some(&clock)).unwrap();
+/// # let _client = connection_handler.connect::<_, 8>(&mut network_stack, Some(&clock)).unwrap();
 /// ```
 ///
 /// ### Concurrency
@@ -174,7 +177,7 @@ pub mod commands;
 ///# let clock = StandardClock::default();
 ///#
 ///# let mut connection_handler = ConnectionHandler::resp2(SocketAddr::from_str("127.0.0.1:6379").unwrap());
-///# let client = connection_handler.connect(&mut stack, Some(&clock)).unwrap();
+///# let client = connection_handler.connect::<_, 8>(&mut stack, Some(&clock)).unwrap();
 ///#
 /// let future1 = client.set("key", "value").unwrap();
 /// let future2 = client.set("other", "key").unwrap();
@@ -199,7 +202,7 @@ pub mod commands;
 ///# let clock = StandardClock::default();
 ///#
 ///# let mut connection_handler = ConnectionHandler::resp2(SocketAddr::from_str("127.0.0.1:6379").unwrap());
-///# let client = connection_handler.connect(&mut stack, Some(&clock)).unwrap();
+///# let client = connection_handler.connect::<_, 8>(&mut stack, Some(&clock)).unwrap();
 ///#
 /// let mut future = client.set("key", "value").unwrap();
 ///
@@ -236,7 +239,7 @@ pub mod commands;
 ///# let clock = StandardClock::default();
 ///#
 ///# let mut connection_handler = ConnectionHandler::resp2(SocketAddr::from_str("127.0.0.1:6379").unwrap());
-///# let client = connection_handler.connect(&mut stack, Some(&clock)).unwrap();
+///# let client = connection_handler.connect::<_, 8>(&mut stack, Some(&clock)).unwrap();
 ///#
 /// let _ = client.set("key", "value");
 /// client.close();

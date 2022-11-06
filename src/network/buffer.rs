@@ -11,11 +11,12 @@ use core::ops::{Deref, DerefMut};
 use embedded_nal::TcpClientStack;
 
 /// Manges interaction between network stack and response buffer
-pub(crate) struct Network<'a, N: TcpClientStack, P: Protocol> {
+/// F_COUNT: Max. number of parallel futures
+pub(crate) struct Network<'a, N: TcpClientStack, P: Protocol, const F_COUNT: usize> {
     protocol: P,
     stack: RefCell<&'a mut N>,
     socket: RefCell<&'a mut N::TcpSocket>,
-    buffer: RefCell<ResponseBuffer<P>>,
+    buffer: RefCell<ResponseBuffer<P, F_COUNT>>,
 
     /// Current valid Future series
     current_series: RefCell<usize>,
@@ -31,7 +32,7 @@ pub(crate) struct Network<'a, N: TcpClientStack, P: Protocol> {
     dropped_futures: RefCell<Vec<Identity>>,
 }
 
-impl<'a, N: TcpClientStack, P: Protocol> Network<'a, N, P> {
+impl<'a, N: TcpClientStack, P: Protocol, const F_COUNT: usize> Network<'a, N, P, F_COUNT> {
     pub(crate) fn new(stack: RefCell<&'a mut N>, socket: RefCell<&'a mut N::TcpSocket>, protocol: P) -> Self {
         Network {
             protocol: protocol.clone(),
@@ -204,7 +205,7 @@ impl<'a, N: TcpClientStack, P: Protocol> Network<'a, N, P> {
     }
 }
 
-impl<'a, N: TcpClientStack, P: Protocol> Debug for Network<'a, N, P> {
+impl<'a, N: TcpClientStack, P: Protocol, const F_COUNT: usize> Debug for Network<'a, N, P, F_COUNT> {
     fn fmt(&self, f: &mut Formatter<'_>) -> core::fmt::Result {
         f.debug_struct("Network").finish()
     }

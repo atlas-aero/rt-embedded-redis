@@ -371,7 +371,7 @@ pub fn create_mocked_client<'a, P: Protocol>(
     socket: &'a mut SocketMock,
     clock: &'a TestClock,
     protocol: P,
-) -> Client<'a, MockNetworkStack, TestClock, P>
+) -> Client<'a, MockNetworkStack, TestClock, P, 8>
 where
     HelloCommand: Command<<P as Protocol>::FrameType>,
 {

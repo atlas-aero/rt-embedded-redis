@@ -15,7 +15,7 @@
 //! let clock = StandardClock::default();
 //!
 //! let mut connection_handler = ConnectionHandler::resp2(SocketAddr::from_str("127.0.0.1:6379").unwrap());
-//! let client = connection_handler.connect(&mut stack, Some(&clock)).unwrap();
+//! let client = connection_handler.connect::<_, 8>(&mut stack, Some(&clock)).unwrap();
 //!
 //! let response = client.ping().unwrap().wait().unwrap();
 //! ```
@@ -33,7 +33,7 @@
 //!# let clock = StandardClock::default();
 //!#
 //!# let mut connection_handler = ConnectionHandler::resp2(SocketAddr::from_str("127.0.0.1:6379").unwrap());
-//!# let client = connection_handler.connect(&mut stack, Some(&clock)).unwrap();
+//!# let client = connection_handler.connect::<_, 8>(&mut stack, Some(&clock)).unwrap();
 //!#
 //! let command = PingCommand::new(None);
 //! let response = client.send(command).unwrap().wait().unwrap();
@@ -54,7 +54,7 @@
 //!# let clock = StandardClock::default();
 //!#
 //!# let mut connection_handler = ConnectionHandler::resp2(SocketAddr::from_str("127.0.0.1:6379").unwrap());
-//!# let client = connection_handler.connect(&mut stack, Some(&clock)).unwrap();
+//!# let client = connection_handler.connect::<_, 8>(&mut stack, Some(&clock)).unwrap();
 //!#
 //! let command = PingCommand::new(Some("hello world".into()));
 //! let response = client.send(command).unwrap().wait().unwrap();
@@ -105,13 +105,13 @@ where
     }
 }
 
-impl<'a, N: TcpClientStack, C: Clock, P: Protocol> Client<'a, N, C, P>
+impl<'a, N: TcpClientStack, C: Clock, P: Protocol, const F_COUNT: usize> Client<'a, N, C, P, F_COUNT>
 where
     AuthCommand: Command<<P as Protocol>::FrameType>,
     HelloCommand: Command<<P as Protocol>::FrameType>,
 {
     /// Shorthand for [PingCommand]
-    pub fn ping(&'a self) -> Result<Future<'a, N, C, P, PingCommand>, CommandErrors>
+    pub fn ping(&'a self) -> Result<Future<'a, N, C, P, PingCommand, F_COUNT>, CommandErrors>
     where
         <P as Protocol>::FrameType: ToStringOption,
         <P as Protocol>::FrameType: From<CommandBuilder>,

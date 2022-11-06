@@ -1,16 +1,18 @@
 use crate::network::protocol::Resp2;
 use crate::network::response::ResponseBuffer;
 
+type BufferType = ResponseBuffer<Resp2, 8>;
+
 #[test]
 fn test_complete_empty_buffer() {
-    let buffer = ResponseBuffer::new(Resp2 {});
+    let buffer: BufferType = ResponseBuffer::new(Resp2 {});
 
     assert!(!buffer.is_complete(0));
 }
 
 #[test]
 fn test_complete_incomplete_simple_string() {
-    let mut buffer = ResponseBuffer::new(Resp2 {});
+    let mut buffer: BufferType = ResponseBuffer::new(Resp2 {});
     buffer.append(b"+test");
 
     assert!(!buffer.is_complete(0));
@@ -18,7 +20,7 @@ fn test_complete_incomplete_simple_string() {
 
 #[test]
 fn test_complete_incomplete_crlf() {
-    let mut buffer = ResponseBuffer::new(Resp2 {});
+    let mut buffer: BufferType = ResponseBuffer::new(Resp2 {});
     buffer.append(b"+test\r");
 
     assert!(!buffer.is_complete(0));
@@ -26,7 +28,7 @@ fn test_complete_incomplete_crlf() {
 
 #[test]
 fn test_complete_fault_prefix() {
-    let mut buffer = ResponseBuffer::new(Resp2 {});
+    let mut buffer: BufferType = ResponseBuffer::new(Resp2 {});
     buffer.append(b"_test\r\n");
 
     assert!(!buffer.is_complete(0));
@@ -34,7 +36,7 @@ fn test_complete_fault_prefix() {
 
 #[test]
 fn test_complete_simple_string() {
-    let mut buffer = ResponseBuffer::new(Resp2 {});
+    let mut buffer: BufferType = ResponseBuffer::new(Resp2 {});
     buffer.append(b"+test\r\n");
 
     assert!(buffer.is_complete(0));
@@ -42,7 +44,7 @@ fn test_complete_simple_string() {
 
 #[test]
 fn test_complete_error_string() {
-    let mut buffer = ResponseBuffer::new(Resp2 {});
+    let mut buffer: BufferType = ResponseBuffer::new(Resp2 {});
     buffer.append(b"-Error\r\n");
 
     assert!(buffer.is_complete(0));
@@ -50,7 +52,7 @@ fn test_complete_error_string() {
 
 #[test]
 fn test_complete_double_frame() {
-    let mut buffer = ResponseBuffer::new(Resp2 {});
+    let mut buffer: BufferType = ResponseBuffer::new(Resp2 {});
     buffer.append(b"+Ok\r\n+Ok\r\n");
 
     assert!(buffer.is_complete(0));
@@ -59,7 +61,7 @@ fn test_complete_double_frame() {
 
 #[test]
 fn test_complete_double_frame_incomplete() {
-    let mut buffer = ResponseBuffer::new(Resp2 {});
+    let mut buffer: BufferType = ResponseBuffer::new(Resp2 {});
     buffer.append(b"+Ok\r\n+Ok\r\n+Ok\r");
 
     assert!(buffer.is_complete(0));
@@ -69,7 +71,7 @@ fn test_complete_double_frame_incomplete() {
 
 #[test]
 fn test_complete_multiple_frames_first_frame_true() {
-    let mut buffer = ResponseBuffer::new(Resp2 {});
+    let mut buffer: BufferType = ResponseBuffer::new(Resp2 {});
     buffer.append(b"+first\r\n");
     buffer.append(b"+second\r\n");
 
@@ -78,7 +80,7 @@ fn test_complete_multiple_frames_first_frame_true() {
 
 #[test]
 fn test_complete_multiple_frames_second_frame_true() {
-    let mut buffer = ResponseBuffer::new(Resp2 {});
+    let mut buffer: BufferType = ResponseBuffer::new(Resp2 {});
     buffer.append(b"+first\r\n");
     buffer.append(b"+second\r\n");
 
@@ -87,7 +89,7 @@ fn test_complete_multiple_frames_second_frame_true() {
 
 #[test]
 fn test_complete_multiple_frames_false() {
-    let mut buffer = ResponseBuffer::new(Resp2 {});
+    let mut buffer: BufferType = ResponseBuffer::new(Resp2 {});
     buffer.append(b"+first\r\n");
     buffer.append(b"+second\r\n");
 
@@ -96,7 +98,7 @@ fn test_complete_multiple_frames_false() {
 
 #[test]
 fn test_complete_multiple_frames_unprocessed_data() {
-    let mut buffer = ResponseBuffer::new(Resp2 {});
+    let mut buffer: BufferType = ResponseBuffer::new(Resp2 {});
     buffer.append(b"+first\r\n");
     buffer.append(b"+second\r\n*2");
 
@@ -106,7 +108,7 @@ fn test_complete_multiple_frames_unprocessed_data() {
 
 #[test]
 fn test_is_ok_response_unprocessed_data_left() {
-    let mut buffer = ResponseBuffer::new(Resp2 {});
+    let mut buffer: BufferType = ResponseBuffer::new(Resp2 {});
     buffer.append(b"+OK\r\n*2");
 
     let frame = buffer.take_frame(0).unwrap();
@@ -116,7 +118,7 @@ fn test_is_ok_response_unprocessed_data_left() {
 
 #[test]
 fn test_is_ok_response_true() {
-    let mut buffer = ResponseBuffer::new(Resp2 {});
+    let mut buffer: BufferType = ResponseBuffer::new(Resp2 {});
     buffer.append(b"+OK\r\n");
 
     let frame = buffer.take_frame(0).unwrap();
@@ -126,7 +128,7 @@ fn test_is_ok_response_true() {
 
 #[test]
 fn test_is_ok_response_multiple_frames_true() {
-    let mut buffer = ResponseBuffer::new(Resp2 {});
+    let mut buffer: BufferType = ResponseBuffer::new(Resp2 {});
     buffer.append(b"-ERROR\r\n");
     buffer.append(b"+OK\r\n");
 
@@ -137,7 +139,7 @@ fn test_is_ok_response_multiple_frames_true() {
 
 #[test]
 fn test_is_ok_response_multiple_frames_false() {
-    let mut buffer = ResponseBuffer::new(Resp2 {});
+    let mut buffer: BufferType = ResponseBuffer::new(Resp2 {});
     buffer.append(b"+OK\r\n");
     buffer.append(b"-ERROR\r\n");
 
@@ -147,13 +149,13 @@ fn test_is_ok_response_multiple_frames_false() {
 
 #[test]
 fn test_take_frame_non_existent() {
-    let mut buffer = ResponseBuffer::new(Resp2 {});
+    let mut buffer: BufferType = ResponseBuffer::new(Resp2 {});
     assert!(buffer.take_frame(0).is_none())
 }
 
 #[test]
 fn test_take_frame_double_call() {
-    let mut buffer = ResponseBuffer::new(Resp2 {});
+    let mut buffer: BufferType = ResponseBuffer::new(Resp2 {});
     buffer.append(b"+OK\r\n");
 
     let first = buffer.take_frame(0);
@@ -165,7 +167,7 @@ fn test_take_frame_double_call() {
 
 #[test]
 fn test_take_frame_all_frames_taken() {
-    let mut buffer = ResponseBuffer::new(Resp2 {});
+    let mut buffer: BufferType = ResponseBuffer::new(Resp2 {});
     buffer.append(b"+OK\r\n");
     buffer.append(b"+OK\r\n");
     buffer.append(b"+OK\r\n");
@@ -191,7 +193,7 @@ fn test_take_frame_all_frames_taken() {
 
 #[test]
 fn test_complete_invalid_index() {
-    let mut buffer = ResponseBuffer::new(Resp2 {});
+    let mut buffer: BufferType = ResponseBuffer::new(Resp2 {});
     buffer.append(b"+OK\r\n");
 
     // As this is the only frame remaining, internal frame vector gets cleared and offset
@@ -202,7 +204,7 @@ fn test_complete_invalid_index() {
 
 #[test]
 fn test_take_frame_invalid_index() {
-    let mut buffer = ResponseBuffer::new(Resp2 {});
+    let mut buffer: BufferType = ResponseBuffer::new(Resp2 {});
     buffer.append(b"+OK\r\n");
     buffer.append(b"+OK\r\n");
 
@@ -216,7 +218,7 @@ fn test_take_frame_invalid_index() {
 
 #[test]
 fn test_faulty_unknown_frame_prefix() {
-    let mut buffer = ResponseBuffer::new(Resp2 {});
+    let mut buffer: BufferType = ResponseBuffer::new(Resp2 {});
     buffer.append(b"+OK\r\n_test\r\n");
 
     assert!(buffer.is_faulty());
@@ -224,7 +226,7 @@ fn test_faulty_unknown_frame_prefix() {
 
 #[test]
 fn test_faulty_false() {
-    let mut buffer = ResponseBuffer::new(Resp2 {});
+    let mut buffer: BufferType = ResponseBuffer::new(Resp2 {});
     buffer.append(b"+OK\r\n");
 
     assert!(!buffer.is_faulty());
@@ -232,7 +234,7 @@ fn test_faulty_false() {
 
 #[test]
 fn test_faulty_previous_frame_readable() {
-    let mut buffer = ResponseBuffer::new(Resp2 {});
+    let mut buffer: BufferType = ResponseBuffer::new(Resp2 {});
     buffer.append(b"+OK\r\n_test\r\n");
 
     assert!(buffer.is_complete(0));

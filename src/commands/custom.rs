@@ -23,7 +23,7 @@
 //! let clock = StandardClock::default();
 //!
 //! let mut connection_handler = ConnectionHandler::resp2(SocketAddr::from_str("127.0.0.1:6379").unwrap());
-//! let client = connection_handler.connect(&mut stack, Some(&clock)).unwrap();
+//! let client = connection_handler.connect::<_, 8>(&mut stack, Some(&clock)).unwrap();
 //!
 //! let command = CommandBuilder::new("ECHO").arg_static("Hello World!").to_command();
 //! let response = client.send(command).unwrap().wait().unwrap();

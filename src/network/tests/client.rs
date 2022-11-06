@@ -225,7 +225,7 @@ fn test_timeout_expired() {
         .into_mock();
 
     let mut socket = SocketMock::new(164);
-    let client = Client {
+    let client: Client<MockNetworkStack, TestClock, Resp2, 8> = Client {
         network: Network::new(RefCell::new(&mut network), RefCell::new(&mut socket), Resp2 {}),
         timeout_duration: 150.microseconds(),
         clock: Some(&clock),
@@ -250,7 +250,7 @@ fn test_timeout_timer_error() {
         .into_mock();
 
     let mut socket = SocketMock::new(164);
-    let client = Client {
+    let client: Client<MockNetworkStack, TestClock, Resp2, 8> = Client {
         network: Network::new(RefCell::new(&mut network), RefCell::new(&mut socket), Resp2 {}),
         timeout_duration: 150.microseconds(),
         clock: Some(&clock),
@@ -277,7 +277,7 @@ fn test_timeout_not_expired() {
         .into_mock();
 
     let mut socket = SocketMock::new(164);
-    let client = Client {
+    let client: Client<MockNetworkStack, TestClock, Resp2, 8> = Client {
         network: Network::new(RefCell::new(&mut network), RefCell::new(&mut socket), Resp2 {}),
         timeout_duration: 250.microseconds(),
         clock: Some(&clock),
@@ -494,7 +494,7 @@ fn test_futures_invalidated_on_timeout() {
         .into_mock();
 
     let mut socket = SocketMock::new(164);
-    let client = Client {
+    let client: Client<MockNetworkStack, TestClock, Resp2, 8> = Client {
         network: Network::new(RefCell::new(&mut network), RefCell::new(&mut socket), Resp2 {}),
         timeout_duration: 150.microseconds(),
         clock: Some(&clock),
@@ -634,7 +634,7 @@ fn test_future_dropped_invalidated() {
         .into_mock();
 
     let mut socket = SocketMock::new(164);
-    let client = Client {
+    let client: Client<MockNetworkStack, TestClock, Resp2, 8> = Client {
         network: Network::new(RefCell::new(&mut network), RefCell::new(&mut socket), Resp2 {}),
         timeout_duration: 150.microseconds(),
         clock: Some(&clock),
@@ -673,7 +673,7 @@ fn test_close_timeout() {
         .into_mock();
 
     let mut socket = SocketMock::new(164);
-    let client = Client {
+    let client: Client<MockNetworkStack, TestClock, Resp2, 8> = Client {
         network: Network::new(RefCell::new(&mut network), RefCell::new(&mut socket), Resp2 {}),
         timeout_duration: 150.microseconds(),
         clock: Some(&clock),

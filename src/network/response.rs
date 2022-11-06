@@ -2,15 +2,18 @@ use crate::network::protocol::Protocol;
 use alloc::vec;
 use alloc::vec::Vec;
 use bytes::Bytes;
+use heapless::Vec as HVec;
 
-pub(crate) struct ResponseBuffer<P: Protocol> {
+/// Buffer for unparsed/incomplete + parsed/complete frames
+/// FRAME_SIZE: Max. number of parsed but not yet handled frames. Basically this defines the max. number of parallel futures.
+pub(crate) struct ResponseBuffer<P: Protocol, const FRAME_SIZE: usize> {
     decoder: P,
 
     /// Unparsed data buffer
     buffer: Vec<u8>,
 
     /// Parsed frames
-    frames: Vec<Option<P::FrameType>>,
+    frames: HVec<Option<P::FrameType>, FRAME_SIZE>,
 
     /// Number of non taken messages in message vector
     frame_count: usize,
@@ -24,12 +27,12 @@ pub(crate) struct ResponseBuffer<P: Protocol> {
     faulty: bool,
 }
 
-impl<P: Protocol> ResponseBuffer<P> {
-    pub fn new(protocol: P) -> ResponseBuffer<P> {
+impl<P: Protocol, const FRAME_SIZE: usize> ResponseBuffer<P, FRAME_SIZE> {
+    pub fn new(protocol: P) -> ResponseBuffer<P, FRAME_SIZE> {
         Self {
             decoder: protocol,
             buffer: vec![],
-            frames: vec![],
+            frames: HVec::new(),
             frame_count: 0,
             frame_offset: 0,
             faulty: false,
@@ -129,7 +132,7 @@ impl<P: Protocol> ResponseBuffer<P> {
         }
 
         let frame = result.unwrap().unwrap();
-        self.frames.push(Some(frame.0));
+        let _ = self.frames.push(Some(frame.0));
         self.frame_count += 1;
         Some(frame.1 - 1 + start)
     }

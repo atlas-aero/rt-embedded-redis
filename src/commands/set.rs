@@ -15,7 +15,7 @@
 //! let clock = StandardClock::default();
 //!
 //! let mut connection_handler = ConnectionHandler::resp2(SocketAddr::from_str("127.0.0.1:6379").unwrap());
-//! let client = connection_handler.connect(&mut stack, Some(&clock)).unwrap();
+//! let client = connection_handler.connect::<_, 8>(&mut stack, Some(&clock)).unwrap();
 //!
 //! let command = SetCommand::new("key", "value");
 //! let _ = client.send(command);
@@ -35,7 +35,7 @@
 //!# let clock = StandardClock::default();
 //!#
 //!# let mut connection_handler = ConnectionHandler::resp2(SocketAddr::from_str("127.0.0.1:6379").unwrap());
-//!# let client = connection_handler.connect(&mut stack, Some(&clock)).unwrap();
+//!# let client = connection_handler.connect::<_, 8>(&mut stack, Some(&clock)).unwrap();
 //!#
 //!  // Expires in 120 seconds
 //!  let command = SetCommand::new("key", "value")
@@ -58,7 +58,7 @@
 //!# let clock = StandardClock::default();
 //!#
 //!# let mut connection_handler = ConnectionHandler::resp2(SocketAddr::from_str("127.0.0.1:6379").unwrap());
-//!# let client = connection_handler.connect(&mut stack, Some(&clock)).unwrap();
+//!# let client = connection_handler.connect::<_, 8>(&mut stack, Some(&clock)).unwrap();
 //!#
 //!  // Just set the key if its not existing yet
 //!  let command = SetCommand::new("key", "value")
@@ -81,7 +81,7 @@
 //!# let clock = StandardClock::default();
 //!#
 //!# let mut connection_handler = ConnectionHandler::resp2(SocketAddr::from_str("127.0.0.1:6379").unwrap());
-//!# let client = connection_handler.connect(&mut stack, Some(&clock)).unwrap();
+//!# let client = connection_handler.connect::<_, 8>(&mut stack, Some(&clock)).unwrap();
 //!#
 //!  // Just set the key if its not existing yet
 //!  let command = SetCommand::new("key", "value")
@@ -103,7 +103,7 @@
 //!# let clock = StandardClock::default();
 //!#
 //!# let mut connection_handler = ConnectionHandler::resp2(SocketAddr::from_str("127.0.0.1:6379").unwrap());
-//!# let client = connection_handler.connect(&mut stack, Some(&clock)).unwrap();
+//!# let client = connection_handler.connect::<_, 8>(&mut stack, Some(&clock)).unwrap();
 //!#
 //!# let _ = client.send(SetCommand::new("test_key", "test_value")).unwrap().wait();
 //!#
@@ -345,7 +345,7 @@ impl<R> SetCommand<R> {
     }
 }
 
-impl<'a, N: TcpClientStack, C: Clock, P: Protocol> Client<'a, N, C, P>
+impl<'a, N: TcpClientStack, C: Clock, P: Protocol, const F_COUNT: usize> Client<'a, N, C, P, F_COUNT>
 where
     AuthCommand: Command<<P as Protocol>::FrameType>,
     HelloCommand: Command<<P as Protocol>::FrameType>,
@@ -356,7 +356,7 @@ where
         &'a self,
         key: K,
         value: V,
-    ) -> Result<Future<'a, N, C, P, SetCommand<ConfirmationResponse>>, CommandErrors>
+    ) -> Result<Future<'a, N, C, P, SetCommand<ConfirmationResponse>, F_COUNT>, CommandErrors>
     where
         <P as Protocol>::FrameType: ToStringBytes,
         <P as Protocol>::FrameType: ToStringOption,

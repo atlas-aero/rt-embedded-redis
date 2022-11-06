@@ -44,11 +44,12 @@ pub enum CommandErrors {
 /// Client to execute Redis commands
 ///
 /// The functionality of the client is best explained by a [command example](crate::commands::get).
-pub struct Client<'a, N: TcpClientStack, C: Clock, P: Protocol>
+/// F_COUNT: Max. number of parallel futures
+pub struct Client<'a, N: TcpClientStack, C: Clock, P: Protocol, const F_COUNT: usize>
 where
     HelloCommand: Command<<P as Protocol>::FrameType>,
 {
-    pub(crate) network: Network<'a, N, P>,
+    pub(crate) network: Network<'a, N, P, F_COUNT>,
     pub(crate) clock: Option<&'a C>,
 
     /// Max. time waiting for response
@@ -58,13 +59,13 @@ where
     pub(crate) hello_response: Option<&'a <HelloCommand as Command<<P as Protocol>::FrameType>>::Response>,
 }
 
-impl<'a, N: TcpClientStack, C: Clock, P: Protocol> Client<'a, N, C, P>
+impl<'a, N: TcpClientStack, C: Clock, P: Protocol, const F_COUNT: usize> Client<'a, N, C, P, F_COUNT>
 where
     AuthCommand: Command<<P as Protocol>::FrameType>,
     HelloCommand: Command<<P as Protocol>::FrameType>,
 {
     /// Sends the given command non-blocking
-    pub fn send<Cmd>(&'a self, command: Cmd) -> Result<Future<N, C, P, Cmd>, CommandErrors>
+    pub fn send<Cmd>(&'a self, command: Cmd) -> Result<Future<N, C, P, Cmd, F_COUNT>, CommandErrors>
     where
         Cmd: Command<P::FrameType>,
     {
@@ -126,7 +127,7 @@ where
     }
 }
 
-impl<'a, N: TcpClientStack, C: Clock> Client<'a, N, C, Resp3> {
+impl<'a, N: TcpClientStack, C: Clock, const F_COUNT: usize> Client<'a, N, C, Resp3, F_COUNT> {
     /// Returns the response to HELLO command executed during connection initialization
     /// [Client HELLO response]
     pub fn get_hello_response(&self) -> &HelloResponse {
@@ -149,7 +150,8 @@ fn hello_error(error: CommandErrors) -> ConnectionError {
     ConnectionError::ProtocolSwitchError(error)
 }
 
-impl<'a, N: TcpClientStack, C: Clock, P: Protocol> Debug for Client<'a, N, C, P>
+impl<'a, N: TcpClientStack, C: Clock, P: Protocol, const F_COUNT: usize> Debug
+    for Client<'a, N, C, P, F_COUNT>
 where
     HelloCommand: Command<<P as Protocol>::FrameType>,
 {

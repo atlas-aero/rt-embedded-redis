@@ -22,7 +22,7 @@
 //!
 //! // RESP3 protocol is essential
 //! let mut connection_handler = ConnectionHandler::resp3(SocketAddr::from_str("127.0.0.1:6379").unwrap());
-//! let client = connection_handler.connect(&mut stack, Some(&clock)).unwrap();
+//! let client = connection_handler.connect::<_, 8>(&mut stack, Some(&clock)).unwrap();
 //!
 //! let command = HelloCommand{};
 //! let response = client.send(command).unwrap().wait().unwrap();
