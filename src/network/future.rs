@@ -1,5 +1,5 @@
 use crate::commands::Command;
-use crate::network::buffer::Network;
+use crate::network::buffer::{Network, NetworkError};
 use crate::network::client::CommandErrors;
 use crate::network::client::CommandErrors::CommandResponseViolation;
 use crate::network::protocol::Protocol;
@@ -111,8 +111,11 @@ impl<'a, N: TcpClientStack, C: Clock, P: Protocol, Cmd: Command<P::FrameType>, c
 
             if let Err(error) = result {
                 match error {
-                    nb::Error::Other(_) => {
-                        return Err(CommandErrors::TcpError);
+                    nb::Error::Other(error) => {
+                        return match error {
+                            NetworkError::StackError(_) => Err(CommandErrors::TcpError),
+                            NetworkError::BufferError(_) => Err(CommandErrors::BufferOverflow),
+                        };
                     }
                     nb::Error::WouldBlock => {
                         if self.timeout.expired()? {

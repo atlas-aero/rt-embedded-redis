@@ -39,6 +39,8 @@ pub enum CommandErrors {
     CommandResponseViolation,
     /// Redis error response. Inner value is the error message received.
     ErrorResponse(String),
+    /// Response buffer overflow. Either the received/unparsed data did not fit in the buffer of the max. number of futures has been exceeded.
+    BufferOverflow,
 }
 
 /// Client to execute Redis commands

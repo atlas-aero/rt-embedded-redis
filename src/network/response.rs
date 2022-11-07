@@ -4,6 +4,13 @@ use alloc::vec::Vec;
 use bytes::Bytes;
 use heapless::Vec as HVec;
 
+/// Buffer management errors
+#[derive(Debug)]
+pub(crate) enum ResponseBufferErrors {
+    /// Overflow of parsed frames => max. number of parallel futures reached.
+    FutureOverflow,
+}
+
 /// Buffer for unparsed/incomplete + parsed/complete frames
 /// FRAME_SIZE: Max. number of parsed but not yet handled frames. Basically this defines the max. number of parallel futures.
 pub(crate) struct ResponseBuffer<P: Protocol, const FRAME_SIZE: usize> {
@@ -40,9 +47,9 @@ impl<P: Protocol, const FRAME_SIZE: usize> ResponseBuffer<P, FRAME_SIZE> {
     }
 
     /// Appends data to buffer
-    pub fn append(&mut self, data: &[u8]) {
+    pub fn append(&mut self, data: &[u8]) -> Result<(), ResponseBufferErrors> {
         self.buffer.extend_from_slice(data);
-        self.parse_frames();
+        self.parse_frames()
     }
 
     /// Takes the frame at the given index
@@ -74,7 +81,7 @@ impl<P: Protocol, const FRAME_SIZE: usize> ResponseBuffer<P, FRAME_SIZE> {
 
     /// Parses buffer and extracts messages
     /// Buffer is drained to only contain non-complete messages
-    fn parse_frames(&mut self) {
+    fn parse_frames(&mut self) -> Result<(), ResponseBufferErrors> {
         // Start of next message
         let mut start = 0;
 
@@ -82,7 +89,7 @@ impl<P: Protocol, const FRAME_SIZE: usize> ResponseBuffer<P, FRAME_SIZE> {
         let mut last_termination = None;
 
         while !self.faulty {
-            let termination = self.parse_frame(start);
+            let termination = self.parse_frame(start)?;
             // No more frames left
             if termination.is_none() {
                 break;
@@ -94,15 +101,17 @@ impl<P: Protocol, const FRAME_SIZE: usize> ResponseBuffer<P, FRAME_SIZE> {
 
         // No message was found, so buffer can stay unchanged
         if last_termination.is_none() {
-            return;
+            return Ok(());
         }
 
         // No unparsed data remaining in buffer
         if (last_termination.unwrap() + 1) == self.buffer.len() {
-            return self.buffer.clear();
+            self.buffer.clear();
+            return Ok(());
         }
 
         self.buffer.drain(..=last_termination.unwrap());
+        Ok(())
     }
 
     /// Parses the next frame
@@ -113,9 +122,9 @@ impl<P: Protocol, const FRAME_SIZE: usize> ResponseBuffer<P, FRAME_SIZE> {
     ///
     /// returns: Option<usize> Position/Index of last termination
     /// None is returned in case no message was found
-    fn parse_frame(&mut self, start: usize) -> Option<usize> {
+    fn parse_frame(&mut self, start: usize) -> Result<Option<usize>, ResponseBufferErrors> {
         if start >= self.buffer.len() {
-            return None;
+            return Ok(None);
         }
 
         let bytes = Bytes::from(self.buffer[start..].to_vec());
@@ -123,18 +132,20 @@ impl<P: Protocol, const FRAME_SIZE: usize> ResponseBuffer<P, FRAME_SIZE> {
         let result = self.decoder.decode(&bytes);
         if result.is_err() {
             self.faulty = true;
-            return None;
+            return Ok(None);
         }
 
         // No frame found
         if result.as_ref().unwrap().is_none() {
-            return None;
+            return Ok(None);
         }
 
         let frame = result.unwrap().unwrap();
-        let _ = self.frames.push(Some(frame.0));
+        self.frames
+            .push(Some(frame.0))
+            .map_err(|_| ResponseBufferErrors::FutureOverflow)?;
         self.frame_count += 1;
-        Some(frame.1 - 1 + start)
+        Ok(Some(frame.1 - 1 + start))
     }
 
     /// Is message at index given index complete

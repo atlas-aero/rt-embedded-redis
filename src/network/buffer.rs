@@ -1,7 +1,7 @@
 use crate::network::client::CommandErrors;
 use crate::network::future::Identity;
 use crate::network::protocol::Protocol;
-use crate::network::response::ResponseBuffer;
+use crate::network::response::{ResponseBuffer, ResponseBufferErrors};
 use alloc::vec;
 use alloc::vec::Vec;
 use bytes::BytesMut;
@@ -9,6 +9,14 @@ use core::cell::RefCell;
 use core::fmt::{Debug, Formatter};
 use core::ops::{Deref, DerefMut};
 use embedded_nal::TcpClientStack;
+use nb::Error;
+
+pub(crate) enum NetworkError<N: TcpClientStack> {
+    /// Network stack error
+    StackError(N::Error),
+    /// Buffer handling error
+    BufferError(ResponseBufferErrors),
+}
 
 /// Manges interaction between network stack and response buffer
 /// F_COUNT: Max. number of parallel futures
@@ -47,17 +55,23 @@ impl<'a, N: TcpClientStack, P: Protocol, const F_COUNT: usize> Network<'a, N, P,
     }
 
     /// Appends 32 byte to the given buffer
-    pub(crate) fn receive_chunk(&self) -> nb::Result<(), N::Error> {
+    pub(crate) fn receive_chunk(&self) -> nb::Result<(), NetworkError<N>> {
         let mut local_buffer: [u8; 32] = [0; 32];
         let mut stack = self.stack.borrow_mut();
         let mut socket = self.socket.borrow_mut();
 
         match stack.receive(socket.deref_mut(), &mut local_buffer) {
             Ok(byte_count) => {
-                self.buffer.borrow_mut().append(&local_buffer[0..byte_count]);
+                self.buffer
+                    .borrow_mut()
+                    .append(&local_buffer[0..byte_count])
+                    .map_err(|e| NetworkError::BufferError(e))?;
                 Ok(())
             }
-            Err(error) => nb::Result::Err(error),
+            Err(error) => match error {
+                Error::Other(other) => nb::Result::Err(nb::Error::Other(NetworkError::StackError(other))),
+                Error::WouldBlock => nb::Result::Err(nb::Error::WouldBlock),
+            },
         }
     }
 
