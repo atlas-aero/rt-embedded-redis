@@ -1,7 +1,7 @@
 use crate::network::client::CommandErrors;
 use crate::network::future::Identity;
 use crate::network::protocol::Protocol;
-use crate::network::response::ResponseBuffer;
+use crate::network::response::{MemoryParameters, ResponseBuffer};
 use alloc::vec;
 use alloc::vec::Vec;
 use bytes::BytesMut;
@@ -32,12 +32,17 @@ pub(crate) struct Network<'a, N: TcpClientStack, P: Protocol> {
 }
 
 impl<'a, N: TcpClientStack, P: Protocol> Network<'a, N, P> {
-    pub(crate) fn new(stack: RefCell<&'a mut N>, socket: RefCell<&'a mut N::TcpSocket>, protocol: P) -> Self {
+    pub(crate) fn new(
+        stack: RefCell<&'a mut N>,
+        socket: RefCell<&'a mut N::TcpSocket>,
+        protocol: P,
+        memory: MemoryParameters,
+    ) -> Self {
         Network {
             protocol: protocol.clone(),
             stack,
             socket,
-            buffer: RefCell::new(ResponseBuffer::new(protocol)),
+            buffer: RefCell::new(ResponseBuffer::new(protocol, memory)),
             current_series: RefCell::new(0),
             next_index: RefCell::new(0),
             clear_buffer: RefCell::new(false),

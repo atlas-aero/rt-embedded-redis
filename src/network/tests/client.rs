@@ -7,6 +7,7 @@ use crate::network::client::CommandErrors::{
 use crate::network::handler::ConnectionError::{AuthenticationError, ProtocolSwitchError};
 use crate::network::handler::Credentials;
 use crate::network::protocol::{Resp2, Resp3};
+use crate::network::response::MemoryParameters;
 use crate::network::tests::mocks::MockTcpError::Error1;
 use crate::network::tests::mocks::{
     create_mocked_client, MockNetworkStack, NetworkMockBuilder, SocketMock, TestClock,
@@ -226,7 +227,12 @@ fn test_timeout_expired() {
 
     let mut socket = SocketMock::new(164);
     let client = Client {
-        network: Network::new(RefCell::new(&mut network), RefCell::new(&mut socket), Resp2 {}),
+        network: Network::new(
+            RefCell::new(&mut network),
+            RefCell::new(&mut socket),
+            Resp2 {},
+            MemoryParameters::default(),
+        ),
         timeout_duration: 150.microseconds(),
         clock: Some(&clock),
         hello_response: None,
@@ -251,7 +257,12 @@ fn test_timeout_timer_error() {
 
     let mut socket = SocketMock::new(164);
     let client = Client {
-        network: Network::new(RefCell::new(&mut network), RefCell::new(&mut socket), Resp2 {}),
+        network: Network::new(
+            RefCell::new(&mut network),
+            RefCell::new(&mut socket),
+            Resp2 {},
+            MemoryParameters::default(),
+        ),
         timeout_duration: 150.microseconds(),
         clock: Some(&clock),
         hello_response: None,
@@ -278,7 +289,12 @@ fn test_timeout_not_expired() {
 
     let mut socket = SocketMock::new(164);
     let client = Client {
-        network: Network::new(RefCell::new(&mut network), RefCell::new(&mut socket), Resp2 {}),
+        network: Network::new(
+            RefCell::new(&mut network),
+            RefCell::new(&mut socket),
+            Resp2 {},
+            MemoryParameters::default(),
+        ),
         timeout_duration: 250.microseconds(),
         clock: Some(&clock),
         hello_response: None,
@@ -495,7 +511,12 @@ fn test_futures_invalidated_on_timeout() {
 
     let mut socket = SocketMock::new(164);
     let client = Client {
-        network: Network::new(RefCell::new(&mut network), RefCell::new(&mut socket), Resp2 {}),
+        network: Network::new(
+            RefCell::new(&mut network),
+            RefCell::new(&mut socket),
+            Resp2 {},
+            MemoryParameters::default(),
+        ),
         timeout_duration: 150.microseconds(),
         clock: Some(&clock),
         hello_response: None,
@@ -635,7 +656,12 @@ fn test_future_dropped_invalidated() {
 
     let mut socket = SocketMock::new(164);
     let client = Client {
-        network: Network::new(RefCell::new(&mut network), RefCell::new(&mut socket), Resp2 {}),
+        network: Network::new(
+            RefCell::new(&mut network),
+            RefCell::new(&mut socket),
+            Resp2 {},
+            MemoryParameters::default(),
+        ),
         timeout_duration: 150.microseconds(),
         clock: Some(&clock),
         hello_response: None,
@@ -674,7 +700,12 @@ fn test_close_timeout() {
 
     let mut socket = SocketMock::new(164);
     let client = Client {
-        network: Network::new(RefCell::new(&mut network), RefCell::new(&mut socket), Resp2 {}),
+        network: Network::new(
+            RefCell::new(&mut network),
+            RefCell::new(&mut socket),
+            Resp2 {},
+            MemoryParameters::default(),
+        ),
         timeout_duration: 150.microseconds(),
         clock: Some(&clock),
         hello_response: None,

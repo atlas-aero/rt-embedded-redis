@@ -152,6 +152,33 @@ pub mod commands;
 /// # let _client = connection_handler.connect(&mut network_stack, Some(&clock)).unwrap();
 /// ```
 ///
+/// ### Memory optimization
+///
+/// The following parameters can be used to optimize memory usage respectively to improve heap allocation.
+/// See [MemoryParameters](crate::network::MemoryParameters) for more details.
+///
+/// ````
+///# use core::str::FromStr;
+///# use embedded_nal::SocketAddr;
+///# use std_embedded_nal::Stack;
+///# use std_embedded_time::StandardClock;
+///# use embedded_redis::commands::set::SetCommand;
+///# use embedded_redis::network::{ConnectionHandler, MemoryParameters};
+///#
+///# let mut stack = Stack::default();
+///# let clock = StandardClock::default();
+///#
+///# let server_address = SocketAddr::from_str("127.0.0.1:6379").unwrap();
+/// let mut connection_handler = ConnectionHandler::resp3(server_address);
+///
+/// connection_handler.memory(MemoryParameters {
+///     buffer_size: 512,
+///     frame_capacity: 4
+/// });
+///
+///# let client = connection_handler.connect(&mut stack, Some(&clock)).unwrap();
+/// ````
+///
 /// ### Concurrency
 ///
 /// While the Client is not Send, the connection handler is.
