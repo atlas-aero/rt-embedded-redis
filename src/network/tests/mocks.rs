@@ -3,6 +3,7 @@ use crate::commands::helpers::{CmdStr, RespInt};
 use crate::commands::Command;
 use crate::network::buffer::Network;
 use crate::network::protocol::Protocol;
+use crate::network::response::MemoryParameters;
 use crate::network::tests::mocks::MockTcpError::Error1;
 use crate::network::Client;
 use alloc::string::{String, ToString};
@@ -376,7 +377,12 @@ where
     HelloCommand: Command<<P as Protocol>::FrameType>,
 {
     Client {
-        network: Network::new(RefCell::new(network_stack), RefCell::new(socket), protocol),
+        network: Network::new(
+            RefCell::new(network_stack),
+            RefCell::new(socket),
+            protocol,
+            MemoryParameters::default(),
+        ),
         timeout_duration: 0.microseconds(),
         clock: Some(clock),
         hello_response: None,

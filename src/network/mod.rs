@@ -2,6 +2,7 @@ pub use client::{Client, CommandErrors};
 pub use future::Future;
 pub use handler::{ConnectionError, ConnectionHandler, Credentials};
 pub use protocol::{Resp2, Resp3};
+pub use response::MemoryParameters;
 
 pub(crate) mod buffer;
 pub(crate) mod client;

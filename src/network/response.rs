@@ -1,7 +1,25 @@
 use crate::network::protocol::Protocol;
-use alloc::vec;
 use alloc::vec::Vec;
 use bytes::Bytes;
+
+/// Parameters for memory optimization
+#[derive(Debug, Clone)]
+pub struct MemoryParameters {
+    /// Pre allocated unparsed buffer size. Should correspond to the maximum expected response size.
+    pub buffer_size: usize,
+
+    /// Pre allocated count of parsed frames. Should correspond to the expected number of parallel futures/commands.
+    pub frame_capacity: usize,
+}
+
+impl Default for MemoryParameters {
+    fn default() -> Self {
+        Self {
+            buffer_size: 256,
+            frame_capacity: 8,
+        }
+    }
+}
 
 pub(crate) struct ResponseBuffer<P: Protocol> {
     decoder: P,
@@ -25,11 +43,11 @@ pub(crate) struct ResponseBuffer<P: Protocol> {
 }
 
 impl<P: Protocol> ResponseBuffer<P> {
-    pub fn new(protocol: P) -> ResponseBuffer<P> {
+    pub fn new(protocol: P, parameters: MemoryParameters) -> ResponseBuffer<P> {
         Self {
             decoder: protocol,
-            buffer: vec![],
-            frames: vec![],
+            buffer: Vec::with_capacity(parameters.buffer_size),
+            frames: Vec::with_capacity(parameters.frame_capacity),
             frame_count: 0,
             frame_offset: 0,
             faulty: false,

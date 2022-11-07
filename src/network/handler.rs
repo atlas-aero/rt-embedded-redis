@@ -7,6 +7,7 @@ use crate::network::buffer::Network;
 use crate::network::client::{Client, CommandErrors};
 use crate::network::handler::ConnectionError::{TcpConnectionFailed, TcpSocketError};
 use crate::network::protocol::{Protocol, Resp2, Resp3};
+use crate::network::response::MemoryParameters;
 use alloc::string::{String, ToString};
 use core::cell::RefCell;
 use embedded_nal::{SocketAddr, TcpClientStack};
@@ -82,6 +83,9 @@ where
     /// Max. duration waiting for Redis responses
     timeout: Microseconds,
 
+    /// Parameters for memory allocation
+    memory: MemoryParameters,
+
     /// Redis protocol
     /// RESP3 requires Redis version >= 6.0
     protocol: P,
@@ -122,6 +126,7 @@ where
             socket: None,
             auth_failed: false,
             timeout: 0.microseconds(),
+            memory: MemoryParameters::default(),
             protocol,
             use_ping: false,
             hello_response: None,
@@ -250,6 +255,7 @@ where
                 RefCell::new(stack),
                 RefCell::new(self.socket.as_mut().unwrap()),
                 self.protocol.clone(),
+                self.memory.clone(),
             ),
             timeout_duration: self.timeout,
             clock,
@@ -277,6 +283,12 @@ where
     /// Using PING command for testing connections
     pub fn use_ping(&mut self) -> &mut Self {
         self.use_ping = true;
+        self
+    }
+
+    /// Sets memory allocation parameters
+    pub fn memory(&mut self, parameters: MemoryParameters) -> &mut Self {
+        self.memory = parameters;
         self
     }
 }
