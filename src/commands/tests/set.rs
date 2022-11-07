@@ -42,13 +42,10 @@ fn test_encode_expiration_timestamp_seconds() {
 
 #[test]
 fn test_encode_expiration_timestamp_milliseconds() {
-    let command = SetCommand::new("test_key", "value123")
-        .expires(ExpirationPolicy::TimestampMilliseconds(1648210076000));
+    let command =
+        SetCommand::new("test_key", "value123").expires(ExpirationPolicy::TimestampMilliseconds(4294967295));
 
-    assert_command(
-        vec!["SET", "test_key", "value123", "PXAT", "1648210076000"],
-        command,
-    );
+    assert_command(vec!["SET", "test_key", "value123", "PXAT", "4294967295"], command);
 }
 
 #[test]

@@ -41,6 +41,25 @@ let response = future.wait().unwrap();
 Any form of support is greatly appreciated. Feel free to create issues and PRs.
 See [DEVELOPMENT](DEVELOPMENT.md) for more details.  
 
+## Benchmarks
+
+The following command can be used to run the benchmarks.
+
+*A local Redis instance is required.*
+
+````
+cargo bench --features benchmarks
+````
+
+| System          | Async publish   | Sync publish   |
+|-----------------|-----------------|----------------|
+| Desktop *¹      | 291,800 msg / s | 70,025 msg / s |
+| Raspberry 4B *¹ | 59,744  msg / s | 10,641 msg / s |
+
+**¹ Rust 1.67.0-nightly, AMD Ryzen 9, DDR4, Ubuntu 22.02, Redis v6.0.16*
+
+**¹ Rust 1.67.0-nightly, Raspberry Pi OS 10, Redis v7.0.5*
+
 ## License
 Licensed under either of
 
