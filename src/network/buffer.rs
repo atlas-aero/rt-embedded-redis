@@ -76,6 +76,18 @@ impl<'a, N: TcpClientStack, P: Protocol> Network<'a, N, P> {
         // Handle dropped futures for not leaking memory
         self.handle_dropped_futures();
 
+        self.send_frame(frame)?;
+
+        let identity = Identity {
+            series: *self.current_series.borrow(),
+            index: *self.next_index.borrow(),
+        };
+        *self.next_index.borrow_mut() += 1;
+        Ok(identity)
+    }
+
+    /// Raw network logic for sending a frame
+    pub(crate) fn send_frame(&self, frame: P::FrameType) -> Result<(), CommandErrors> {
         let mut buffer = BytesMut::new();
         if self.protocol.encode_bytes(&mut buffer, &frame).is_err() {
             return Err(CommandErrors::EncodingCommandFailed);
@@ -88,12 +100,7 @@ impl<'a, N: TcpClientStack, P: Protocol> Network<'a, N, P> {
             return Err(CommandErrors::TcpError);
         };
 
-        let identity = Identity {
-            series: *self.current_series.borrow(),
-            index: *self.next_index.borrow(),
-        };
-        *self.next_index.borrow_mut() += 1;
-        Ok(identity)
+        Ok(())
     }
 
     /// Is the message of the given future complete?
@@ -122,6 +129,11 @@ impl<'a, N: TcpClientStack, P: Protocol> Network<'a, N, P> {
         }
 
         self.buffer.borrow_mut().take_frame(id.index)
+    }
+
+    /// Takes and returns the next frame if existing.
+    pub(crate) fn take_next_frame(&self) -> Option<P::FrameType> {
+        self.buffer.borrow_mut().take_next_frame()
     }
 
     /// In case of fatal errors alle current futures are invalidated
@@ -167,7 +179,7 @@ impl<'a, N: TcpClientStack, P: Protocol> Network<'a, N, P> {
     }
 
     /// Receives all pending socket data
-    fn receive_all(&self) {
+    pub fn receive_all(&self) {
         let mut result = Ok(());
 
         while result.is_ok() {

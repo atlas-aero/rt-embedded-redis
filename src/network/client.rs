@@ -1,4 +1,5 @@
 use crate::commands::auth::AuthCommand;
+use crate::commands::builder::CommandBuilder;
 use crate::commands::hello::{HelloCommand, HelloResponse};
 use crate::commands::Command;
 use crate::network::buffer::Network;
@@ -6,7 +7,10 @@ use crate::network::future::Future;
 use crate::network::handler::{ConnectionError, Credentials};
 use crate::network::protocol::{Protocol, Resp3};
 use crate::network::timeout::{Timeout, TimeoutError};
+use crate::subscribe::client::{Error, Subscription};
+use crate::subscribe::messages::ToPushMessage;
 use alloc::string::String;
+use bytes::Bytes;
 use core::fmt::{Debug, Formatter};
 use embedded_nal::TcpClientStack;
 use embedded_time::duration::Microseconds;
@@ -77,6 +81,21 @@ where
             &self.network,
             Timeout::new(self.clock, self.timeout_duration)?,
         ))
+    }
+
+    /// Subscribes the given channels and returns a subscription client.
+    ///
+    /// *If the subscriptions fails, it's recommended to close the connection, as a the
+    /// state is undefined. A further reuse of the connection could subsequent errors*
+    pub fn subscribe<const L: usize>(
+        self,
+        channels: [Bytes; L],
+    ) -> Result<Subscription<'a, N, C, P, L>, Error>
+    where
+        <P as Protocol>::FrameType: ToPushMessage,
+        <P as Protocol>::FrameType: From<CommandBuilder>,
+    {
+        Subscription::new(self, channels).subscribe()
     }
 
     /// Authenticates blocking with the given credentials during client initialization

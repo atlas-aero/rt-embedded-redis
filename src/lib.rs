@@ -269,3 +269,4 @@ pub mod commands;
 /// client.close();
 /// ````
 pub mod network;
+pub mod subscribe;
