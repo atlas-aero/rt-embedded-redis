@@ -2,7 +2,7 @@ use crate::network::buffer::Network;
 use crate::network::tests::mocks::{create_mocked_client, NetworkMockBuilder};
 use crate::network::tests::mocks::{SocketMock, TestClock};
 use crate::network::{Client, MemoryParameters, Resp3};
-use crate::subscribe::client::Error;
+use crate::subscription::client::Error;
 use embedded_time::duration::Extensions;
 use std::cell::RefCell;
 

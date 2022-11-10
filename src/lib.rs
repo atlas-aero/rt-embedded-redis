@@ -4,7 +4,7 @@
 //! This crate consists of three parts:
 //! * [network module](crate::network) for network details (connection handling, response management, etc.) + regular command client
 //! * [commands module](crate::commands) for Redis command abstractions
-//! * [subscribe module][crate::subscribe] for Redis subscription client
+//! * [subscription module][crate::subscription] for Redis subscription client
 //!
 //! ```
 //!# use core::str::FromStr;
@@ -270,4 +270,4 @@ pub mod commands;
 /// client.close();
 /// ````
 pub mod network;
-pub mod subscribe;
+pub mod subscription;

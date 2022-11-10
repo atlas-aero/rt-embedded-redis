@@ -4,7 +4,7 @@ use crate::commands::Command;
 use crate::network::protocol::Protocol;
 use crate::network::timeout::Timeout;
 use crate::network::{Client, CommandErrors};
-use crate::subscribe::messages::{DecodeError, Message as PushMessage, ToPushMessage};
+use crate::subscription::messages::{DecodeError, Message as PushMessage, ToPushMessage};
 use bytes::Bytes;
 use embedded_nal::TcpClientStack;
 use embedded_time::Clock;

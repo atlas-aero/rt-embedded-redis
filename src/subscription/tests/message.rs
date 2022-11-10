@@ -1,5 +1,5 @@
 use crate::network::tests::mocks::MockFrames;
-use crate::subscribe::messages::{DecodeError, Message, ToPushMessage};
+use crate::subscription::messages::{DecodeError, Message, ToPushMessage};
 use bytes::Bytes;
 use redis_protocol::resp2::types::Frame as Resp2Frame;
 use redis_protocol::resp3::types::Frame as Resp3Frame;
