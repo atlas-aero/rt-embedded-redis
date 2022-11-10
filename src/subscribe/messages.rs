@@ -1,5 +1,5 @@
 use bytes::Bytes;
-use redis_protocol::resp3::prelude::{Frame as Resp3Frame, Frame};
+use redis_protocol::resp3::prelude::Frame as Resp3Frame;
 
 /// A decoded PubSub message
 #[derive(Debug, PartialEq, Eq)]
@@ -28,82 +28,96 @@ pub enum DecodeError {
 /// Decodes frames to messages
 pub trait ToPushMessage {
     /// Tries to decode the frame to a push message
-    fn decode_push(self) -> Result<Message, DecodeError>;
+    fn decode_push(self) -> Result<Message, DecodeError>
+    where
+        Self: Sized,
+    {
+        Decoder::new(self).decode()
+    }
+
+    /// Validates that the given frame is a push message and returns the inner array.
+    fn as_array(&self) -> Result<&[Self], DecodeError>
+    where
+        Self: Sized;
+
+    /// Validates that the given frame is a string type and clones the inner Bytes value.
+    fn clone_byte_string(&self, frame: &Self) -> Result<Bytes, DecodeError>;
+
+    /// Validates that the given frame is a number type and returns the inner value.
+    fn get_number(&self, frame: &Self) -> Result<i64, DecodeError>;
 }
 
 impl ToPushMessage for Resp3Frame {
-    fn decode_push(self) -> Result<Message, DecodeError> {
-        Resp3Decoder::new(self).decode()
+    fn as_array(&self) -> Result<&[Self], DecodeError> {
+        if let Resp3Frame::Push { data, attributes: _ } = self {
+            return Ok(data);
+        }
+
+        Err(DecodeError::NoPushMessage)
+    }
+
+    fn clone_byte_string(&self, frame: &Self) -> Result<Bytes, DecodeError> {
+        match frame {
+            Resp3Frame::BlobString { data, attributes: _ }
+            | Resp3Frame::SimpleString { data, attributes: _ } => Ok(data.clone()),
+            _ => Err(DecodeError::ProtocolViolation),
+        }
+    }
+
+    fn get_number(&self, frame: &Self) -> Result<i64, DecodeError> {
+        if let Resp3Frame::Number { data, attributes: _ } = frame {
+            return Ok(*data);
+        }
+
+        Err(DecodeError::ProtocolViolation)
     }
 }
 
-struct Resp3Decoder {
-    frame: Resp3Frame,
+/// Generic push message decoder for RESP2 + RESP3 frames
+struct Decoder<F: ToPushMessage> {
+    frame: F,
 }
 
-impl Resp3Decoder {
-    pub fn new(frame: Resp3Frame) -> Self {
+impl<F: ToPushMessage> Decoder<F> {
+    pub fn new(frame: F) -> Self {
         Self { frame }
     }
 
     pub fn decode(self) -> Result<Message, DecodeError> {
-        match &self.frame {
-            Frame::Push { data, attributes: _ } => {
-                if data.len() < 2 {
-                    return Err(DecodeError::ProtocolViolation);
-                }
+        let data = self.frame.as_array()?;
 
-                if data.len() < 3 {
-                    return Err(DecodeError::ProtocolViolation);
-                }
+        if data.len() < 3 {
+            return Err(DecodeError::ProtocolViolation);
+        }
 
-                match self.get_byte_string(&data[0])? {
-                    b"message" => self.decode_message(data),
-                    b"subscribe" => self.decode_subscribe(data),
-                    b"unsubscribe" => self.decode_unsubscribe(data),
-                    &_ => Err(DecodeError::UnknownType),
-                }
-            }
-            _ => Err(DecodeError::NoPushMessage),
+        match &self.frame.clone_byte_string(&data[0])?[..] {
+            b"message" => self.decode_message(data),
+            b"subscribe" => self.decode_subscribe(data),
+            b"unsubscribe" => self.decode_unsubscribe(data),
+            &_ => Err(DecodeError::UnknownType),
         }
     }
 
     /// Decodes and validates a "subscribe" message
-    fn decode_subscribe(&self, data: &[Frame]) -> Result<Message, DecodeError> {
-        match &data[2] {
-            Frame::Number { data, attributes: _ } => {
-                Ok(Message::SubConfirmation(self.cast_channel_count(*data)?))
-            }
-            _ => Err(DecodeError::ProtocolViolation),
-        }
+    fn decode_subscribe(&self, data: &[F]) -> Result<Message, DecodeError> {
+        let channel_count = self.frame.get_number(&data[2])?;
+        Ok(Message::SubConfirmation(self.cast_channel_count(channel_count)?))
     }
 
     /// Decodes and validates a "unsubscribe" message
-    fn decode_unsubscribe(&self, data: &[Frame]) -> Result<Message, DecodeError> {
-        match &data[2] {
-            Frame::Number { data, attributes: _ } => {
-                Ok(Message::UnSubConfirmation(self.cast_channel_count(*data)?))
-            }
-            _ => Err(DecodeError::ProtocolViolation),
-        }
-    }
-
-    /// Decodes and validates a "message" message
-    fn decode_message(&self, data: &[Frame]) -> Result<Message, DecodeError> {
-        Ok(Message::Publish(
-            self.clone_string(&data[1])?,
-            self.clone_string(&data[2])?,
+    fn decode_unsubscribe(&self, data: &[F]) -> Result<Message, DecodeError> {
+        let channel_count = self.frame.get_number(&data[2])?;
+        Ok(Message::UnSubConfirmation(
+            self.cast_channel_count(channel_count)?,
         ))
     }
 
-    /// Tries to convert the frame to a byte string
-    fn get_byte_string<'a>(&self, frame: &'a Resp3Frame) -> Result<&'a [u8], DecodeError> {
-        let byte_string = match frame {
-            Frame::BlobString { data, attributes: _ } | Frame::SimpleString { data, attributes: _ } => data,
-            _ => return Err(DecodeError::ProtocolViolation),
-        };
-
-        Ok(&byte_string[..])
+    /// Decodes and validates a "message" message
+    fn decode_message(&self, data: &[F]) -> Result<Message, DecodeError> {
+        Ok(Message::Publish(
+            self.frame.clone_byte_string(&data[1])?,
+            self.frame.clone_byte_string(&data[2])?,
+        ))
     }
 
     /// Safe casting of channel count
@@ -113,15 +127,5 @@ impl Resp3Decoder {
         }
 
         usize::try_from(count).map_err(|_| DecodeError::IntegerOverflow)
-    }
-
-    /// Tries to extract and clone the Bytes string
-    fn clone_string(&self, frame: &Resp3Frame) -> Result<Bytes, DecodeError> {
-        match frame {
-            Frame::BlobString { data, attributes: _ } | Frame::SimpleString { data, attributes: _ } => {
-                Ok(data.clone())
-            }
-            _ => Err(DecodeError::ProtocolViolation),
-        }
     }
 }
