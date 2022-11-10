@@ -16,6 +16,7 @@ Both RESP2 and RESP3 protocol are supported.
   * [PUBLISH command](https://docs.rs/embedded-redis/latest/embedded_redis/commands/publish/index.html)
 * [Command abstraction](https://docs.rs/embedded-redis/latest/embedded_redis/commands/index.html)
 * [Custom commands](https://docs.rs/embedded-redis/latest/embedded_redis/commands/custom/index.html)
+* [Subscriptions](https://docs.rs/embedded-redis/latest/embedded_redis/subscribe)
 
 ## Example
 ```rust

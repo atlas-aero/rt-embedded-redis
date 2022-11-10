@@ -12,15 +12,15 @@ use embedded_time::Clock;
 /// Subscription errors
 #[derive(Debug, Eq, PartialEq, Clone)]
 pub enum Error {
-    /// Error while sending SUBSCRIBE command
+    /// Error while sending SUBSCRIBE or UNSUBSCRIBE command
     CommandError(CommandErrors),
     /// Upstream time error
     ClockError,
-    /// Network error receiving data
+    /// Network error receiving or sending data
     TcpError,
     /// Error while decoding a push message. Either Redis sent invalid data or there is a decoder bug.
     DecodeError,
-    /// Subscription was not confirmed by Redis within time limit. Its recommended to close/reconnect the socket to avoid
+    /// Subscription or Unsubscription was not confirmed by Redis within time limit. Its recommended to close/reconnect the socket to avoid
     /// subsequent errors based on invalid state.
     Timeout,
 }
@@ -36,6 +36,7 @@ pub struct Message {
 }
 
 /// Client for handling subscriptions
+///
 /// L: Number of subscribed topics
 #[derive(Debug)]
 pub struct Subscription<'a, N: TcpClientStack, C: Clock, P: Protocol, const L: usize>

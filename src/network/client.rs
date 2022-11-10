@@ -86,7 +86,7 @@ where
     /// Subscribes the given channels and returns a subscription client.
     ///
     /// *If the subscriptions fails, it's recommended to close the connection, as a the
-    /// state is undefined. A further reuse of the connection could subsequent errors*
+    /// state is undefined. A further reuse of the connection could cause subsequent errors*
     pub fn subscribe<const L: usize>(
         self,
         channels: [Bytes; L],
