@@ -1,4 +1,5 @@
 use bytes::Bytes;
+use redis_protocol::resp2::prelude::{Frame as Resp2Frame, Frame};
 use redis_protocol::resp3::prelude::Frame as Resp3Frame;
 
 /// A decoded PubSub message
@@ -67,6 +68,34 @@ impl ToPushMessage for Resp3Frame {
     fn get_number(&self, frame: &Self) -> Result<i64, DecodeError> {
         if let Resp3Frame::Number { data, attributes: _ } = frame {
             return Ok(*data);
+        }
+
+        Err(DecodeError::ProtocolViolation)
+    }
+}
+
+impl ToPushMessage for Resp2Frame {
+    fn as_array(&self) -> Result<&[Self], DecodeError>
+    where
+        Self: Sized,
+    {
+        if let Resp2Frame::Array(data) = self {
+            return Ok(data);
+        }
+
+        Err(DecodeError::NoPushMessage)
+    }
+
+    fn clone_byte_string(&self, frame: &Self) -> Result<Bytes, DecodeError> {
+        match frame {
+            Frame::SimpleString(string) | Frame::BulkString(string) => Ok(string.clone()),
+            _ => Err(DecodeError::ProtocolViolation),
+        }
+    }
+
+    fn get_number(&self, frame: &Self) -> Result<i64, DecodeError> {
+        if let Resp2Frame::Integer(number) = frame {
+            return Ok(*number);
         }
 
         Err(DecodeError::ProtocolViolation)
