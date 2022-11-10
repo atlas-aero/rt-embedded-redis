@@ -41,11 +41,16 @@ pub struct Message {
 pub struct Subscription<'a, N: TcpClientStack, C: Clock, P: Protocol, const L: usize>
 where
     HelloCommand: Command<<P as Protocol>::FrameType>,
+    <P as Protocol>::FrameType: From<CommandBuilder>,
+    <P as Protocol>::FrameType: ToPushMessage,
 {
     client: Client<'a, N, C, P>,
 
     /// List of subscribed topics
     channels: [Bytes; L],
+
+    /// Confirmed + active subscription
+    subscribed: bool,
 }
 
 impl<'a, N, C, P, const L: usize> Subscription<'a, N, C, P, L>
@@ -61,6 +66,7 @@ where
         Self {
             client,
             channels: topics,
+            subscribed: false,
         }
     }
 
@@ -80,25 +86,46 @@ where
     }
 
     /// Starts the subscription and waits for confirmation
-    pub(crate) fn subscribe(self) -> Result<Self, Error> {
+    pub(crate) fn subscribe(mut self) -> Result<Self, Error> {
         let mut cmd = CommandBuilder::new("SUBSCRIBE");
         for topic in &self.channels {
             cmd = cmd.arg(topic);
         }
 
         self.client.network.send_frame(cmd.into()).map_err(Error::CommandError)?;
-        self.wait_for_confirmation()
+        self.wait_for_confirmation(|message| message == PushMessage::SubConfirmation(self.channels.len()))?;
+
+        self.subscribed = true;
+        Ok(self)
+    }
+
+    /// Unsubscribes from all topics and waits for confirmation
+    ///
+    /// *If this fails, it's recommended to clos the connection to avoid subsequent errors caused by invalid state*
+    pub fn unsubscribe(mut self) -> Result<(), Error> {
+        self.close()
+    }
+
+    /// Unsubscribes from all topics and waits for confirmation
+    pub(crate) fn close(&mut self) -> Result<(), Error> {
+        self.subscribed = false;
+        let cmd = CommandBuilder::new("UNSUBSCRIBE");
+
+        self.client.network.send_frame(cmd.into()).map_err(Error::CommandError)?;
+        self.wait_for_confirmation(|message| message == PushMessage::UnSubConfirmation(0))?;
+
+        Ok(())
     }
 
     /// Waits for the confirmation of all topics
-    fn wait_for_confirmation(self) -> Result<Self, Error> {
+    fn wait_for_confirmation<F: Fn(PushMessage) -> bool>(&self, is_confirmation: F) -> Result<(), Error> {
         let timeout =
             Timeout::new(self.client.clock, self.client.timeout_duration).map_err(|_| Error::ClockError)?;
 
         while !timeout.expired().map_err(|_| Error::ClockError)? {
-            if let Some(PushMessage::SubConfirmation(count)) = self.receive_message()? {
-                if count == self.channels.len() {
-                    return Ok(self);
+            if let Some(message) = self.receive_message()? {
+                if is_confirmation(message) {
+                    return Ok(());
                 }
             }
         }
@@ -129,6 +156,28 @@ where
                 DecodeError::ProtocolViolation => Err(Error::DecodeError),
                 DecodeError::IntegerOverflow => Err(Error::DecodeError),
             },
+        }
+    }
+
+    /// Prevents the automatic unsubscription when client is dropped
+    #[cfg(test)]
+    pub(crate) fn set_unsubscribed(&mut self) {
+        self.subscribed = false;
+    }
+}
+
+impl<N, C, P, const L: usize> Drop for Subscription<'_, N, C, P, L>
+where
+    N: TcpClientStack,
+    C: Clock,
+    P: Protocol,
+    HelloCommand: Command<<P as Protocol>::FrameType>,
+    <P as Protocol>::FrameType: From<CommandBuilder>,
+    <P as Protocol>::FrameType: ToPushMessage,
+{
+    fn drop(&mut self) {
+        if self.subscribed {
+            let _ = self.close();
         }
     }
 }

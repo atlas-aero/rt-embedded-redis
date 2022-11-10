@@ -236,6 +236,23 @@ impl NetworkMockBuilder {
         self
     }
 
+    /// Simulates a confirmed unsubscription
+    pub fn unsub_confirmation_resp3(mut self, topic: &'static str, channel_count: usize) -> Self {
+        self.stack.expect_receive().times(1).returning(move |_, mut buffer: &mut [u8]| {
+            let frame = b">3\r\n+unsubscribe\r\n";
+            let _ = buffer.write(frame).unwrap();
+            nb::Result::Ok(frame.len())
+        });
+
+        self.stack.expect_receive().times(1).returning(move |_, mut buffer: &mut [u8]| {
+            let frame = format!("+{}\r\n:{}\r\n", topic, channel_count);
+            let _ = buffer.write(frame.as_bytes()).unwrap();
+            nb::Result::Ok(frame.len())
+        });
+
+        self
+    }
+
     /// Simulates a published message
     pub fn sub_message(mut self, channel: &'static str, payload: &'static str) -> Self {
         self.stack.expect_receive().times(1).returning(move |_, mut buffer: &mut [u8]| {
