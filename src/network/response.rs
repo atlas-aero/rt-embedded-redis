@@ -87,6 +87,12 @@ impl<P: Protocol> ResponseBuffer<P> {
         frame
     }
 
+    /// Takes the next frame. Returns None in case no complete frame exists.
+    pub fn take_next_frame(&mut self) -> Option<P::FrameType> {
+        let index = self.frames.iter().position(|x| x.is_some())?;
+        self.take_frame(index + self.frame_offset)
+    }
+
     /// Parses buffer and extracts messages
     /// Buffer is drained to only contain non-complete messages
     fn parse_frames(&mut self) {

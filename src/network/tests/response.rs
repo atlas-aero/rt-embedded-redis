@@ -241,3 +241,25 @@ fn test_faulty_previous_frame_readable() {
     assert!(frame.is_string());
     assert_eq!("OK", frame.to_string().unwrap());
 }
+
+#[test]
+fn test_take_next_frame_correct_order() {
+    let mut buffer = ResponseBuffer::new(Resp2 {}, MemoryParameters::default());
+    buffer.append(b"+1\r\n");
+    buffer.append(b"+2\r\n");
+
+    assert_eq!("1", buffer.take_next_frame().unwrap().to_string().unwrap());
+    assert_eq!("2", buffer.take_next_frame().unwrap().to_string().unwrap());
+    assert!(buffer.take_next_frame().is_none());
+}
+
+#[test]
+fn test_take_next_frame_correct_offset() {
+    let mut buffer = ResponseBuffer::new(Resp2 {}, MemoryParameters::default());
+    buffer.append(b"+1\r\n");
+    assert_eq!("1", buffer.take_next_frame().unwrap().to_string().unwrap());
+
+    buffer.append(b"+2\r\n");
+    assert_eq!("2", buffer.take_next_frame().unwrap().to_string().unwrap());
+    assert!(buffer.take_next_frame().is_none());
+}

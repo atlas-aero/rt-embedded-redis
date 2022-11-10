@@ -1,9 +1,10 @@
 //! This crate offers a non-blocking Redis Client for no_std targets.
 //! Both RESP2 and RESP3 protocol are supported.
 //!
-//! This crate consists of two parts:
-//! * [network module](crate::network) for network details (connection handling, response management, etc.)
+//! This crate consists of three parts:
+//! * [network module](crate::network) for network details (connection handling, response management, etc.) + regular command client
 //! * [commands module](crate::commands) for Redis command abstractions
+//! * [subscription module][crate::subscription] for Redis subscription client
 //!
 //! ```
 //!# use core::str::FromStr;
@@ -48,7 +49,7 @@ extern crate core;
 /// *Please consider contributing new command abstractions*.
 pub mod commands;
 
-/// # Connection and Client logic
+/// # Connection and regular Client logic
 ///
 /// ## Connection handling
 ///
@@ -269,3 +270,4 @@ pub mod commands;
 /// client.close();
 /// ````
 pub mod network;
+pub mod subscription;
