@@ -6,18 +6,12 @@ use redis_protocol::resp3::types::Frame as Resp3Frame;
 
 #[test]
 fn test_decode_resp3_no_push() {
-    assert_eq!(
-        DecodeError::NoPushMessage,
-        MockFrames::ok_resp3().decode_push().unwrap_err()
-    )
+    assert_eq!(Message::Unknown, MockFrames::ok_resp3().decode_push().unwrap())
 }
 
 #[test]
 fn test_decode_resp2_no_push() {
-    assert_eq!(
-        DecodeError::NoPushMessage,
-        MockFrames::ok_resp2().decode_push().unwrap_err()
-    )
+    assert_eq!(Message::Unknown, MockFrames::ok_resp2().decode_push().unwrap())
 }
 
 #[test]

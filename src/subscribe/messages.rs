@@ -11,15 +11,13 @@ pub enum Message {
     UnSubConfirmation(usize),
     /// An actual published message. First value represents the channel, the second value is the actual message payload.
     Publish(Bytes, Bytes),
+    /// Unknown push sub message type (neither subscribe, unsubscribe nor message)
+    Unknown,
 }
 
 /// Errors related for decoding push messages
 #[derive(Debug, PartialEq, Eq)]
 pub enum DecodeError {
-    /// The given frame is not a push message (only RESP3)
-    NoPushMessage,
-    /// Unknown sub message type (neither subscribe, unsubscribe nor message)
-    UnknownType,
     /// Invalid message format (violation of RESP2 or RESP3 specification)
     ProtocolViolation,
     /// The given channel counts overflows usize
@@ -37,7 +35,8 @@ pub trait ToPushMessage {
     }
 
     /// Validates that the given frame is a push message and returns the inner array.
-    fn as_array(&self) -> Result<&[Self], DecodeError>
+    /// Returns None in case the frame is not a push message
+    fn as_array(&self) -> Option<&[Self]>
     where
         Self: Sized;
 
@@ -49,12 +48,12 @@ pub trait ToPushMessage {
 }
 
 impl ToPushMessage for Resp3Frame {
-    fn as_array(&self) -> Result<&[Self], DecodeError> {
+    fn as_array(&self) -> Option<&[Self]> {
         if let Resp3Frame::Push { data, attributes: _ } = self {
-            return Ok(data);
+            return Some(data);
         }
 
-        Err(DecodeError::NoPushMessage)
+        None
     }
 
     fn clone_byte_string(&self, frame: &Self) -> Result<Bytes, DecodeError> {
@@ -75,15 +74,15 @@ impl ToPushMessage for Resp3Frame {
 }
 
 impl ToPushMessage for Resp2Frame {
-    fn as_array(&self) -> Result<&[Self], DecodeError>
+    fn as_array(&self) -> Option<&[Self]>
     where
         Self: Sized,
     {
         if let Resp2Frame::Array(data) = self {
-            return Ok(data);
+            return Some(data);
         }
 
-        Err(DecodeError::NoPushMessage)
+        None
     }
 
     fn clone_byte_string(&self, frame: &Self) -> Result<Bytes, DecodeError> {
@@ -113,7 +112,10 @@ impl<F: ToPushMessage> Decoder<F> {
     }
 
     pub fn decode(self) -> Result<Message, DecodeError> {
-        let data = self.frame.as_array()?;
+        let data = match self.frame.as_array() {
+            None => return Ok(Message::Unknown),
+            Some(data) => data,
+        };
 
         if data.len() < 3 {
             return Err(DecodeError::ProtocolViolation);
@@ -123,7 +125,7 @@ impl<F: ToPushMessage> Decoder<F> {
             b"message" => self.decode_message(data),
             b"subscribe" => self.decode_subscribe(data),
             b"unsubscribe" => self.decode_unsubscribe(data),
-            &_ => Err(DecodeError::UnknownType),
+            &_ => Ok(Message::Unknown),
         }
     }
 

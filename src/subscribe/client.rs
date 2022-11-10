@@ -4,7 +4,7 @@ use crate::commands::Command;
 use crate::network::protocol::Protocol;
 use crate::network::timeout::Timeout;
 use crate::network::{Client, CommandErrors};
-use crate::subscribe::messages::{DecodeError, Message, ToPushMessage};
+use crate::subscribe::messages::{DecodeError, Message as PushMessage, ToPushMessage};
 use bytes::Bytes;
 use embedded_nal::TcpClientStack;
 use embedded_time::Clock;
@@ -23,6 +23,16 @@ pub enum Error {
     /// Subscription was not confirmed by Redis within time limit. Its recommended to close/reconnect the socket to avoid
     /// subsequent errors based on invalid state.
     Timeout,
+}
+
+/// A published subscription message
+#[derive(Debug, Clone)]
+pub struct Message {
+    /// The channel the message has been published to
+    pub channel: Bytes,
+
+    /// The actual payload
+    pub payload: Bytes,
 }
 
 /// Client for handling subscriptions
@@ -54,6 +64,21 @@ where
         }
     }
 
+    /// Receives a message. Returns None in case no message is pending
+    pub fn receive(&mut self) -> Result<Option<Message>, Error> {
+        loop {
+            let message = self.receive_message()?;
+
+            if message.is_none() {
+                return Ok(None);
+            }
+
+            if let PushMessage::Publish(channel, payload) = message.unwrap() {
+                return Ok(Some(Message { channel, payload }));
+            }
+        }
+    }
+
     /// Starts the subscription and waits for confirmation
     pub(crate) fn subscribe(self) -> Result<Self, Error> {
         let mut cmd = CommandBuilder::new("SUBSCRIBE");
@@ -71,7 +96,7 @@ where
             Timeout::new(self.client.clock, self.client.timeout_duration).map_err(|_| Error::ClockError)?;
 
         while !timeout.expired().map_err(|_| Error::ClockError)? {
-            if let Some(Message::SubConfirmation(count)) = self.receive_message()? {
+            if let Some(PushMessage::SubConfirmation(count)) = self.receive_message()? {
                 if count == self.channels.len() {
                     return Ok(self);
                 }
@@ -82,12 +107,15 @@ where
     }
 
     /// Receives and decodes the next message. Returns None in case no message is pending or not complete yet.
-    fn receive_message(&self) -> Result<Option<Message>, Error> {
-        if let Err(error) = self.client.network.receive_chunk() {
-            return match error {
-                nb::Error::Other(_) => Err(Error::TcpError),
-                nb::Error::WouldBlock => Ok(None),
-            };
+    fn receive_message(&self) -> Result<Option<PushMessage>, Error> {
+        // Receive all pending data
+        loop {
+            if let Err(error) = self.client.network.receive_chunk() {
+                match error {
+                    nb::Error::Other(_) => return Err(Error::TcpError),
+                    nb::Error::WouldBlock => break,
+                };
+            }
         }
 
         let frame = self.client.network.take_next_frame();
@@ -98,8 +126,6 @@ where
         match frame.unwrap().decode_push() {
             Ok(message) => Ok(Some(message)),
             Err(error) => match error {
-                DecodeError::NoPushMessage => Ok(None),
-                DecodeError::UnknownType => Ok(None),
                 DecodeError::ProtocolViolation => Err(Error::DecodeError),
                 DecodeError::IntegerOverflow => Err(Error::DecodeError),
             },
