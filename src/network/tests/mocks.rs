@@ -228,7 +228,7 @@ impl NetworkMockBuilder {
         });
 
         self.stack.expect_receive().times(1).returning(move |_, mut buffer: &mut [u8]| {
-            let frame = format!("+{}\r\n:{}\r\n", topic, channel_count);
+            let frame = format!("+{topic}\r\n:{channel_count}\r\n");
             let _ = buffer.write(frame.as_bytes()).unwrap();
             nb::Result::Ok(frame.len())
         });
@@ -245,7 +245,7 @@ impl NetworkMockBuilder {
         });
 
         self.stack.expect_receive().times(1).returning(move |_, mut buffer: &mut [u8]| {
-            let frame = format!("+{}\r\n:{}\r\n", topic, channel_count);
+            let frame = format!("+{topic}\r\n:{channel_count}\r\n");
             let _ = buffer.write(frame.as_bytes()).unwrap();
             nb::Result::Ok(frame.len())
         });
@@ -262,7 +262,7 @@ impl NetworkMockBuilder {
         });
 
         self.stack.expect_receive().times(1).returning(move |_, mut buffer: &mut [u8]| {
-            let frame = format!("+{}\r\n+{}\r\n", channel, payload);
+            let frame = format!("+{channel}\r\n+{payload}\r\n");
             let _ = buffer.write(frame.as_bytes()).unwrap();
             nb::Result::Ok(frame.len())
         });
