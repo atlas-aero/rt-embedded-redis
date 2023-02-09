@@ -156,6 +156,8 @@ pub mod commands;
 /// ### Memory optimization
 ///
 /// The following parameters can be used to optimize memory usage respectively to improve heap allocation.
+/// The right parameters can also protect against DOS scenarios, when the received data can
+/// potentially exceed the memory resources.
 /// See [MemoryParameters](crate::network::MemoryParameters) for more details.
 ///
 /// ````
@@ -174,7 +176,8 @@ pub mod commands;
 ///
 /// connection_handler.memory(MemoryParameters {
 ///     buffer_size: 512,
-///     frame_capacity: 4
+///     frame_capacity: 4,
+///     memory_limit: Some(4096)
 /// });
 ///
 ///# let client = connection_handler.connect(&mut stack, Some(&clock)).unwrap();

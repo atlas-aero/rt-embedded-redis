@@ -65,6 +65,11 @@ impl<'a, N: TcpClientStack, P: Protocol> Network<'a, N, P> {
         }
     }
 
+    /// Returns true if the memory limit is reached
+    pub(crate) fn is_buffer_full(&self) -> bool {
+        self.buffer.borrow().is_full()
+    }
+
     /// Encodes and sends the given command
     pub(crate) fn send(&self, frame: P::FrameType) -> Result<Identity, CommandErrors> {
         // Seems a fata error invalidated the current series, so everything needs to be cleared

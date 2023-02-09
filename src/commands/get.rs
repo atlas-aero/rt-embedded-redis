@@ -129,6 +129,7 @@ impl GetCommand {
 }
 
 ///Abstraction of GET response
+#[cfg_attr(test, derive(Debug))]
 pub struct GetResponse {
     inner: Bytes,
 }

@@ -12,6 +12,7 @@ use crate::network::tests::mocks::MockTcpError::Error1;
 use crate::network::tests::mocks::{
     create_mocked_client, MockNetworkStack, NetworkMockBuilder, SocketMock, TestClock,
 };
+use crate::network::CommandErrors;
 use alloc::string::ToString;
 use alloc::vec;
 use bytes::Bytes;
@@ -630,7 +631,7 @@ fn test_future_dropped_received_at_next_future() {
 
 /// Tests dropped future, which wait() method was not called.
 /// Response data of this futures is handled at next send() call
-/// In the following scenario a fatal error occured, so the dropped future got invalidated in the
+/// In the following scenario a fatal error occurred, so the dropped future got invalidated in the
 /// meanwhile
 #[test]
 fn test_future_dropped_invalidated() {
@@ -742,6 +743,67 @@ fn test_close_handled_dropped_futures() {
     client.close();
     assert_eq!(0, client.network.get_dropped_future_count());
     assert_eq!(0, client.network.get_pending_frame_count());
+}
+
+#[test]
+fn test_memory_limit_reached() {
+    let clock = TestClock::new(vec![]);
+
+    let mut network = NetworkMockBuilder::default()
+        .send(164, "*2\r\n$3\r\nGET\r\n$3\r\nkey\r\n")
+        .response_incomplete_binary::<110>()
+        .into_mock();
+
+    let mut socket = SocketMock::new(164);
+    let client = Client {
+        network: Network::new(
+            RefCell::new(&mut network),
+            RefCell::new(&mut socket),
+            Resp3 {},
+            MemoryParameters {
+                buffer_size: 128,
+                frame_capacity: 1,
+                memory_limit: Some(100),
+            },
+        ),
+        timeout_duration: 0.microseconds(),
+        clock: Some(&clock),
+        hello_response: None,
+    };
+
+    let error = client.get("key").unwrap().wait().unwrap_err();
+    assert_eq!(CommandErrors::MemoryFull, error);
+}
+
+#[test]
+fn test_memory_limit_not_reached() {
+    let clock = TestClock::new(vec![]);
+
+    let mut network = NetworkMockBuilder::default()
+        .send(164, "*2\r\n$3\r\nGET\r\n$3\r\nkey\r\n")
+        .response_incomplete_binary::<110>()
+        .response("\r\n")
+        .into_mock();
+
+    let mut socket = SocketMock::new(164);
+    let client = Client {
+        network: Network::new(
+            RefCell::new(&mut network),
+            RefCell::new(&mut socket),
+            Resp3 {},
+            MemoryParameters {
+                buffer_size: 128,
+                frame_capacity: 1,
+                memory_limit: Some(150),
+            },
+        ),
+        timeout_duration: 0.microseconds(),
+        clock: Some(&clock),
+        hello_response: None,
+    };
+
+    let data = client.get("key").unwrap().wait().unwrap().unwrap().to_bytes();
+    assert_eq!(&[0x0u8; 110], &data[..])
 }
 
 #[test]
