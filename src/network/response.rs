@@ -10,6 +10,10 @@ pub struct MemoryParameters {
 
     /// Pre allocated count of parsed frames. Should correspond to the expected number of parallel futures/commands.
     pub frame_capacity: usize,
+
+    /// Optional buffer memory limit in bytes for preventing DOS attacks.
+    /// [CommandErrors::MemoryFull](crate::network::CommandErrors::MemoryFull) error is returned in case limit is reached.
+    pub memory_limit: Option<usize>,
 }
 
 impl Default for MemoryParameters {
@@ -17,6 +21,7 @@ impl Default for MemoryParameters {
         Self {
             buffer_size: 256,
             frame_capacity: 8,
+            memory_limit: None,
         }
     }
 }
@@ -40,6 +45,9 @@ pub(crate) struct ResponseBuffer<P: Protocol> {
 
     /// Received unknown message prefix
     faulty: bool,
+
+    /// Memory limit in bytes. 0 in case if no limit is used.
+    limit: usize,
 }
 
 impl<P: Protocol> ResponseBuffer<P> {
@@ -51,11 +59,16 @@ impl<P: Protocol> ResponseBuffer<P> {
             frame_count: 0,
             frame_offset: 0,
             faulty: false,
+            limit: parameters.memory_limit.unwrap_or(0),
         }
     }
 
     /// Appends data to buffer
     pub fn append(&mut self, data: &[u8]) {
+        if self.is_full() {
+            return;
+        }
+
         self.buffer.extend_from_slice(data);
         self.parse_frames();
     }
@@ -173,6 +186,15 @@ impl<P: Protocol> ResponseBuffer<P> {
     /// The mapping of messages indexes can no longer be guaranteed from this point on.
     pub fn is_faulty(&self) -> bool {
         self.faulty
+    }
+
+    /// Returns true if max. buffer size is reached
+    pub fn is_full(&self) -> bool {
+        if self.limit == 0 {
+            return false;
+        }
+
+        self.buffer.len() > self.limit
     }
 
     /// Resets the buffer in case of fatal error

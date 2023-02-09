@@ -43,6 +43,9 @@ pub enum CommandErrors {
     CommandResponseViolation,
     /// Redis error response. Inner value is the error message received.
     ErrorResponse(String),
+    /// Memory limit reached. s. [MemoryParameter](crate::network::MemoryParameters)
+    /// *Is recommended to create a new client/connection in this case*.
+    MemoryFull,
 }
 
 /// Client to execute Redis commands

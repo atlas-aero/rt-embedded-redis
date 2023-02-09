@@ -306,6 +306,25 @@ impl NetworkMockBuilder {
         self
     }
 
+    /// Simulates a incomplete binary message of the given length
+    #[allow(unused)]
+    pub fn response_incomplete_binary<const L: usize>(mut self) -> Self {
+        let mut frame = vec![b'$'];
+        frame.put_slice(L.to_string().as_bytes());
+        frame.put_slice(b"\r\n");
+        frame.put_slice(&[0x0; L]);
+
+        for chunk in frame.chunks(32) {
+            let chunk_copy = chunk.to_vec();
+
+            self.stack.expect_receive().times(1).returning(move |_, mut buffer: &mut [u8]| {
+                let _ = buffer.write(&chunk_copy).unwrap();
+                nb::Result::Ok(chunk_copy.len())
+            });
+        }
+        self
+    }
+
     /// Simulates correct HELLO response
     pub fn response_hello(mut self) -> Self {
         let frame = MockFrames::hello();

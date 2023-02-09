@@ -100,6 +100,10 @@ impl<'a, N: TcpClientStack, C: Clock, P: Protocol, Cmd: Command<P::FrameType>> F
         while !self.network.is_complete(&self.id)? {
             let result = self.network.receive_chunk();
 
+            if self.network.is_buffer_full() {
+                return Err(CommandErrors::MemoryFull);
+            }
+
             if let Err(error) = result {
                 match error {
                     nb::Error::Other(_) => {
