@@ -1,4 +1,5 @@
 pub mod auth;
+pub mod bgsave;
 pub mod builder;
 pub mod custom;
 pub mod get;

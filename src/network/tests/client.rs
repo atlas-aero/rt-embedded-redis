@@ -958,3 +958,33 @@ fn test_shorthand_ping() {
 
     client.ping().unwrap().wait().unwrap();
 }
+
+#[test]
+fn test_shorthand_bgsave_non_scheduled() {
+    let clock = TestClock::new(vec![]);
+
+    let mut network = NetworkMockBuilder::default()
+        .send(164, "*1\r\n$6\r\nBGSAVE\r\n")
+        .response_string("Background saving started")
+        .into_mock();
+
+    let mut socket = SocketMock::new(164);
+    let client = create_mocked_client(&mut network, &mut socket, &clock, Resp2 {});
+
+    client.bgsave(false).unwrap().wait().unwrap();
+}
+
+#[test]
+fn test_shorthand_bgsave_scheduled() {
+    let clock = TestClock::new(vec![]);
+
+    let mut network = NetworkMockBuilder::default()
+        .send(164, "*2\r\n$6\r\nBGSAVE\r\n$8\r\nSCHEDULE\r\n")
+        .response_string("Background saving sch")
+        .into_mock();
+
+    let mut socket = SocketMock::new(164);
+    let client = create_mocked_client(&mut network, &mut socket, &clock, Resp2 {});
+
+    client.bgsave(true).unwrap().wait().unwrap();
+}
