@@ -1,3 +1,86 @@
+//! Abstraction of HSET command.
+//!
+//! For general information about this command, see the [Redis documentation](<https://redis.io/commands/hset/>).
+//!
+//! # Using command object
+//! ```
+//!# use core::str::FromStr;
+//!# use embedded_nal::SocketAddr;
+//!# use std_embedded_nal::Stack;
+//!# use std_embedded_time::StandardClock;
+//!# use embedded_redis::commands::builder::CommandBuilder;
+//! use embedded_redis::commands::hset::HashSetCommand;
+//!# use embedded_redis::commands::publish::PublishCommand;
+//!# use embedded_redis::network::ConnectionHandler;
+//!#
+//! let mut stack = Stack::default();
+//! let clock = StandardClock::default();
+//!
+//! let mut connection_handler = ConnectionHandler::resp2(SocketAddr::from_str("127.0.0.1:6379").unwrap());
+//! let client = connection_handler.connect(&mut stack, Some(&clock)).unwrap();
+//!# client.send(CommandBuilder::new("DEL").arg_static("my_hash").to_command()).unwrap().wait().unwrap();
+//!
+//! let command = HashSetCommand::new("my_hash".into(), "color".into(), "green".into());
+//! let response = client.send(command).unwrap().wait().unwrap();
+//!
+//! // Returns the number of added fields
+//! assert_eq!(1, response)
+//! ```
+//! # Setting multiple fields at once
+//! ```
+//!# use core::str::FromStr;
+//!# use embedded_nal::SocketAddr;
+//!# use std_embedded_nal::Stack;
+//!# use std_embedded_time::StandardClock;
+//!# use embedded_redis::commands::builder::CommandBuilder;
+//!# use embedded_redis::commands::hset::HashSetCommand;
+//!# use embedded_redis::commands::publish::PublishCommand;
+//!# use embedded_redis::network::ConnectionHandler;
+//!#
+//!# let mut stack = Stack::default();
+//!# let clock = StandardClock::default();
+//!#
+//!# let mut connection_handler = ConnectionHandler::resp2(SocketAddr::from_str("127.0.0.1:6379").unwrap());
+//!# let client = connection_handler.connect(&mut stack, Some(&clock)).unwrap();
+//!# client.send(CommandBuilder::new("DEL").arg_static("my_hash").to_command()).unwrap().wait().unwrap();
+//!#
+//! let command = HashSetCommand::multiple("my_hash".into(), [
+//!     ("color".into(), "green".into()),
+//!     ("material".into(), "stone".into())
+//! ]);
+//! let response = client.send(command).unwrap().wait().unwrap();
+//!
+//! // Returns the number of added fields
+//! assert_eq!(2, response)
+//! ```
+//! # Shorthand
+//! [Client](Client#method.hset) provides a shorthand method for this command.
+//! ```
+//!# use core::str::FromStr;
+//!# use bytes::Bytes;
+//!# use embedded_nal::SocketAddr;
+//!# use std_embedded_nal::Stack;
+//!# use std_embedded_time::StandardClock;
+//!# use embedded_redis::commands::set::SetCommand;
+//!# use embedded_redis::network::ConnectionHandler;
+//!#
+//!# let mut stack = Stack::default();
+//!# let clock = StandardClock::default();
+//!#
+//!# let mut connection_handler = ConnectionHandler::resp2(SocketAddr::from_str("127.0.0.1:6379").unwrap());
+//!# let client = connection_handler.connect(&mut stack, Some(&clock)).unwrap();
+//!#
+//!# let _ = client.send(SetCommand::new("test_key", "test_value")).unwrap().wait();
+//!#
+//! // Using &str arguments
+//! let _ = client.hset("hash", "field", "value");
+//!
+//! // Using String arguments
+//! let _ = client.hset("hash".to_string(), "field".to_string(), "value".to_string());
+//!
+//! // Using Bytes arguments
+//! let _ = client.hset(Bytes::from_static(b"hash"), Bytes::from_static(b"field"), Bytes::from_static(b"value"));
+//! ```
 use crate::commands::auth::AuthCommand;
 use crate::commands::builder::{CommandBuilder, ToInteger};
 use crate::commands::hello::HelloCommand;
@@ -57,7 +140,7 @@ where
     HelloCommand: Command<<P as Protocol>::FrameType>,
 {
     /// Shorthand for [HashSetCommand]
-    /// For setting multiple fields, use [<P as Protocol>::FrameType: From<CommandBuilder>] directly instead
+    /// For setting multiple fields, use [HashSetCommand] directly instead
     pub fn hset<K, F, V>(
         &'a self,
         key: K,
