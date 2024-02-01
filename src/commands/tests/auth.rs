@@ -13,7 +13,7 @@ fn test_resp2_encode_no_username() {
     assert!(frame.is_array());
     if let Resp2Frame::Array(array) = frame {
         assert_eq!(2, array.len());
-        assert_eq!("AUTH", array.get(0).unwrap().to_string().unwrap());
+        assert_eq!("AUTH", array.first().unwrap().to_string().unwrap());
         assert_eq!("secret123!", array.get(1).unwrap().to_string().unwrap());
     }
 }
@@ -26,7 +26,7 @@ fn test_resp2_encode_username() {
     assert!(frame.is_array());
     if let Resp2Frame::Array(array) = frame {
         assert_eq!(3, array.len());
-        assert_eq!("AUTH", array.get(0).unwrap().to_string().unwrap());
+        assert_eq!("AUTH", array.first().unwrap().to_string().unwrap());
         assert_eq!("test_user", array.get(1).unwrap().to_string().unwrap());
         assert_eq!("secret123!", array.get(2).unwrap().to_string().unwrap());
     }
@@ -42,7 +42,7 @@ fn test_resp3_encode_no_username() {
         assert_eq!(2, data.len());
         assert!(attributes.is_none());
 
-        assert_eq!("AUTH", data.get(0).unwrap().to_string().unwrap());
+        assert_eq!("AUTH", data.first().unwrap().to_string().unwrap());
         assert_eq!("secret123!", data.get(1).unwrap().to_string().unwrap());
     }
 }
@@ -57,7 +57,7 @@ fn test_resp3_encode_username() {
         assert_eq!(3, data.len());
         assert!(attributes.is_none());
 
-        assert_eq!("AUTH", data.get(0).unwrap().to_string().unwrap());
+        assert_eq!("AUTH", data.first().unwrap().to_string().unwrap());
         assert_eq!("user01", data.get(1).unwrap().to_string().unwrap());
         assert_eq!("secret123!", data.get(2).unwrap().to_string().unwrap());
     }
