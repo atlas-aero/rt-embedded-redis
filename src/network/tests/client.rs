@@ -988,3 +988,69 @@ fn test_shorthand_bgsave_scheduled() {
 
     client.bgsave(true).unwrap().wait().unwrap();
 }
+
+#[test]
+fn test_shorthand_hset_str_argument() {
+    let clock = TestClock::new(vec![]);
+
+    let mut network = NetworkMockBuilder::default()
+        .send(
+            164,
+            "*4\r\n$4\r\nHSET\r\n$7\r\nmy_hash\r\n$5\r\ncolor\r\n$5\r\ngreen\r\n",
+        )
+        .response(":1\r\n")
+        .into_mock();
+
+    let mut socket = SocketMock::new(164);
+    let client = create_mocked_client(&mut network, &mut socket, &clock, Resp2 {});
+
+    client.hset("my_hash", "color", "green").unwrap().wait().unwrap();
+}
+
+#[test]
+fn test_shorthand_hset_string_argument() {
+    let clock = TestClock::new(vec![]);
+
+    let mut network = NetworkMockBuilder::default()
+        .send(
+            164,
+            "*4\r\n$4\r\nHSET\r\n$7\r\nmy_hash\r\n$5\r\ncolor\r\n$5\r\ngreen\r\n",
+        )
+        .response(":1\r\n")
+        .into_mock();
+
+    let mut socket = SocketMock::new(164);
+    let client = create_mocked_client(&mut network, &mut socket, &clock, Resp2 {});
+
+    client
+        .hset("my_hash".to_string(), "color".to_string(), "green".to_string())
+        .unwrap()
+        .wait()
+        .unwrap();
+}
+
+#[test]
+fn test_shorthand_hset_bytes_argument() {
+    let clock = TestClock::new(vec![]);
+
+    let mut network = NetworkMockBuilder::default()
+        .send(
+            164,
+            "*4\r\n$4\r\nHSET\r\n$7\r\nmy_hash\r\n$5\r\ncolor\r\n$5\r\ngreen\r\n",
+        )
+        .response(":1\r\n")
+        .into_mock();
+
+    let mut socket = SocketMock::new(164);
+    let client = create_mocked_client(&mut network, &mut socket, &clock, Resp2 {});
+
+    client
+        .hset(
+            Bytes::from_static(b"my_hash"),
+            Bytes::from_static(b"color"),
+            Bytes::from_static(b"green"),
+        )
+        .unwrap()
+        .wait()
+        .unwrap();
+}

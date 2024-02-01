@@ -9,6 +9,7 @@ pub mod ping;
 pub mod publish;
 pub mod set;
 
+mod hset;
 #[cfg(test)]
 pub(crate) mod tests;
 
