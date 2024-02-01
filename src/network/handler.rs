@@ -198,10 +198,6 @@ where
             return;
         }
 
-        if !network.is_connected(self.socket.as_ref().unwrap()).unwrap_or(false) {
-            return self.disconnect(network);
-        }
-
         if self.use_ping && self.ping(network, clock).is_err() {
             self.disconnect(network);
         }

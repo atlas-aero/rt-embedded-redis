@@ -11,8 +11,8 @@ use alloc::vec::Vec;
 use alloc::{format, vec};
 use bytes::{BufMut, Bytes, BytesMut};
 use core::cell::RefCell;
-use embedded_nal::SocketAddr;
 use embedded_nal::TcpClientStack;
+use embedded_nal::{SocketAddr, TcpError, TcpErrorKind};
 use embedded_time::clock::Error;
 use embedded_time::duration::{Duration, Extensions};
 use embedded_time::fixed_point::FixedPoint;
@@ -41,6 +41,12 @@ pub enum MockTcpError {
     Error1,
 }
 
+impl TcpError for MockTcpError {
+    fn kind(&self) -> TcpErrorKind {
+        TcpErrorKind::Other
+    }
+}
+
 mock! {
     #[derive(Debug)]
     pub NetworkStack {}
@@ -56,8 +62,6 @@ mock! {
             socket: &mut SocketMock,
             remote: SocketAddr,
         ) -> nb::Result<(), <Self as TcpClientStack>::Error>;
-
-        fn is_connected(&mut self, socket: &SocketMock) -> Result<bool, <Self as TcpClientStack>::Error>;
 
         fn send(
             &mut self,
@@ -110,24 +114,6 @@ impl NetworkMockBuilder {
         self.stack.expect_connect().times(1).returning(move |socket, _| {
             assert_eq!(socket_id, socket.id);
             nb::Result::Err(nb::Error::Other(Error1))
-        });
-        self
-    }
-
-    /// Asserts that is_connected is called
-    pub fn expect_is_connected(mut self, socket_id: i32, is_connected: bool) -> Self {
-        self.stack.expect_is_connected().times(1).returning(move |socket| {
-            assert_eq!(socket_id, socket.id);
-            Ok(is_connected)
-        });
-        self
-    }
-
-    /// Simulates an error on is_connected call
-    pub fn expect_is_connected_error(mut self, socket_id: i32) -> Self {
-        self.stack.expect_is_connected().times(1).returning(move |socket| {
-            assert_eq!(socket_id, socket.id);
-            Err(Error1)
         });
         self
     }
