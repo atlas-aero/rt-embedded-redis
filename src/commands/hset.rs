@@ -69,9 +69,6 @@
 //!#
 //!# let mut connection_handler = ConnectionHandler::resp2(SocketAddr::from_str("127.0.0.1:6379").unwrap());
 //!# let client = connection_handler.connect(&mut stack, Some(&clock)).unwrap();
-//!#
-//!# let _ = client.send(SetCommand::new("test_key", "test_value")).unwrap().wait();
-//!#
 //! // Using &str arguments
 //! let _ = client.hset("hash", "field", "value");
 //!
