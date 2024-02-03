@@ -5,10 +5,10 @@ pub mod custom;
 pub mod get;
 pub mod hello;
 pub mod helpers;
+pub mod hset;
 pub mod ping;
 pub mod publish;
 pub mod set;
-
 #[cfg(test)]
 pub(crate) mod tests;
 
