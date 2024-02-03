@@ -163,6 +163,20 @@ impl GetResponse {
 
         Some(result.unwrap())
     }
+
+    /// Constructs the response object from frame
+    pub(crate) fn from_frame<F>(frame: F) -> Result<Option<Self>, ResponseTypeError>
+    where
+        F: IsNullFrame + ToStringBytes,
+    {
+        if frame.is_null_frame() {
+            return Ok(None);
+        }
+
+        Ok(Some(GetResponse::new(
+            frame.to_string_bytes().ok_or(ResponseTypeError {})?,
+        )))
+    }
 }
 
 impl<F> Command<F> for GetCommand
@@ -176,13 +190,7 @@ where
     }
 
     fn eval_response(&self, frame: F) -> Result<Self::Response, ResponseTypeError> {
-        if frame.is_null_frame() {
-            return Ok(None);
-        }
-
-        Ok(Some(GetResponse::new(
-            frame.to_string_bytes().ok_or(ResponseTypeError {})?,
-        )))
+        GetResponse::from_frame(frame)
     }
 }
 
