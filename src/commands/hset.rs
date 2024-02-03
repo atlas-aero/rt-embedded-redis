@@ -10,7 +10,6 @@
 //!# use std_embedded_time::StandardClock;
 //!# use embedded_redis::commands::builder::CommandBuilder;
 //! use embedded_redis::commands::hset::HashSetCommand;
-//!# use embedded_redis::commands::publish::PublishCommand;
 //!# use embedded_redis::network::ConnectionHandler;
 //!#
 //! let mut stack = Stack::default();
@@ -34,7 +33,6 @@
 //!# use std_embedded_time::StandardClock;
 //!# use embedded_redis::commands::builder::CommandBuilder;
 //!# use embedded_redis::commands::hset::HashSetCommand;
-//!# use embedded_redis::commands::publish::PublishCommand;
 //!# use embedded_redis::network::ConnectionHandler;
 //!#
 //!# let mut stack = Stack::default();
@@ -61,7 +59,6 @@
 //!# use embedded_nal::SocketAddr;
 //!# use std_embedded_nal::Stack;
 //!# use std_embedded_time::StandardClock;
-//!# use embedded_redis::commands::set::SetCommand;
 //!# use embedded_redis::network::ConnectionHandler;
 //!#
 //!# let mut stack = Stack::default();
