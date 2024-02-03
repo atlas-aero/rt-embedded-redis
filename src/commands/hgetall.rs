@@ -1,3 +1,87 @@
+//! Abstraction of HGETALL command.
+//!
+//! For general information about this command, see the [Redis documentation](<https://redis.io/commands/hgetall/>).
+//!
+//! # Using command object
+//! ```
+//!# use core::str::FromStr;
+//!# use embedded_nal::SocketAddr;
+//!# use std_embedded_nal::Stack;
+//!# use std_embedded_time::StandardClock;
+//!# use embedded_redis::commands::builder::CommandBuilder;
+//!# use embedded_redis::commands::hgetall::HashGetAllCommand;
+//!# use embedded_redis::network::ConnectionHandler;
+//!#
+//! let mut stack = Stack::default();
+//! let clock = StandardClock::default();
+//!
+//! let mut connection_handler = ConnectionHandler::resp2(SocketAddr::from_str("127.0.0.1:6379").unwrap());
+//! let client = connection_handler.connect(&mut stack, Some(&clock)).unwrap();
+//! client.hset("test_all_hash", "color", "green").unwrap().wait().unwrap();
+//! client.hset("test_all_hash", "material", "wood").unwrap().wait().unwrap();
+//!
+//! let command = HashGetAllCommand::new("test_all_hash");
+//! let response = client.send(command).unwrap().wait().unwrap().unwrap();
+//!
+//! assert_eq!("green", response.get_str("color").unwrap());
+//! assert_eq!("wood", response.get_str("material").unwrap());
+//! ```
+//!
+//! # Missing key or field
+//! In case key or field is missing. [None] is returned.
+//! ```
+//!# use core::str::FromStr;
+//!# use embedded_nal::SocketAddr;
+//!# use std_embedded_nal::Stack;
+//!# use std_embedded_time::StandardClock;
+//!# use embedded_redis::commands::builder::CommandBuilder;
+//!# use embedded_redis::commands::hgetall::HashGetAllCommand;
+//!# use embedded_redis::network::ConnectionHandler;
+//!#
+//!# let mut stack = Stack::default();
+//!# let clock = StandardClock::default();
+//!#
+//!# let mut connection_handler = ConnectionHandler::resp2(SocketAddr::from_str("127.0.0.1:6379").unwrap());
+//!# let client = connection_handler.connect(&mut stack, Some(&clock)).unwrap();
+//!#
+//! let command = HashGetAllCommand::new("not_existing");
+//! let response = client.send(command).unwrap().wait().unwrap();
+//!
+//! assert!(response.is_none())
+//! ```
+//!
+//! # Shorthand
+//! [Client](Client#method.hgetall) provides a shorthand method for this command.
+//! ```
+//!# use core::str::FromStr;
+//!# use bytes::Bytes;
+//!# use embedded_nal::SocketAddr;
+//!# use std_embedded_nal::Stack;
+//!# use std_embedded_time::StandardClock;
+//!# use embedded_redis::commands::hset::HashSetCommand;
+//!# use embedded_redis::commands::set::SetCommand;
+//!# use embedded_redis::network::ConnectionHandler;
+//!#
+//!# let mut stack = Stack::default();
+//!# let clock = StandardClock::default();
+//!#
+//!# let mut connection_handler = ConnectionHandler::resp2(SocketAddr::from_str("127.0.0.1:6379").unwrap());
+//!# let client = connection_handler.connect(&mut stack, Some(&clock)).unwrap();
+//!#
+//!# let _ = client.send(HashSetCommand::new("multi_hash_key", "first_field", "green")).unwrap().wait();
+//!# let _ = client.send(HashSetCommand::new("multi_hash_key", "second_field", "wood")).unwrap().wait();
+//!#
+//! // Using &str arguments
+//! let response = client.hgetall("multi_hash_key").unwrap().wait().unwrap().unwrap();
+//! assert_eq!("green", response.get_str("first_field").unwrap());
+//! assert_eq!("wood", response.get_str("second_field").unwrap());
+//!
+//! // Using String arguments
+//! let _ = client.hgetall("multi_hash_key".to_string());
+//!
+//! // Using Bytes arguments
+//! let _ = client.hgetall(Bytes::from_static(b"multi_hash_key"));
+//! ```
 use crate::commands::auth::AuthCommand;
 use crate::commands::builder::{CommandBuilder, ToBytesMap};
 use crate::commands::hello::HelloCommand;
