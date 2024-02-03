@@ -5,7 +5,7 @@ use redis_protocol::resp3::types::Frame as Resp3Frame;
 
 #[test]
 fn test_encode_single_field_resp2() {
-    let frame: Resp2Frame = HashSetCommand::new("my_hash".into(), "color".into(), "green".into()).encode();
+    let frame: Resp2Frame = HashSetCommand::new("my_hash", "color", "green").encode();
 
     assert!(frame.is_array());
     if let Resp2Frame::Array(array) = frame {
@@ -19,7 +19,7 @@ fn test_encode_single_field_resp2() {
 
 #[test]
 fn test_encode_single_field_resp3() {
-    let frame: Resp3Frame = HashSetCommand::new("my_hash".into(), "color".into(), "green".into()).encode();
+    let frame: Resp3Frame = HashSetCommand::new("my_hash", "color", "green").encode();
 
     if let Resp3Frame::Array { data, attributes: _ } = frame {
         assert_eq!(4, data.len());
@@ -76,7 +76,7 @@ fn test_encode_multiple_fields_resp3() {
 
 #[test]
 fn test_eval_response_resp2_success() {
-    let command = HashSetCommand::new("my_hash".into(), "color".into(), "green".into());
+    let command = HashSetCommand::new("my_hash", "color", "green");
     let response = command.eval_response(Resp2Frame::Integer(2));
 
     assert_eq!(2, response.unwrap());
@@ -84,7 +84,7 @@ fn test_eval_response_resp2_success() {
 
 #[test]
 fn test_eval_response_resp3_success() {
-    let command = HashSetCommand::new("my_hash".into(), "color".into(), "green".into());
+    let command = HashSetCommand::new("my_hash", "color", "green");
     let response = command.eval_response(Resp3Frame::Number {
         data: 3,
         attributes: None,
@@ -95,7 +95,7 @@ fn test_eval_response_resp3_success() {
 
 #[test]
 fn test_eval_response_resp2_invalid_response() {
-    let command = HashSetCommand::new("my_hash".into(), "color".into(), "green".into());
+    let command = HashSetCommand::new("my_hash", "color", "green");
     let response = command.eval_response(Resp2Frame::BulkString("3".into()));
 
     assert!(response.is_err());
@@ -103,7 +103,7 @@ fn test_eval_response_resp2_invalid_response() {
 
 #[test]
 fn test_eval_response_resp3_invalid_response() {
-    let command = HashSetCommand::new("my_hash".into(), "color".into(), "green".into());
+    let command = HashSetCommand::new("my_hash", "color", "green");
     let response = command.eval_response(Resp3Frame::BlobString {
         data: "test".into(),
         attributes: None,

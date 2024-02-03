@@ -1054,3 +1054,63 @@ fn test_shorthand_hset_bytes_argument() {
         .wait()
         .unwrap();
 }
+
+#[test]
+fn test_shorthand_hget_str_argument() {
+    let clock = TestClock::new(vec![]);
+
+    let mut network = NetworkMockBuilder::default()
+        .send(164, "*3\r\n$4\r\nHGET\r\n$7\r\nmy_hash\r\n$5\r\nfield\r\n")
+        .response_string("test_response")
+        .into_mock();
+
+    let mut socket = SocketMock::new(164);
+    let client = create_mocked_client(&mut network, &mut socket, &clock, Resp2 {});
+
+    assert_eq!(
+        "test_response",
+        client
+            .hget("my_hash", "field")
+            .unwrap()
+            .wait()
+            .unwrap()
+            .unwrap()
+            .as_str()
+            .unwrap()
+    );
+}
+
+#[test]
+fn test_shorthand_hget_string_argument() {
+    let clock = TestClock::new(vec![]);
+
+    let mut network = NetworkMockBuilder::default()
+        .send(164, "*3\r\n$4\r\nHGET\r\n$7\r\nmy_hash\r\n$5\r\nfield\r\n")
+        .response_string("test_response")
+        .into_mock();
+
+    let mut socket = SocketMock::new(164);
+    let client = create_mocked_client(&mut network, &mut socket, &clock, Resp2 {});
+
+    let response = client.hget("my_hash".to_string(), "field".to_string()).unwrap().wait();
+    assert_eq!("test_response", response.unwrap().unwrap().as_str().unwrap());
+}
+
+#[test]
+fn test_shorthand_hget_bytes_argument() {
+    let clock = TestClock::new(vec![]);
+
+    let mut network = NetworkMockBuilder::default()
+        .send(164, "*3\r\n$4\r\nHGET\r\n$7\r\nmy_hash\r\n$5\r\nfield\r\n")
+        .response_string("test_response")
+        .into_mock();
+
+    let mut socket = SocketMock::new(164);
+    let client = create_mocked_client(&mut network, &mut socket, &clock, Resp2 {});
+
+    let response = client
+        .hget(Bytes::from_static(b"my_hash"), Bytes::from_static(b"field"))
+        .unwrap()
+        .wait();
+    assert_eq!("test_response", response.unwrap().unwrap().as_str().unwrap());
+}
