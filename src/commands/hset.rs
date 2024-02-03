@@ -20,7 +20,7 @@
 //! let client = connection_handler.connect(&mut stack, Some(&clock)).unwrap();
 //!# client.send(CommandBuilder::new("DEL").arg_static("my_hash").to_command()).unwrap().wait().unwrap();
 //!
-//! let command = HashSetCommand::new("my_hash".into(), "color".into(), "green".into());
+//! let command = HashSetCommand::new("my_hash", "color", "green");
 //! let response = client.send(command).unwrap().wait().unwrap();
 //!
 //! // Returns the number of added fields
@@ -101,10 +101,15 @@ pub struct HashSetCommand<const N: usize> {
 }
 
 impl HashSetCommand<1> {
-    pub fn new(key: Bytes, field: Bytes, value: Bytes) -> Self {
+    pub fn new<K, F, V>(key: K, field: F, value: V) -> Self
+    where
+        Bytes: From<K>,
+        Bytes: From<F>,
+        Bytes: From<V>,
+    {
         Self {
-            key,
-            fields: [(field, value)],
+            key: key.into(),
+            fields: [(field.into(), value.into())],
         }
     }
 }
@@ -154,6 +159,6 @@ where
         <P as Protocol>::FrameType: ToInteger,
         <P as Protocol>::FrameType: From<CommandBuilder>,
     {
-        self.send(HashSetCommand::new(key.into(), field.into(), value.into()))
+        self.send(HashSetCommand::new(key, field, value))
     }
 }
