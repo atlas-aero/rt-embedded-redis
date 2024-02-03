@@ -6,6 +6,7 @@ pub mod get;
 pub mod hello;
 pub mod helpers;
 pub mod hget;
+pub mod hgetall;
 pub mod hset;
 pub mod ping;
 pub mod publish;
