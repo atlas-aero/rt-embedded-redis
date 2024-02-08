@@ -31,10 +31,12 @@
 //!     .into();
 //! ```
 use crate::commands::custom::CustomCommand;
+use alloc::collections::BTreeMap;
 use alloc::string::{String, ToString};
 use alloc::vec;
 use alloc::vec::Vec;
 use bytes::Bytes;
+use redis_protocol::resp2::prelude::Frame;
 use redis_protocol::resp2::types::Frame as Resp2Frame;
 use redis_protocol::resp3::types::Frame as Resp3Frame;
 
@@ -206,5 +208,72 @@ impl ToStringBytes for Resp3Frame {
             Resp3Frame::BlobString { data, attributes: _ } => Some(data.clone()),
             _ => None,
         }
+    }
+}
+
+/// Trait for converting RESP2 arrays or RESP3 maps
+pub trait ToBytesMap {
+    /// Converts the frame to map
+    /// Returns None in case of protocol violation
+    fn to_map(&self) -> Option<BTreeMap<Bytes, Bytes>>;
+}
+
+impl ToBytesMap for Resp2Frame {
+    fn to_map(&self) -> Option<BTreeMap<Bytes, Bytes>> {
+        let mut map = BTreeMap::new();
+
+        match self {
+            Frame::Array(array) => {
+                for item in array.chunks(2) {
+                    if item.len() < 2 {
+                        return None;
+                    }
+
+                    let field = match &item[0] {
+                        Frame::SimpleString(value) | Frame::BulkString(value) => value.clone(),
+                        _ => return None,
+                    };
+
+                    let value = match &item[1] {
+                        Frame::SimpleString(value) | Frame::BulkString(value) => value.clone(),
+                        _ => return None,
+                    };
+
+                    map.insert(field, value);
+                }
+            }
+            _ => return None,
+        }
+
+        Some(map)
+    }
+}
+
+impl ToBytesMap for Resp3Frame {
+    fn to_map(&self) -> Option<BTreeMap<Bytes, Bytes>> {
+        let mut map = BTreeMap::new();
+
+        match self {
+            Resp3Frame::Map { data, attributes: _ } => {
+                for item in data {
+                    let field = match item.0 {
+                        Resp3Frame::BlobString { data, attributes: _ }
+                        | Resp3Frame::SimpleString { data, attributes: _ } => data.clone(),
+                        _ => return None,
+                    };
+
+                    let value = match item.1 {
+                        Resp3Frame::BlobString { data, attributes: _ }
+                        | Resp3Frame::SimpleString { data, attributes: _ } => data.clone(),
+                        _ => return None,
+                    };
+
+                    map.insert(field, value);
+                }
+            }
+            _ => return None,
+        }
+
+        Some(map)
     }
 }

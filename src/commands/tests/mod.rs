@@ -1,9 +1,11 @@
 mod auth;
 mod bgsave;
+mod builder;
 mod custom;
 mod get;
 pub(crate) mod hello;
 mod hget;
+mod hgetall;
 mod hset;
 mod ping;
 mod publish;

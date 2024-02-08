@@ -1114,3 +1114,78 @@ fn test_shorthand_hget_bytes_argument() {
         .wait();
     assert_eq!("test_response", response.unwrap().unwrap().as_str().unwrap());
 }
+
+#[test]
+fn test_shorthand_hgetall_str_argument() {
+    let clock = TestClock::new(vec![]);
+
+    let mut network = NetworkMockBuilder::default()
+        .send(164, "*2\r\n$7\r\nHGETALL\r\n$7\r\nmy_hash\r\n")
+        .response("*2\r\n$5\r\ncolor\r\n$5\r\ngreen\r\n")
+        .into_mock();
+
+    let mut socket = SocketMock::new(164);
+    let client = create_mocked_client(&mut network, &mut socket, &clock, Resp2 {});
+
+    assert_eq!(
+        "green",
+        client
+            .hgetall("my_hash")
+            .unwrap()
+            .wait()
+            .unwrap()
+            .unwrap()
+            .get_str("color")
+            .unwrap()
+    );
+}
+
+#[test]
+fn test_shorthand_hgetall_string_argument() {
+    let clock = TestClock::new(vec![]);
+
+    let mut network = NetworkMockBuilder::default()
+        .send(164, "*2\r\n$7\r\nHGETALL\r\n$7\r\nmy_hash\r\n")
+        .response("*2\r\n$5\r\ncolor\r\n$5\r\ngreen\r\n")
+        .into_mock();
+
+    let mut socket = SocketMock::new(164);
+    let client = create_mocked_client(&mut network, &mut socket, &clock, Resp2 {});
+
+    assert_eq!(
+        "green",
+        client
+            .hgetall("my_hash".to_string())
+            .unwrap()
+            .wait()
+            .unwrap()
+            .unwrap()
+            .get_str("color")
+            .unwrap()
+    );
+}
+
+#[test]
+fn test_shorthand_hgetall_bytes_argument() {
+    let clock = TestClock::new(vec![]);
+
+    let mut network = NetworkMockBuilder::default()
+        .send(164, "*2\r\n$7\r\nHGETALL\r\n$7\r\nmy_hash\r\n")
+        .response("*2\r\n$5\r\ncolor\r\n$5\r\ngreen\r\n")
+        .into_mock();
+
+    let mut socket = SocketMock::new(164);
+    let client = create_mocked_client(&mut network, &mut socket, &clock, Resp2 {});
+
+    assert_eq!(
+        "green",
+        client
+            .hgetall(Bytes::from_static(b"my_hash"))
+            .unwrap()
+            .wait()
+            .unwrap()
+            .unwrap()
+            .get_str("color")
+            .unwrap()
+    );
+}
