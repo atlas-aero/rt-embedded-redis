@@ -20,7 +20,7 @@ bytes = { version = "1.2.1", default-features = false }
 mockall = { version = "0.12.1", optional=true }
 
 [dev-dependencies]
-std-embedded-nal = { git="https://github.com/marius-meissner/std-embedded-nal", version = "0.3.0" }
+std-embedded-nal = { package = "mm-std-embedded-nal", version = "0.3.0" }
 std-embedded-time = "0.1.0"
 mockall = { version = "0.12.1" }
 
