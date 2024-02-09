@@ -108,12 +108,18 @@ impl HashGetAllCommand {
     }
 }
 
+#[cfg_attr(test, derive(Debug))]
 pub struct HashResponse {
     /// Field/Value map
     inner: BTreeMap<Bytes, Bytes>,
 }
 
 impl HashResponse {
+    #[cfg(test)]
+    pub fn new(inner: BTreeMap<Bytes, Bytes>) -> Self {
+        Self { inner }
+    }
+
     /// Extracts inner map
     #[allow(clippy::wrong_self_convention)]
     pub fn to_map(self) -> BTreeMap<Bytes, Bytes> {
