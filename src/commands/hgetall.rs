@@ -115,7 +115,6 @@ pub struct HashResponse {
 }
 
 impl HashResponse {
-    #[cfg(test)]
     pub fn new(inner: BTreeMap<Bytes, Bytes>) -> Self {
         Self { inner }
     }
