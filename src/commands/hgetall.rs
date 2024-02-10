@@ -108,7 +108,7 @@ impl HashGetAllCommand {
     }
 }
 
-#[cfg_attr(test, derive(Debug))]
+#[derive(Debug)]
 pub struct HashResponse {
     /// Field/Value map
     inner: BTreeMap<Bytes, Bytes>,
