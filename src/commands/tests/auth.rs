@@ -2,15 +2,15 @@ use crate::commands::auth::AuthCommand;
 use crate::commands::Command;
 use alloc::vec;
 use bytes::Bytes;
-use redis_protocol::resp2::prelude::Frame as Resp2Frame;
-use redis_protocol::resp3::prelude::{Frame as Resp3Frame, Frame};
+use redis_protocol::resp2::types::{BytesFrame as Resp2Frame, Resp2Frame as _};
+use redis_protocol::resp3::types::{BytesFrame as Resp3Frame, Resp3Frame as _};
 
 #[test]
 fn test_resp2_encode_no_username() {
     let command = AuthCommand::new(None as Option<Bytes>, "secret123!");
     let frame: Resp2Frame = command.encode();
 
-    assert!(frame.is_array());
+    assert!(matches!(frame, Resp2Frame::Array(_)));
     if let Resp2Frame::Array(array) = frame {
         assert_eq!(2, array.len());
         assert_eq!("AUTH", array.first().unwrap().to_string().unwrap());
@@ -23,7 +23,7 @@ fn test_resp2_encode_username() {
     let command = AuthCommand::new(Some("test_user"), "secret123!");
     let frame: Resp2Frame = command.encode();
 
-    assert!(frame.is_array());
+    assert!(matches!(frame, Resp2Frame::Array(_)));
     if let Resp2Frame::Array(array) = frame {
         assert_eq!(3, array.len());
         assert_eq!("AUTH", array.first().unwrap().to_string().unwrap());
@@ -37,8 +37,8 @@ fn test_resp3_encode_no_username() {
     let command = AuthCommand::new(None as Option<Bytes>, "secret123!");
     let frame: Resp3Frame = command.encode();
 
-    assert!(frame.is_array());
-    if let Frame::Array { data, attributes } = frame {
+    matches!(frame, Resp3Frame::Array { .. });
+    if let Resp3Frame::Array { data, attributes } = frame {
         assert_eq!(2, data.len());
         assert!(attributes.is_none());
 
@@ -52,8 +52,8 @@ fn test_resp3_encode_username() {
     let command = AuthCommand::new(Some("user01"), "secret123!");
     let frame: Resp3Frame = command.encode();
 
-    assert!(frame.is_array());
-    if let Frame::Array { data, attributes } = frame {
+    matches!(frame, Resp3Frame::Array { .. });
+    if let Resp3Frame::Array { data, attributes } = frame {
         assert_eq!(3, data.len());
         assert!(attributes.is_none());
 

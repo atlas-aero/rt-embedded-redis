@@ -1,6 +1,6 @@
 use bytes::Bytes;
-use redis_protocol::resp2::prelude::{Frame as Resp2Frame, Frame};
-use redis_protocol::resp3::prelude::Frame as Resp3Frame;
+use redis_protocol::resp2::types::BytesFrame as Resp2Frame;
+use redis_protocol::resp3::types::BytesFrame as Resp3Frame;
 
 /// A decoded PubSub message
 #[derive(Debug, PartialEq, Eq)]
@@ -87,7 +87,7 @@ impl ToPushMessage for Resp2Frame {
 
     fn clone_byte_string(&self, frame: &Self) -> Result<Bytes, DecodeError> {
         match frame {
-            Frame::SimpleString(string) | Frame::BulkString(string) => Ok(string.clone()),
+            Resp2Frame::SimpleString(string) | Resp2Frame::BulkString(string) => Ok(string.clone()),
             _ => Err(DecodeError::ProtocolViolation),
         }
     }

@@ -20,9 +20,10 @@ use embedded_time::fraction::Fraction;
 use embedded_time::timer::param::{Armed, OneShot};
 use embedded_time::{Clock, Instant, Timer};
 use mockall::mock;
-use redis_protocol::resp2::types::Frame as Resp2Frame;
+use redis_protocol::error::RedisProtocolErrorKind::BufferTooSmall;
+use redis_protocol::resp2::types::BytesFrame as Resp2Frame;
 use redis_protocol::resp3::encode::complete::encode_bytes as resp3_encode_bytes;
-use redis_protocol::resp3::types::{Frame as Resp3Frame, FrameMap};
+use redis_protocol::resp3::types::{BytesFrame as Resp3Frame, FrameMap};
 use std::io::Write;
 
 #[derive(Debug)]
@@ -315,7 +316,15 @@ impl NetworkMockBuilder {
     pub fn response_hello(mut self) -> Self {
         let frame = MockFrames::hello();
         let mut bytes = BytesMut::new();
-        resp3_encode_bytes(&mut bytes, &frame).unwrap();
+
+        // Extend buffer if needed
+        while let Err(error) = resp3_encode_bytes(&mut bytes, &frame, false) {
+            if let BufferTooSmall(size) = error.kind() {
+                bytes.resize(bytes.len() + *size, 0x0);
+            } else {
+                panic!("Encoding frame failed: {:?}", error);
+            }
+        }
 
         let mut byte_chunks = vec![];
         for chunk in bytes.chunks(32) {

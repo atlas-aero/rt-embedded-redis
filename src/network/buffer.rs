@@ -9,6 +9,7 @@ use core::cell::RefCell;
 use core::fmt::{Debug, Formatter};
 use core::ops::{Deref, DerefMut};
 use embedded_nal::TcpClientStack;
+use redis_protocol::error::RedisProtocolErrorKind::BufferTooSmall;
 
 /// Manges interaction between network stack and response buffer
 pub(crate) struct Network<'a, N: TcpClientStack, P: Protocol> {
@@ -94,8 +95,14 @@ impl<'a, N: TcpClientStack, P: Protocol> Network<'a, N, P> {
     /// Raw network logic for sending a frame
     pub(crate) fn send_frame(&self, frame: P::FrameType) -> Result<(), CommandErrors> {
         let mut buffer = BytesMut::new();
-        if self.protocol.encode_bytes(&mut buffer, &frame).is_err() {
-            return Err(CommandErrors::EncodingCommandFailed);
+
+        // Extend buffer if needed
+        while let Err(error) = self.protocol.encode_bytes(&mut buffer, &frame) {
+            if let BufferTooSmall(size) = error.kind() {
+                buffer.resize(buffer.len() + *size, 0x0);
+            } else {
+                return Err(CommandErrors::EncodingCommandFailed);
+            }
         }
 
         let mut stack = self.stack.borrow_mut();

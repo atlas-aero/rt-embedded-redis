@@ -7,7 +7,7 @@
 //! The following example demonstrates the creation of command frame for [HGET](https://redis.io/commands/hget/).
 //! ```
 //! use embedded_redis::commands::builder::CommandBuilder;
-//! use redis_protocol::resp2::types::Frame as Resp2Frame;
+//! use redis_protocol::resp2::types::BytesFrame as Resp2Frame;
 //!
 //! let _frame: Resp2Frame = CommandBuilder::new("HGET")
 //!     .arg_static("field1")
@@ -19,7 +19,7 @@
 //! ```
 //!# use bytes::Bytes;
 //! use embedded_redis::commands::builder::CommandBuilder;
-//!# use redis_protocol::resp2::types::Frame as Resp2Frame;
+//!# use redis_protocol::resp2::types::BytesFrame as Resp2Frame;
 //!#
 //! // Using Bytes avoids data copy, as clone() is shallow
 //! let value = Bytes::from_static("Large value".as_bytes());
@@ -36,9 +36,8 @@ use alloc::string::{String, ToString};
 use alloc::vec;
 use alloc::vec::Vec;
 use bytes::Bytes;
-use redis_protocol::resp2::prelude::Frame;
-use redis_protocol::resp2::types::Frame as Resp2Frame;
-use redis_protocol::resp3::types::Frame as Resp3Frame;
+use redis_protocol::resp2::types::{BytesFrame as Resp2Frame, Resp2Frame as _};
+use redis_protocol::resp3::types::{BytesFrame as Resp3Frame, Resp3Frame as _};
 
 /// Builder for constructing RESP2/3 frames
 #[derive(Clone, Default)]
@@ -152,13 +151,13 @@ pub trait IsNullFrame {
 
 impl IsNullFrame for Resp2Frame {
     fn is_null_frame(&self) -> bool {
-        self.is_null()
+        self == &Resp2Frame::Null
     }
 }
 
 impl IsNullFrame for Resp3Frame {
     fn is_null_frame(&self) -> bool {
-        self.is_null()
+        self == &Resp3Frame::Null
     }
 }
 
@@ -223,19 +222,19 @@ impl ToBytesMap for Resp2Frame {
         let mut map = BTreeMap::new();
 
         match self {
-            Frame::Array(array) => {
+            Resp2Frame::Array(array) => {
                 for item in array.chunks(2) {
                     if item.len() < 2 {
                         return None;
                     }
 
                     let field = match &item[0] {
-                        Frame::SimpleString(value) | Frame::BulkString(value) => value.clone(),
+                        Resp2Frame::SimpleString(value) | Resp2Frame::BulkString(value) => value.clone(),
                         _ => return None,
                     };
 
                     let value = match &item[1] {
-                        Frame::SimpleString(value) | Frame::BulkString(value) => value.clone(),
+                        Resp2Frame::SimpleString(value) | Resp2Frame::BulkString(value) => value.clone(),
                         _ => return None,
                     };
 

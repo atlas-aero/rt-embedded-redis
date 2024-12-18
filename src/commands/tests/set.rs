@@ -5,9 +5,8 @@ use alloc::string::ToString;
 use alloc::vec;
 use alloc::vec::Vec;
 use bytes::Bytes;
-use redis_protocol::resp2::types::Frame as Resp2Frame;
-use redis_protocol::resp3::prelude::Frame;
-use redis_protocol::resp3::types::Frame as Resp3Frame;
+use redis_protocol::resp2::types::{BytesFrame as Resp2Frame, Resp2Frame as _};
+use redis_protocol::resp3::types::{BytesFrame as Resp3Frame, Resp3Frame as _};
 
 #[test]
 fn test_encode_no_options() {
@@ -267,7 +266,8 @@ where
 }
 
 fn assert_resp2_command(expected: Vec<&'static str>, frame: Resp2Frame) {
-    assert!(frame.is_array());
+    assert!(matches!(frame, Resp2Frame::Array(_)));
+
     if let Resp2Frame::Array(array) = frame {
         assert_eq!(expected.len(), array.len());
 
@@ -281,9 +281,9 @@ fn assert_resp2_command(expected: Vec<&'static str>, frame: Resp2Frame) {
 }
 
 fn assert_resp3_command(expected: Vec<&'static str>, frame: Resp3Frame) {
-    assert!(frame.is_array());
+    matches!(frame, Resp3Frame::Array { .. });
 
-    if let Frame::Array { data, attributes: _ } = frame {
+    if let Resp3Frame::Array { data, attributes: _ } = frame {
         assert_eq!(expected.len(), data.len());
 
         for item in expected.iter().enumerate() {

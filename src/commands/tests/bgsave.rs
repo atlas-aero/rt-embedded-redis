@@ -1,14 +1,14 @@
 use crate::commands::bgsave::BackgroundSaveCommand;
 use crate::commands::Command;
 use bytes::Bytes;
-use redis_protocol::resp2::types::Frame as Resp2Frame;
-use redis_protocol::resp3::types::Frame as Resp3Frame;
+use redis_protocol::resp2::types::{BytesFrame as Resp2Frame, Resp2Frame as _};
+use redis_protocol::resp3::types::{BytesFrame as Resp3Frame, Resp3Frame as _};
 
 #[test]
 fn test_encode_resp2_default() {
     let frame: Resp2Frame = BackgroundSaveCommand::default().encode();
 
-    assert!(frame.is_array());
+    assert!(matches!(frame, Resp2Frame::Array(_)));
     if let Resp2Frame::Array(array) = frame {
         assert_eq!(1, array.len());
         assert_eq!("BGSAVE", array[0].to_string().unwrap());
@@ -19,7 +19,7 @@ fn test_encode_resp2_default() {
 fn test_encode_resp2_schedule() {
     let frame: Resp2Frame = BackgroundSaveCommand::new(true).encode();
 
-    assert!(frame.is_array());
+    assert!(matches!(frame, Resp2Frame::Array(_)));
     if let Resp2Frame::Array(array) = frame {
         assert_eq!(2, array.len());
         assert_eq!("BGSAVE", array[0].to_string().unwrap());
@@ -31,7 +31,7 @@ fn test_encode_resp2_schedule() {
 fn test_encode_resp3_default() {
     let frame: Resp3Frame = BackgroundSaveCommand::default().encode();
 
-    assert!(frame.is_array());
+    matches!(frame, Resp3Frame::Array { .. });
     if let Resp3Frame::Array { data, attributes: _ } = frame {
         assert_eq!(1, data.len());
         assert_eq!("BGSAVE", data[0].to_string().unwrap());
@@ -42,7 +42,7 @@ fn test_encode_resp3_default() {
 fn test_encode_resp3_schedule() {
     let frame: Resp3Frame = BackgroundSaveCommand::new(true).encode();
 
-    assert!(frame.is_array());
+    matches!(frame, Resp3Frame::Array { .. });
     if let Resp3Frame::Array { data, attributes: _ } = frame {
         assert_eq!(2, data.len());
         assert_eq!("BGSAVE", data[0].to_string().unwrap());

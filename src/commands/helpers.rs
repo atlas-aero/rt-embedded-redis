@@ -2,8 +2,8 @@
 use alloc::borrow::ToOwned;
 use alloc::string::{String, ToString};
 use bytes::Bytes;
-use redis_protocol::resp2::types::Frame as Resp2Frame;
-use redis_protocol::resp3::types::{Frame as Resp3Frame, FrameMap};
+use redis_protocol::resp2::types::BytesFrame as Resp2Frame;
+use redis_protocol::resp3::types::{BytesFrame as Resp3Frame, FrameMap, Resp3Frame as _};
 
 /// Helper for casting Strings to frame types
 pub struct CmdStr<'a> {
@@ -96,11 +96,11 @@ impl CmdBytes {
 
 /// Helper for finding & casting map elements
 pub struct RespMap<'a> {
-    inner: &'a FrameMap,
+    inner: &'a FrameMap<Resp3Frame, Resp3Frame>,
 }
 
 impl<'a> RespMap<'a> {
-    pub fn new(inner: &'a FrameMap) -> Self {
+    pub fn new(inner: &'a FrameMap<Resp3Frame, Resp3Frame>) -> Self {
         RespMap { inner }
     }
 

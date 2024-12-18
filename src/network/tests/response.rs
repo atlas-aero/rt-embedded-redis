@@ -1,5 +1,6 @@
 use crate::network::protocol::Resp2;
 use crate::network::response::{MemoryParameters, ResponseBuffer};
+use redis_protocol::resp2::types::{BytesFrame, Resp2Frame as _};
 
 #[test]
 fn test_complete_empty_buffer() {
@@ -110,7 +111,7 @@ fn test_is_ok_response_unprocessed_data_left() {
     buffer.append(b"+OK\r\n*2");
 
     let frame = buffer.take_frame(0).unwrap();
-    assert!(frame.is_string());
+    assert!(frame.as_str().is_some());
     assert_eq!("OK", frame.to_string().unwrap());
 }
 
@@ -120,7 +121,7 @@ fn test_is_ok_response_true() {
     buffer.append(b"+OK\r\n");
 
     let frame = buffer.take_frame(0).unwrap();
-    assert!(frame.is_string());
+    assert!(frame.as_str().is_some());
     assert_eq!("OK", frame.to_string().unwrap());
 }
 
@@ -131,7 +132,7 @@ fn test_is_ok_response_multiple_frames_true() {
     buffer.append(b"+OK\r\n");
 
     let frame = buffer.take_frame(1).unwrap();
-    assert!(frame.is_string());
+    assert!(frame.as_str().is_some());
     assert_eq!("OK", frame.to_string().unwrap());
 }
 
@@ -142,7 +143,7 @@ fn test_is_ok_response_multiple_frames_false() {
     buffer.append(b"-ERROR\r\n");
 
     let frame = buffer.take_frame(1).unwrap();
-    assert!(frame.is_error());
+    assert!(matches!(frame, BytesFrame::Error(_)));
 }
 
 #[test]
@@ -238,7 +239,7 @@ fn test_faulty_previous_frame_readable() {
     assert!(buffer.is_complete(0));
 
     let frame = buffer.take_frame(0).unwrap();
-    assert!(frame.is_string());
+    assert!(frame.as_str().is_some());
     assert_eq!("OK", frame.to_string().unwrap());
 }
 
