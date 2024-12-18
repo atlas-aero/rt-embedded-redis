@@ -18,8 +18,8 @@ pub(crate) mod tests;
 #[derive(Debug)]
 pub struct ResponseTypeError {}
 
-/// Generic command structure. F is either [Resp2Frame](redis_protocol::resp2::types::Frame) or
-/// [Resp3Frame](redis_protocol::resp3::types::Frame)
+/// Generic command structure. F is either [Resp2Frame](redis_protocol::resp2::types::BytesFrame) or
+/// [Resp3Frame](redis_protocol::resp3::types::BytesFrame)
 pub trait Command<F> {
     /// Response type, either a custom evaluated "high-level" response or the original RESP frame
     type Response;

@@ -3,8 +3,8 @@
 //! [CustomCommand] in combination with [CommandBuilder] can be used for executing arbitrary commands,
 //! which high level logic is not abstracted yet by this crate.
 //!
-//! Response is not evaluated, so pure [Resp2Frame](redis_protocol::resp2::types::Frame)
-//! or [Resp3Frame](redis_protocol::resp3::types::Frame) is returned.
+//! Response is not evaluated, so pure [Resp2Frame](redis_protocol::resp2::types::BytesFrame)
+//! or [Resp3Frame](redis_protocol::resp3::types::BytesFrame) is returned.
 //! The only exception is that error responses are intercepted and converted to [CommandErrors::ErrorResponse](crate::network::CommandErrors::ErrorResponse)
 //!
 //! *Please consider contributing command abstractions not supported yet.*
