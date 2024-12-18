@@ -1,8 +1,8 @@
 use crate::network::tests::mocks::MockFrames;
 use crate::subscription::messages::{DecodeError, Message, ToPushMessage};
 use bytes::Bytes;
-use redis_protocol::resp2::types::Frame as Resp2Frame;
-use redis_protocol::resp3::types::Frame as Resp3Frame;
+use redis_protocol::resp2::types::BytesFrame as Resp2Frame;
+use redis_protocol::resp3::types::BytesFrame as Resp3Frame;
 
 #[test]
 fn test_decode_resp3_no_push() {

@@ -18,6 +18,7 @@
 //!# use std_embedded_time::StandardClock;
 //!# use embedded_redis::commands::builder::CommandBuilder;
 //!# use embedded_redis::network::ConnectionHandler;
+//!# use redis_protocol::resp2::types::Resp2Frame;
 //!#
 //! let mut stack = Stack::default();
 //! let clock = StandardClock::default();

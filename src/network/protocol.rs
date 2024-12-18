@@ -1,11 +1,10 @@
 use crate::network::client::CommandErrors;
 use alloc::string::ToString;
 use bytes::{Bytes, BytesMut};
-use redis_protocol::resp2::types::Frame as Resp2Frame;
-use redis_protocol::resp3::prelude::Frame;
+use redis_protocol::error::RedisProtocolError;
+use redis_protocol::resp2::types::BytesFrame as Resp2Frame;
+use redis_protocol::resp3::types::BytesFrame as Resp3Frame;
 use redis_protocol::resp3::types::DecodedFrame;
-use redis_protocol::resp3::types::Frame as Resp3Frame;
-use redis_protocol::types::RedisProtocolError;
 use redis_protocol::{resp2, resp3};
 
 /// Generic wrapper for redis-protocol encode/decode methods
@@ -35,11 +34,11 @@ impl Protocol for Resp2 {
     type FrameType = Resp2Frame;
 
     fn decode(&self, data: &Bytes) -> Result<Option<(Self::FrameType, usize)>, RedisProtocolError> {
-        resp2::decode::decode(data)
+        resp2::decode::decode_bytes(data)
     }
 
     fn encode_bytes(&self, buf: &mut BytesMut, frame: &Self::FrameType) -> Result<usize, RedisProtocolError> {
-        resp2::encode::encode_bytes(buf, frame)
+        resp2::encode::encode_bytes(buf, frame, false)
     }
 
     fn assert_error(&self, frame: &Self::FrameType) -> Result<(), CommandErrors> {
@@ -61,7 +60,7 @@ impl Protocol for Resp3 {
     /// In case of streaming frame None is returned. In Redis <= 6 there is currently no command
     /// returning a stream frame.
     fn decode(&self, data: &Bytes) -> Result<Option<(Self::FrameType, usize)>, RedisProtocolError> {
-        match resp3::decode::streaming::decode(data) {
+        match resp3::decode::streaming::decode_bytes(data) {
             Ok(option) => match option {
                 None => Ok(None),
                 Some(decoded) => {
@@ -77,13 +76,15 @@ impl Protocol for Resp3 {
     }
 
     fn encode_bytes(&self, buf: &mut BytesMut, frame: &Self::FrameType) -> Result<usize, RedisProtocolError> {
-        resp3::encode::complete::encode_bytes(buf, frame)
+        resp3::encode::complete::encode_bytes(buf, frame, false)
     }
 
     fn assert_error(&self, frame: &Self::FrameType) -> Result<(), CommandErrors> {
         match frame {
-            Frame::BlobError { .. } => Err(CommandErrors::ErrorResponse("blob".to_string())),
-            Frame::SimpleError { data, attributes: _ } => Err(CommandErrors::ErrorResponse(data.to_string())),
+            Resp3Frame::BlobError { .. } => Err(CommandErrors::ErrorResponse("blob".to_string())),
+            Resp3Frame::SimpleError { data, attributes: _ } => {
+                Err(CommandErrors::ErrorResponse(data.to_string()))
+            }
             _ => Ok(()),
         }
     }

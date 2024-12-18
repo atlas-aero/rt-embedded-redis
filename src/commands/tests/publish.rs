@@ -1,14 +1,14 @@
 use crate::commands::publish::PublishCommand;
 use crate::commands::Command;
-use redis_protocol::resp2::types::Frame as Resp2Frame;
-use redis_protocol::resp3::types::Frame as Resp3Frame;
+use redis_protocol::resp2::types::{BytesFrame as Resp2Frame, Resp2Frame as _};
+use redis_protocol::resp3::types::{BytesFrame as Resp3Frame, Resp3Frame as _};
 
 #[test]
 fn test_encode_resp2() {
     let command = PublishCommand::new("test_channel", "test_message");
     let frame: Resp2Frame = command.encode();
 
-    assert!(frame.is_array());
+    assert!(matches!(frame, Resp2Frame::Array(_)));
     if let Resp2Frame::Array(array) = frame {
         assert_eq!(3, array.len());
         assert_eq!("PUBLISH", array[0].to_string().unwrap());
@@ -22,7 +22,7 @@ fn test_encode_resp3() {
     let command = PublishCommand::new("test_channel", "test_message");
     let frame: Resp3Frame = command.encode();
 
-    assert!(frame.is_array());
+    matches!(frame, Resp3Frame::Array { .. });
     if let Resp3Frame::Array { data, attributes: _ } = frame {
         assert_eq!(3, data.len());
         assert_eq!("PUBLISH", data[0].to_string().unwrap());
