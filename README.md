@@ -69,3 +69,7 @@ Licensed under either of
 at your option.
 
 Each contributor agrees that his/her contribution covers both licenses.
+
+## Credits
+
+This crate is based on [redis-protocol](https://crates.io/crates/redis-protocol), developed by @aembke.
