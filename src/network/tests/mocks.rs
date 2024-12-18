@@ -407,9 +407,10 @@ impl Clock for TestClock {
         Ok(Instant::new(self.next_instants.borrow_mut().remove(0)))
     }
 
-    fn new_timer<Dur: Duration>(&self, duration: Dur) -> Timer<OneShot, Armed, Self, Dur>
+    fn new_timer<Dur>(&self, duration: Dur) -> Timer<OneShot, Armed, Self, Dur>
     where
         Dur: FixedPoint,
+        Dur: Duration,
     {
         Timer::new(self, duration)
     }

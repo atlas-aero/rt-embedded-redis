@@ -127,9 +127,7 @@ impl<'a, N: TcpClientStack, C: Clock, P: Protocol, Cmd: Command<P::FrameType>> F
     }
 }
 
-impl<'a, N: TcpClientStack, C: Clock, P: Protocol, Cmd: Command<P::FrameType>> Drop
-    for Future<'a, N, C, P, Cmd>
-{
+impl<N: TcpClientStack, C: Clock, P: Protocol, Cmd: Command<P::FrameType>> Drop for Future<'_, N, C, P, Cmd> {
     fn drop(&mut self) {
         if !self.wait_called {
             self.network.drop_future(self.id.clone());

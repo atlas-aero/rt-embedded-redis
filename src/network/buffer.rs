@@ -226,7 +226,7 @@ impl<'a, N: TcpClientStack, P: Protocol> Network<'a, N, P> {
     }
 }
 
-impl<'a, N: TcpClientStack, P: Protocol> Debug for Network<'a, N, P> {
+impl<N: TcpClientStack, P: Protocol> Debug for Network<'_, N, P> {
     fn fmt(&self, f: &mut Formatter<'_>) -> core::fmt::Result {
         f.debug_struct("Network").finish()
     }

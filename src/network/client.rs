@@ -29,7 +29,7 @@ pub enum CommandErrors {
     /// * Bug in this library (e.g. incomplete implementation of RESP protocol)
     /// * Redis server bug
     /// * Network failure. As we are using TCP, only a network stack bug or other exotic causes (e.g. bit flip) is reasonable.
-    /// *Is recommended to create a new client/connection in this case*.
+    /// * Is recommended to create a new client/connection in this case*.
     ProtocolViolation,
     /// Future is no longer valid. This happens on fatal problems like timeouts or faulty responses, on which message<->future
     /// mapping can no longer be guaranteed
@@ -71,7 +71,7 @@ where
     HelloCommand: Command<<P as Protocol>::FrameType>,
 {
     /// Sends the given command non-blocking
-    pub fn send<Cmd>(&'a self, command: Cmd) -> Result<Future<N, C, P, Cmd>, CommandErrors>
+    pub fn send<Cmd>(&'a self, command: Cmd) -> Result<Future<'a, N, C, P, Cmd>, CommandErrors>
     where
         Cmd: Command<P::FrameType>,
     {
@@ -148,7 +148,7 @@ where
     }
 }
 
-impl<'a, N: TcpClientStack, C: Clock> Client<'a, N, C, Resp3> {
+impl<N: TcpClientStack, C: Clock> Client<'_, N, C, Resp3> {
     /// Returns the response to HELLO command executed during connection initialization
     /// [Client HELLO response]
     pub fn get_hello_response(&self) -> &HelloResponse {
@@ -171,7 +171,7 @@ fn hello_error(error: CommandErrors) -> ConnectionError {
     ConnectionError::ProtocolSwitchError(error)
 }
 
-impl<'a, N: TcpClientStack, C: Clock, P: Protocol> Debug for Client<'a, N, C, P>
+impl<N: TcpClientStack, C: Clock, P: Protocol> Debug for Client<'_, N, C, P>
 where
     HelloCommand: Command<<P as Protocol>::FrameType>,
 {
