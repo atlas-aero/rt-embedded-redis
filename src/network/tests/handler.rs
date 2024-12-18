@@ -6,8 +6,8 @@ use crate::network::handler::{ConnectionHandler, Credentials};
 use crate::network::tests::mocks::{NetworkMockBuilder, TestClock};
 use alloc::string::ToString;
 use alloc::vec;
+use core::net::SocketAddr;
 use core::str::FromStr;
-use embedded_nal::SocketAddr;
 use embedded_time::duration::Extensions;
 
 #[test]

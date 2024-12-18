@@ -5,7 +5,7 @@
 //! # Basic usage
 //! ```
 //!# use core::str::FromStr;
-//!# use embedded_nal::SocketAddr;
+//!# use core::net::SocketAddr;
 //!# use std_embedded_nal::Stack;
 //!# use std_embedded_time::StandardClock;
 //!# use embedded_redis::commands::set::SetCommand;
@@ -25,7 +25,7 @@
 //! Setting TTL can be achieved in the following way. Fore more details s. [ExpirationPolicy] enum.
 //! ```
 //!# use core::str::FromStr;
-//!# use embedded_nal::SocketAddr;
+//!# use core::net::SocketAddr;
 //!# use std_embedded_nal::Stack;
 //!# use std_embedded_time::StandardClock;
 //!# use embedded_redis::commands::set::{SetCommand, ExpirationPolicy};
@@ -48,7 +48,7 @@
 //! Using this options affects the return type. s. [ExclusiveSetResponse]
 //! ```
 //!# use core::str::FromStr;
-//!# use embedded_nal::SocketAddr;
+//!# use core::net::SocketAddr;
 //!# use std_embedded_nal::Stack;
 //!# use std_embedded_time::StandardClock;
 //!# use embedded_redis::commands::set::{SetCommand, Exclusivity};
@@ -71,7 +71,7 @@
 //! Using this options affects the return type. s. [ReturnPreviousResponse]
 //! ```
 //!# use core::str::FromStr;
-//!# use embedded_nal::SocketAddr;
+//!# use core::net::SocketAddr;
 //!# use std_embedded_nal::Stack;
 //!# use std_embedded_time::StandardClock;
 //!# use embedded_redis::commands::set::{SetCommand};
@@ -93,7 +93,7 @@
 //! ```
 //!# use core::str::FromStr;
 //!# use bytes::Bytes;
-//!# use embedded_nal::SocketAddr;
+//!# use core::net::SocketAddr;
 //!# use std_embedded_nal::Stack;
 //!# use std_embedded_time::StandardClock;
 //!# use embedded_redis::commands::set::SetCommand;

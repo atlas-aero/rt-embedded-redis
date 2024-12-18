@@ -6,7 +6,7 @@
 //! By default no `SCHEDULE` option is used.
 //! ```
 //!# use core::str::FromStr;
-//!# use embedded_nal::SocketAddr;
+//!# use core::net::SocketAddr;
 //!# use std_embedded_nal::Stack;
 //!# use std_embedded_time::StandardClock;
 //!# use embedded_redis::commands::bgsave::BackgroundSaveCommand;
@@ -25,7 +25,7 @@
 //! Using `SCHEDULE` option by setting constructor flag to `true`.
 //! ```
 //!# use core::str::FromStr;
-//!# use embedded_nal::SocketAddr;
+//!# use core::net::SocketAddr;
 //!# use std_embedded_nal::Stack;
 //!# use std_embedded_time::StandardClock;
 //!# use embedded_redis::commands::bgsave::BackgroundSaveCommand;
@@ -43,7 +43,7 @@
 //! [Client](Client#method.get) provides a shorthand method for this command.
 //! ```no_run
 //!# use core::str::FromStr;
-//!# use embedded_nal::SocketAddr;
+//!# use core::net::SocketAddr;
 //!# use std_embedded_nal::Stack;
 //!# use std_embedded_time::StandardClock;
 //!# use embedded_redis::network::ConnectionHandler;

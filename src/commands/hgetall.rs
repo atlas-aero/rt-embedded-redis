@@ -5,7 +5,7 @@
 //! # Using command object
 //! ```
 //!# use core::str::FromStr;
-//!# use embedded_nal::SocketAddr;
+//!# use core::net::SocketAddr;
 //!# use std_embedded_nal::Stack;
 //!# use std_embedded_time::StandardClock;
 //!# use embedded_redis::commands::builder::CommandBuilder;
@@ -31,7 +31,7 @@
 //! In case key or field is missing. [None] is returned.
 //! ```
 //!# use core::str::FromStr;
-//!# use embedded_nal::SocketAddr;
+//!# use core::net::SocketAddr;
 //!# use std_embedded_nal::Stack;
 //!# use std_embedded_time::StandardClock;
 //!# use embedded_redis::commands::builder::CommandBuilder;
@@ -55,7 +55,7 @@
 //! ```
 //!# use core::str::FromStr;
 //!# use bytes::Bytes;
-//!# use embedded_nal::SocketAddr;
+//!# use core::net::SocketAddr;
 //!# use std_embedded_nal::Stack;
 //!# use std_embedded_time::StandardClock;
 //!# use embedded_redis::commands::hset::HashSetCommand;

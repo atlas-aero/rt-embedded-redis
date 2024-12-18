@@ -8,7 +8,7 @@
 //!
 //! ```
 //!# use core::str::FromStr;
-//!# use embedded_nal::SocketAddr;
+//!# use core::net::SocketAddr;
 //!# use std_embedded_nal::Stack;
 //!# use std_embedded_time::StandardClock;
 //!# use embedded_redis::network::ConnectionHandler;
@@ -62,7 +62,7 @@ pub mod commands;
 /// * A clock implementing [embedded-time](<https://docs.rs/embedded-time/latest/embedded_time/>). Optional if no Timeout is configured.
 /// ```
 ///# use core::str::FromStr;
-///# use embedded_nal::SocketAddr;
+///# use core::net::SocketAddr;
 ///# use std_embedded_nal::Stack;
 ///# use std_embedded_time::StandardClock;
 ///# use embedded_redis::network::ConnectionHandler;
@@ -86,7 +86,7 @@ pub mod commands;
 /// Authentication is done in the following way:
 /// ```
 ///# use core::str::FromStr;
-///# use embedded_nal::SocketAddr;
+///# use core::net::SocketAddr;
 ///# use std_embedded_nal::Stack;
 ///# use std_embedded_time::StandardClock;
 ///# use embedded_redis::network::{ConnectionHandler, Credentials};
@@ -113,7 +113,7 @@ pub mod commands;
 ///
 /// ```
 ///# use core::str::FromStr;
-///# use embedded_nal::SocketAddr;
+///# use core::net::SocketAddr;
 ///# use std_embedded_nal::Stack;
 ///# use std_embedded_time::StandardClock;
 ///# use embedded_redis::network::{ConnectionHandler, Credentials};
@@ -136,7 +136,7 @@ pub mod commands;
 ///
 /// ```
 ///# use core::str::FromStr;
-///# use embedded_nal::SocketAddr;
+///# use core::net::SocketAddr;
 ///# use std_embedded_nal::Stack;
 ///# use std_embedded_time::StandardClock;
 ///# use embedded_redis::network::{ConnectionHandler, Credentials};
@@ -162,7 +162,7 @@ pub mod commands;
 ///
 /// ````
 ///# use core::str::FromStr;
-///# use embedded_nal::SocketAddr;
+///# use core::net::SocketAddr;
 ///# use std_embedded_nal::Stack;
 ///# use std_embedded_time::StandardClock;
 ///# use embedded_redis::commands::set::SetCommand;
@@ -195,7 +195,7 @@ pub mod commands;
 /// simultaneously* and handle responses in any order at any point in time:
 /// ```
 ///# use core::str::FromStr;
-///# use embedded_nal::SocketAddr;
+///# use core::net::SocketAddr;
 ///# use std_embedded_nal::Stack;
 ///# use std_embedded_time::StandardClock;
 ///# use embedded_redis::commands::set::SetCommand;
@@ -220,7 +220,7 @@ pub mod commands;
 /// If `ready()` returns true, then next call to `wait()` is not expected to block.
 /// ```
 ///# use core::str::FromStr;
-///# use embedded_nal::SocketAddr;
+///# use core::net::SocketAddr;
 ///# use std_embedded_nal::Stack;
 ///# use std_embedded_time::StandardClock;
 ///# use embedded_redis::commands::set::SetCommand;
@@ -257,7 +257,7 @@ pub mod commands;
 ///
 /// ````
 ///# use core::str::FromStr;
-///# use embedded_nal::SocketAddr;
+///# use core::net::SocketAddr;
 ///# use std_embedded_nal::Stack;
 ///# use std_embedded_time::StandardClock;
 ///# use embedded_redis::commands::set::SetCommand;
