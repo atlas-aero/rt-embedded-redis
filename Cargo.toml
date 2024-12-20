@@ -17,12 +17,12 @@ embedded-time = "0.12.1"
 nb = "1.1.0"
 redis-protocol = { version = "6.0.0", default-features = false, features = ["bytes", "resp2", "resp3", "libm", "hashbrown", "alloc"] }
 bytes = { version = "1.9.0", default-features = false }
-mockall = { version = "0.12.1", optional=true }
+mockall = { version = "0.13.1", optional=true }
 
 [dev-dependencies]
 std-embedded-nal = { package = "mm-std-embedded-nal", version = "0.4.0" }
 std-embedded-time = "0.1.0"
-mockall = { version = "0.12.1" }
+mockall = { version = "0.13.1" }
 
 [features]
 default = []
