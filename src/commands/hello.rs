@@ -34,8 +34,8 @@ use crate::commands::helpers::{CmdStr, RespMap};
 use crate::commands::{Command, ResponseTypeError};
 use alloc::string::String;
 use alloc::vec::Vec;
-use redis_protocol::resp2::types::Frame as Resp2Frame;
-use redis_protocol::resp3::types::{Frame as Resp3Frame, RespVersion};
+use redis_protocol::resp2::types::BytesFrame as Resp2Frame;
+use redis_protocol::resp3::types::{BytesFrame as Resp3Frame, RespVersion};
 
 /// Abstraction of HELLO command.
 pub struct HelloCommand {}
@@ -47,6 +47,7 @@ impl Command<Resp3Frame> for HelloCommand {
         Resp3Frame::Hello {
             version: RespVersion::RESP3,
             auth: None,
+            setname: None,
         }
     }
 

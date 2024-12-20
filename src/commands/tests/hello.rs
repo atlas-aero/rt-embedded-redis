@@ -3,7 +3,7 @@ use crate::commands::helpers::CmdStr;
 use crate::commands::Command;
 use crate::network::tests::mocks::MockFrames;
 use alloc::vec;
-use redis_protocol::resp3::prelude::Frame;
+use redis_protocol::resp3::types::BytesFrame as Frame;
 use redis_protocol::resp3::types::RespVersion;
 
 #[test]
@@ -12,9 +12,14 @@ fn test_encode() {
     let frame = command.encode();
 
     match frame {
-        Frame::Hello { version, auth } => {
+        Frame::Hello {
+            version,
+            auth,
+            setname,
+        } => {
             assert_eq!(RespVersion::RESP3, version);
             assert_eq!(None, auth);
+            assert_eq!(None, setname);
         }
         _ => {
             panic!("Unexpected frame type")

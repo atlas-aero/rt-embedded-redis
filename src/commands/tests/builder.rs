@@ -1,7 +1,7 @@
 use crate::commands::builder::ToBytesMap;
 use bytes::Bytes;
-use redis_protocol::resp2::types::Frame as Resp2Frame;
-use redis_protocol::resp3::types::{Frame as Resp3Frame, FrameMap};
+use redis_protocol::resp2::types::BytesFrame as Resp2Frame;
+use redis_protocol::resp3::types::{BytesFrame as Resp3Frame, FrameMap};
 
 #[test]
 fn to_bytes_map_resp2_simple_string() {
