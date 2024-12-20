@@ -6,7 +6,7 @@
 //! Internally it is checked whether the server answers with PONG. If not, an error is returned.
 //! ```
 //!# use core::str::FromStr;
-//!# use embedded_nal::SocketAddr;
+//!# use core::net::SocketAddr;
 //!# use std_embedded_nal::Stack;
 //!# use std_embedded_time::StandardClock;
 //!# use embedded_redis::network::ConnectionHandler;
@@ -23,7 +23,7 @@
 //! Sending a `PingCommand` as alternative to client shorthand.
 //! ```
 //!# use core::str::FromStr;
-//!# use embedded_nal::SocketAddr;
+//!# use core::net::SocketAddr;
 //!# use std_embedded_nal::Stack;
 //!# use std_embedded_time::StandardClock;
 //!# use embedded_redis::commands::ping::PingCommand;
@@ -44,7 +44,7 @@
 //! The abstraction compares the server's response with the argument and returns an error if there is no match.
 //! ```
 //!# use core::str::FromStr;
-//!# use embedded_nal::SocketAddr;
+//!# use core::net::SocketAddr;
 //!# use std_embedded_nal::Stack;
 //!# use std_embedded_time::StandardClock;
 //!# use embedded_redis::commands::ping::PingCommand;

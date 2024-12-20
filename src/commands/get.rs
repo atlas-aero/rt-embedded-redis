@@ -6,7 +6,7 @@
 //! In case of existing key [`Some(GetResponse)`](GetResponse) is returned.
 //! ```
 //!# use core::str::FromStr;
-//!# use embedded_nal::SocketAddr;
+//!# use core::net::SocketAddr;
 //!# use std_embedded_nal::Stack;
 //!# use std_embedded_time::StandardClock;
 //!# use embedded_redis::commands::get::GetCommand;
@@ -29,7 +29,7 @@
 //! In case of missing key `None` is returned
 //! ```
 //!# use core::str::FromStr;
-//!# use embedded_nal::SocketAddr;
+//!# use core::net::SocketAddr;
 //!# use std_embedded_nal::Stack;
 //!# use std_embedded_time::StandardClock;
 //!# use embedded_redis::commands::get::GetCommand;
@@ -51,7 +51,7 @@
 //! ```
 //!# use core::str::FromStr;
 //!# use bytes::Bytes;
-//!# use embedded_nal::SocketAddr;
+//!# use core::net::SocketAddr;
 //!# use std_embedded_nal::Stack;
 //!# use std_embedded_time::StandardClock;
 //!# use embedded_redis::commands::get::GetCommand;
@@ -78,7 +78,7 @@
 //! [Client](Client#method.get) provides a shorthand method for this command.
 //! ```
 //!# use core::str::FromStr;
-//!# use embedded_nal::SocketAddr;
+//!# use core::net::SocketAddr;
 //!# use std_embedded_nal::Stack;
 //!# use std_embedded_time::StandardClock;
 //!# use embedded_redis::commands::set::SetCommand;
