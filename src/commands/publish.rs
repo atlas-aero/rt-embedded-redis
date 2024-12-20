@@ -5,7 +5,7 @@
 //! # Using command object
 //! ```
 //!# use core::str::FromStr;
-//!# use embedded_nal::SocketAddr;
+//!# use core::net::SocketAddr;
 //!# use std_embedded_nal::Stack;
 //!# use std_embedded_time::StandardClock;
 //!# use embedded_redis::commands::publish::PublishCommand;
@@ -27,7 +27,7 @@
 //! [Client](Client#method.publish) provides a shorthand method.
 //! ```
 //!# use core::str::FromStr;
-//!# use embedded_nal::SocketAddr;
+//!# use core::net::SocketAddr;
 //!# use std_embedded_nal::Stack;
 //!# use std_embedded_time::StandardClock;
 //!# use embedded_redis::network::ConnectionHandler;

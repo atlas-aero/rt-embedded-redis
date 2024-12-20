@@ -1,7 +1,7 @@
 use crate::network::ConnectionHandler;
 use bytes::Bytes;
+use core::net::SocketAddr;
 use core::str::FromStr;
-use embedded_nal::SocketAddr;
 use std_embedded_nal::Stack;
 use std_embedded_time::StandardClock;
 use test::Bencher;

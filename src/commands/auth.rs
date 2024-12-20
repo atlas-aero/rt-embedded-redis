@@ -8,7 +8,7 @@
 //! ```
 //!# use core::str::FromStr;
 //!# use std::str::Bytes;
-//!# use embedded_nal::SocketAddr;
+//!# use core::net::SocketAddr;
 //!# use std_embedded_nal::Stack;
 //!# use std_embedded_time::StandardClock;
 //!# use embedded_redis::commands::auth::AuthCommand;
@@ -32,7 +32,7 @@
 //! *Requires Redis version > 6.0 + serverside ACL configuration*
 //! ```
 //!# use core::str::FromStr;
-//!# use embedded_nal::SocketAddr;
+//!# use core::net::SocketAddr;
 //!# use std_embedded_nal::Stack;
 //!# use std_embedded_time::StandardClock;
 //!# use embedded_redis::commands::auth::AuthCommand;
@@ -59,7 +59,7 @@
 //! to [CommandErrors::ErrorResponse](crate::network::CommandErrors::ErrorResponse).
 //! ```
 //!# use core::str::FromStr;
-//!# use embedded_nal::SocketAddr;
+//!# use core::net::SocketAddr;
 //!# use std_embedded_nal::Stack;
 //!# use std_embedded_time::StandardClock;
 //!# use embedded_redis::commands::auth::AuthCommand;
