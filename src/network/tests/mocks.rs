@@ -410,14 +410,14 @@ impl Clock for TestClock {
     const SCALING_FACTOR: Fraction = Fraction::new(1, 1_000_000);
 
     fn try_now(&self) -> Result<Instant<Self>, Error> {
-        if self.next_instants.borrow().len() == 0 {
+        if self.next_instants.borrow().is_empty() {
             return Err(Error::Unspecified);
         }
 
         Ok(Instant::new(self.next_instants.borrow_mut().remove(0)))
     }
 
-    fn new_timer<Dur>(&self, duration: Dur) -> Timer<OneShot, Armed, Self, Dur>
+    fn new_timer<Dur>(&self, duration: Dur) -> Timer<'_, OneShot, Armed, Self, Dur>
     where
         Dur: FixedPoint,
         Dur: Duration,

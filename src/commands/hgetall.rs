@@ -134,10 +134,7 @@ impl HashResponse {
 
         match self.inner.get(&field) {
             None => None,
-            Some(value) => match core::str::from_utf8(value) {
-                Ok(value) => Some(value),
-                Err(_) => None,
-            },
+            Some(value) => core::str::from_utf8(value).ok(),
         }
     }
 }

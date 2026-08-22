@@ -103,8 +103,8 @@ where
 
     /// Authenticates blocking with the given credentials during client initialization
     pub(crate) fn auth(&'a self, credentials: Option<Credentials>) -> Result<(), ConnectionError> {
-        if credentials.is_some() {
-            self.send(AuthCommand::from(credentials.as_ref().unwrap()))
+        if let Some(credentials) = credentials.as_ref() {
+            self.send(AuthCommand::from(credentials))
                 .map_err(auth_error)?
                 .wait()
                 .map_err(auth_error)?;
