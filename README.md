@@ -35,8 +35,7 @@ let server_address = SocketAddr::from_str("127.0.0.1:6379").unwrap();
 let mut connection_handler = ConnectionHandler::resp2(server_address);
 let client = connection_handler.connect(&stack, Some(&clock)).await.unwrap();
 
-let future = client.set("key", "value").await.unwrap();
-let response = future.wait().await.unwrap();
+let response = client.set("key", "value").await.unwrap();
 }
 ```
 

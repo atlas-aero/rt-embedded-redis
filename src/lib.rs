@@ -21,8 +21,7 @@
 //! let mut connection_handler = ConnectionHandler::resp2(server_address);
 //! let client = connection_handler.connect(&stack, Some(&clock)).await.unwrap();
 //!
-//! let future = client.set("key", "value").await.unwrap();
-//! let response = future.wait().await.unwrap();
+//! let response = client.set("key", "value").await.unwrap();
 //! # });
 //! ```
 #![cfg_attr(all(not(test), not(feature = "mock")), no_std)]
@@ -198,21 +197,21 @@ pub mod commands;
 /// ### Concurrency
 ///
 /// A client owns one connection. Access to that connection is serialized asynchronously, so
-/// multiple response futures may be polled concurrently on the same executor. Whether a client
+/// multiple command operations may be polled concurrently on the same executor. Whether a client
 /// can be moved between threads depends on the concrete connection, clock, and protocol types.
 ///
 /// ## Asynchronous response management
 ///
-/// Redis server responses are managed as [Future](crate::network::Future). Sending several
-/// commands before awaiting their responses enables pipelining, and responses can be consumed in
-/// any order:
+/// [`Client::send`](crate::network::Client::send) and the command shorthand methods asynchronously
+/// wait for and return the evaluated Redis response directly. Polling several command operations
+/// concurrently enables pipelining:
 /// ```
 /// # async_std::task::block_on(async {
 ///# use core::str::FromStr;
 ///# use core::net::SocketAddr;
+///# use futures_util::future::join;
 ///# use std_embedded_nal_async::Stack;
 ///# use std_embedded_time::StandardClock;
-///# use embedded_redis::commands::set::SetCommand;
 ///# use embedded_redis::network::ConnectionHandler;
 ///#
 ///# let stack = Stack::default();
@@ -221,37 +220,12 @@ pub mod commands;
 ///# let mut connection_handler = ConnectionHandler::resp2(SocketAddr::from_str("127.0.0.1:6379").unwrap());
 ///# let client = connection_handler.connect(&stack, Some(&clock)).await.unwrap();
 ///#
-/// let future1 = client.set("key", "value").await.unwrap();
-/// let future2 = client.set("other", "key").await.unwrap();
+/// let first = client.set("first_key", "first_value");
+/// let second = client.set("second_key", "second_value");
 ///
-/// let _ = future2.wait().await;
-/// let _ = future1.wait().await;
-/// # });
-/// ```
-///
-/// ### Ready
-/// The asynchronous `ready()` method waits until the corresponding response arrives or an error
-/// occurs. Errors are retained and returned by the subsequent `wait()` call.
-/// ```
-/// # async_std::task::block_on(async {
-///# use core::str::FromStr;
-///# use core::net::SocketAddr;
-///# use std_embedded_nal_async::Stack;
-///# use std_embedded_time::StandardClock;
-///# use embedded_redis::commands::set::SetCommand;
-///# use embedded_redis::network::ConnectionHandler;
-///#
-///# let stack = Stack::default();
-///# let clock = StandardClock::default();
-///#
-///# let mut connection_handler = ConnectionHandler::resp2(SocketAddr::from_str("127.0.0.1:6379").unwrap());
-///# let client = connection_handler.connect(&stack, Some(&clock)).await.unwrap();
-///#
-/// let mut future = client.set("key", "value").await.unwrap();
-///
-/// if future.ready().await {
-///    let _ = future.wait().await;
-/// }
+/// let (first_response, second_response) = join(first, second).await;
+/// first_response.unwrap();
+/// second_response.unwrap();
 /// # });
 /// ```
 ///
@@ -262,14 +236,15 @@ pub mod commands;
 ///
 /// ### Timeout error
 ///
-/// In the event of a timeout error, all remaining futures will be invalidated, as the assignment of
-/// responses can no longer be guaranteed. In case of a invalidated future [InvalidFuture](crate::network::CommandErrors::InvalidFuture)
-/// error is returned when calling `wait()`.
+/// In the event of a timeout error, all other concurrently pending command operations are
+/// invalidated, as the assignment of responses can no longer be guaranteed. Those operations
+/// return [InvalidFuture](crate::network::CommandErrors::InvalidFuture).
 ///
 /// ### Clean state
 ///
-/// If futures are dropped without being awaited, `close().await` consumes their pending responses
-/// before the client is dropped. Dropping the client itself closes its owned connection.
+/// If an in-flight command operation is cancelled after sending its command, `close().await`
+/// consumes its pending response before the client is dropped. Dropping the client itself closes
+/// its owned connection.
 ///
 /// ````
 /// # async_std::task::block_on(async {

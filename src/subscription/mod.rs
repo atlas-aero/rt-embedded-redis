@@ -54,7 +54,7 @@
 //!# let publisher = publisher_handler.connect(&stack, Some(&clock)).await.unwrap();
 //!# publisher
 //!#     .publish("embedded_redis_doctest_channel", "example payload")
-//!#     .await.unwrap().wait().await.unwrap();
+//!#     .await.unwrap();
 //!#
 //! let message = client.receive().await.unwrap().unwrap();
 //! assert_eq!("embedded_redis_doctest_channel", core::str::from_utf8(&message.channel[..]).unwrap());

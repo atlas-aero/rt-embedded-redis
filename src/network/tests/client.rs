@@ -300,13 +300,7 @@ async fn test_set_ok_response() {
     let socket = SocketMock::new(164);
     let client = create_mocked_client(&network, socket, &clock, Resp2 {});
 
-    client
-        .send(SetCommand::new("test_key", "test"))
-        .await
-        .unwrap()
-        .wait()
-        .await
-        .unwrap();
+    client.send(SetCommand::new("test_key", "test")).await.unwrap();
 }
 
 #[async_std::test]
@@ -318,13 +312,7 @@ async fn test_set_error_response() {
     let socket = SocketMock::new(164);
     let client = create_mocked_client(&network, socket, &clock, Resp2 {});
 
-    let result = client
-        .send(SetCommand::new("test_key", "test"))
-        .await
-        .unwrap()
-        .wait()
-        .await
-        .unwrap_err();
+    let result = client.send(SetCommand::new("test_key", "test")).await.unwrap_err();
     assert_eq!(ErrorResponse("Error".to_string()), result);
 }
 
@@ -337,7 +325,7 @@ async fn test_set_unknown_response() {
     let socket = SocketMock::new(164);
     let client = create_mocked_client(&network, socket, &clock, Resp2 {});
 
-    let response = client.send(SetCommand::new("test_key", "test")).await.unwrap().wait().await;
+    let response = client.send(SetCommand::new("test_key", "test")).await;
     assert_eq!(CommandResponseViolation, response.unwrap_err());
 }
 
@@ -353,12 +341,12 @@ async fn test_faulty_response() {
     let socket = SocketMock::new(164);
     let client = create_mocked_client(&network, socket, &clock, Resp2 {});
 
-    let result = client.send(SetCommand::new("test_key", "test")).await.unwrap().wait().await;
+    let result = client.send(SetCommand::new("test_key", "test")).await;
     assert_eq!(ProtocolViolation, result.unwrap_err())
 }
 
 #[async_std::test]
-async fn test_future_ready_true() {
+async fn test_send_waits_for_response() {
     let clock = TestClock::new(vec![]);
 
     let network = NetworkMockBuilder::default().send(164, "").response_ok().into_mock();
@@ -366,14 +354,11 @@ async fn test_future_ready_true() {
     let socket = SocketMock::new(164);
     let client = create_mocked_client(&network, socket, &clock, Resp2 {});
 
-    let mut future = client.send(SetCommand::new("first", "future")).await.unwrap();
-
-    assert!(future.ready().await);
-    future.wait().await.unwrap();
+    client.send(SetCommand::new("first", "future")).await.unwrap();
 }
 
 #[async_std::test]
-async fn test_future_ready_after_pending_read() {
+async fn test_send_waits_after_pending_read() {
     let clock = TestClock::new(vec![]);
 
     let network = NetworkMockBuilder::default()
@@ -385,13 +370,11 @@ async fn test_future_ready_after_pending_read() {
     let socket = SocketMock::new(164);
     let client = create_mocked_client(&network, socket, &clock, Resp2 {});
 
-    let mut future = client.send(SetCommand::new("first", "future")).await.unwrap();
-    assert!(future.ready().await);
-    future.wait().await.unwrap();
+    client.send(SetCommand::new("first", "future")).await.unwrap();
 }
 
 #[async_std::test]
-async fn test_future_ready_after_incomplete_frame() {
+async fn test_send_waits_for_complete_frame() {
     let clock = TestClock::new(vec![]);
 
     let network = NetworkMockBuilder::default()
@@ -404,14 +387,11 @@ async fn test_future_ready_after_incomplete_frame() {
     let socket = SocketMock::new(164);
     let client = create_mocked_client(&network, socket, &clock, Resp2 {});
 
-    let mut future = client.send(SetCommand::new("first", "future")).await.unwrap();
-
-    assert!(future.ready().await);
-    future.wait().await.unwrap();
+    client.send(SetCommand::new("first", "future")).await.unwrap();
 }
 
 #[async_std::test]
-async fn test_future_ready_error() {
+async fn test_send_reports_receive_error() {
     let clock = TestClock::new(vec![]);
 
     let network = NetworkMockBuilder::default().send(164, "").receive_tcp_error().into_mock();
@@ -419,22 +399,19 @@ async fn test_future_ready_error() {
     let socket = SocketMock::new(164);
     let client = create_mocked_client(&network, socket, &clock, Resp2 {});
 
-    let mut future = client.send(SetCommand::new("first", "future")).await.unwrap();
-
-    assert!(future.ready().await);
-    assert_eq!(TcpError, future.wait().await.unwrap_err());
+    let error = client.send(SetCommand::new("first", "future")).await.unwrap_err();
+    assert_eq!(TcpError, error);
 }
 
 #[async_std::test]
-async fn test_future_reports_closed_connection() {
+async fn test_send_reports_closed_connection() {
     let clock = TestClock::new(vec![]);
     let network = NetworkMockBuilder::default().send(164, "").response_eof().into_mock();
     let socket = SocketMock::new(164);
     let client = create_mocked_client(&network, socket, &clock, Resp2 {});
 
-    let future = client.send(SetCommand::new("first", "future")).await.unwrap();
-
-    assert_eq!(TcpError, future.wait().await.unwrap_err());
+    let error = client.send(SetCommand::new("first", "future")).await.unwrap_err();
+    assert_eq!(TcpError, error);
 }
 
 #[async_std::test]
@@ -454,8 +431,8 @@ async fn test_multiple_responses_future_wait_in_order() {
     let socket = SocketMock::new(164);
     let client = create_mocked_client(&network, socket, &clock, Resp2 {});
 
-    let first = client.send(SetCommand::new("first", "future")).await.unwrap();
-    let second = client.send(SetCommand::new("second", "future")).await.unwrap();
+    let first = client.send_pending(SetCommand::new("first", "future")).await.unwrap();
+    let second = client.send_pending(SetCommand::new("second", "future")).await.unwrap();
 
     assert_eq!(
         ErrorResponse("Error".to_string()),
@@ -481,8 +458,8 @@ async fn test_multiple_responses_future_wait_crossed() {
     let socket = SocketMock::new(164);
     let client = create_mocked_client(&network, socket, &clock, Resp2 {});
 
-    let first = client.send(SetCommand::new("first", "future")).await.unwrap();
-    let second = client.send(SetCommand::new("second", "future")).await.unwrap();
+    let first = client.send_pending(SetCommand::new("first", "future")).await.unwrap();
+    let second = client.send_pending(SetCommand::new("second", "future")).await.unwrap();
 
     second.wait().await.unwrap();
     assert_eq!(
@@ -502,8 +479,8 @@ async fn test_multiple_responses_can_be_awaited_concurrently() {
     let socket = SocketMock::new(164);
     let client = create_mocked_client(&network, socket, &clock, Resp2 {});
 
-    let first = client.send(SetCommand::new("first", "future")).await.unwrap();
-    let second = client.send(SetCommand::new("second", "future")).await.unwrap();
+    let first = client.send_pending(SetCommand::new("first", "future")).await.unwrap();
+    let second = client.send_pending(SetCommand::new("second", "future")).await.unwrap();
     let (first_result, second_result) = join(first.wait(), second.wait()).await;
 
     first_result.unwrap();
@@ -526,11 +503,9 @@ async fn test_multiple_responses_partly_complete() {
     let socket = SocketMock::new(164);
     let client = create_mocked_client(&network, socket, &clock, Resp2 {});
 
-    let mut first = client.send(SetCommand::new("first", "future")).await.unwrap();
-    let mut second = client.send(SetCommand::new("second", "future")).await.unwrap();
+    let first = client.send_pending(SetCommand::new("first", "future")).await.unwrap();
+    let second = client.send_pending(SetCommand::new("second", "future")).await.unwrap();
 
-    assert!(first.ready().await);
-    assert!(second.ready().await);
     first.wait().await.unwrap();
     second.wait().await.unwrap();
 }
@@ -559,8 +534,8 @@ async fn test_futures_invalidated_on_timeout() {
         hello_response: None,
     };
 
-    let first = client.send(SetCommand::new("timeout", "future")).await.unwrap();
-    let second = client.send(SetCommand::new("second", "future")).await.unwrap();
+    let first = client.send_pending(SetCommand::new("timeout", "future")).await.unwrap();
+    let second = client.send_pending(SetCommand::new("second", "future")).await.unwrap();
     assert_eq!(Timeout, first.wait().await.unwrap_err());
     assert_eq!(InvalidFuture, second.wait().await.unwrap_err());
 }
@@ -578,8 +553,8 @@ async fn test_future_invalidated_on_faulty_response() {
     let socket = SocketMock::new(164);
     let client = create_mocked_client(&network, socket, &clock, Resp2 {});
 
-    let first = client.send(SetCommand::new("faulty", "future")).await.unwrap();
-    let second = client.send(SetCommand::new("second", "future")).await.unwrap();
+    let first = client.send_pending(SetCommand::new("faulty", "future")).await.unwrap();
+    let second = client.send_pending(SetCommand::new("second", "future")).await.unwrap();
 
     assert_eq!(ProtocolViolation, first.wait().await.unwrap_err());
     assert_eq!(InvalidFuture, second.wait().await.unwrap_err());
@@ -606,11 +581,11 @@ async fn test_future_dropped_received_at_send() {
     let client = create_mocked_client(&network, socket, &clock, Resp2 {});
 
     {
-        let _ = client.send(SetCommand::new("key", "value")).await;
+        let _ = client.send_pending(SetCommand::new("key", "value")).await;
     }
 
     assert_eq!(1, client.network.get_dropped_future_count());
-    let future = client.send(SetCommand::new("key", "value")).await.unwrap();
+    let future = client.send_pending(SetCommand::new("key", "value")).await.unwrap();
     assert_eq!(1, client.network.get_dropped_future_count());
     assert_eq!(0, client.network.get_pending_frame_count());
     future.wait().await.unwrap();
@@ -639,11 +614,11 @@ async fn test_future_dropped_received_at_next_future() {
     let client = create_mocked_client(&network, socket, &clock, Resp2 {});
 
     {
-        let _ = client.send(SetCommand::new("key", "value")).await;
+        let _ = client.send_pending(SetCommand::new("key", "value")).await;
     }
 
     assert_eq!(1, client.network.get_dropped_future_count());
-    let second = client.send(SetCommand::new("key", "value")).await.unwrap();
+    let second = client.send_pending(SetCommand::new("key", "value")).await.unwrap();
     // Data of dropped future is not arrived yet
     assert_eq!(1, client.network.get_dropped_future_count());
     assert_eq!(0, client.network.get_pending_frame_count());
@@ -654,7 +629,7 @@ async fn test_future_dropped_received_at_next_future() {
 
     // Data of dropped future gets cleared
     assert_eq!(1, client.network.get_dropped_future_count());
-    let third = client.send(SetCommand::new("key", "value")).await.unwrap();
+    let third = client.send_pending(SetCommand::new("key", "value")).await.unwrap();
     assert_eq!(0, client.network.get_dropped_future_count());
     assert_eq!(0, client.network.get_pending_frame_count());
 
@@ -689,9 +664,9 @@ async fn test_future_dropped_invalidated() {
         hello_response: None,
     };
 
-    let first = client.send(SetCommand::new("timeout", "future")).await.unwrap();
+    let first = client.send_pending(SetCommand::new("timeout", "future")).await.unwrap();
     {
-        let _second = client.send(SetCommand::new("second", "future")).await.unwrap();
+        let _second = client.send_pending(SetCommand::new("second", "future")).await.unwrap();
     }
     assert_eq!(Timeout, first.wait().await.unwrap_err());
 
@@ -727,7 +702,7 @@ async fn test_close_timeout() {
     };
 
     {
-        let _ = client.send(SetCommand::new("key", "value")).await;
+        let _ = client.send_pending(SetCommand::new("key", "value")).await;
     }
 
     assert_eq!(1, client.network.get_dropped_future_count());
@@ -750,7 +725,7 @@ async fn test_close_handled_dropped_futures() {
     let client = create_mocked_client(&network, socket, &clock, Resp2 {});
 
     {
-        let _ = client.send(SetCommand::new("key", "value")).await;
+        let _ = client.send_pending(SetCommand::new("key", "value")).await;
     }
 
     assert_eq!(1, client.network.get_dropped_future_count());
@@ -784,7 +759,7 @@ async fn test_memory_limit_reached() {
         hello_response: None,
     };
 
-    let error = client.get("key").await.unwrap().wait().await.unwrap_err();
+    let error = client.get("key").await.unwrap_err();
     assert_eq!(CommandErrors::MemoryFull, error);
 }
 
@@ -814,7 +789,7 @@ async fn test_memory_limit_not_reached() {
         hello_response: None,
     };
 
-    let data = client.get("key").await.unwrap().wait().await.unwrap().unwrap().to_bytes();
+    let data = client.get("key").await.unwrap().unwrap().to_bytes();
     assert_eq!(&[0x0u8; 110], &data[..])
 }
 
@@ -832,16 +807,7 @@ async fn test_shorthand_get_str_argument() {
 
     assert_eq!(
         "test_response",
-        client
-            .get("key")
-            .await
-            .unwrap()
-            .wait()
-            .await
-            .unwrap()
-            .unwrap()
-            .as_str()
-            .unwrap()
+        client.get("key").await.unwrap().unwrap().as_str().unwrap()
     );
 }
 
@@ -857,7 +823,7 @@ async fn test_shorthand_get_string_argument() {
     let socket = SocketMock::new(164);
     let client = create_mocked_client(&network, socket, &clock, Resp2 {});
 
-    let response = client.get("test_key".to_string()).await.unwrap().wait().await;
+    let response = client.get("test_key".to_string()).await;
     assert_eq!("test_response", response.unwrap().unwrap().as_str().unwrap());
 }
 
@@ -873,7 +839,7 @@ async fn test_shorthand_get_bytes_argument() {
     let socket = SocketMock::new(164);
     let client = create_mocked_client(&network, socket, &clock, Resp2 {});
 
-    let response = client.get(Bytes::from_static(b"test_key")).await.unwrap().wait().await;
+    let response = client.get(Bytes::from_static(b"test_key")).await;
     assert_eq!("test_response", response.unwrap().unwrap().as_str().unwrap());
 }
 
@@ -893,9 +859,9 @@ async fn test_shorthand_get_multi() {
     let socket = SocketMock::new(897);
     let client = create_mocked_client(&network, socket, &clock, Resp2 {});
 
-    let response1 = client.get(Bytes::from_static(b"key1")).await.unwrap().wait().await;
-    let response2 = client.get(Bytes::from_static(b"key2")).await.unwrap().wait().await;
-    let response3 = client.get(Bytes::from_static(b"key3")).await.unwrap().wait().await;
+    let response1 = client.get(Bytes::from_static(b"key1")).await;
+    let response2 = client.get(Bytes::from_static(b"key2")).await;
+    let response3 = client.get(Bytes::from_static(b"key3")).await;
 
     assert_eq!("value1", response1.unwrap().unwrap().as_string().unwrap());
     assert_eq!("value2", response2.unwrap().unwrap().as_string().unwrap());
@@ -914,7 +880,7 @@ async fn test_shorthand_set_str_argument() {
     let socket = SocketMock::new(164);
     let client = create_mocked_client(&network, socket, &clock, Resp2 {});
 
-    client.set("key", "value").await.unwrap().wait().await.unwrap();
+    client.set("key", "value").await.unwrap();
 }
 
 #[async_std::test]
@@ -929,13 +895,7 @@ async fn test_shorthand_set_string_argument() {
     let socket = SocketMock::new(164);
     let client = create_mocked_client(&network, socket, &clock, Resp2 {});
 
-    client
-        .set("key".to_string(), "value".to_string())
-        .await
-        .unwrap()
-        .wait()
-        .await
-        .unwrap();
+    client.set("key".to_string(), "value".to_string()).await.unwrap();
 }
 
 #[async_std::test]
@@ -952,7 +912,7 @@ async fn test_shorthand_set_bytes_argument() {
 
     let key = Bytes::from_static(b"key");
     let value = Bytes::from_static(b"value");
-    client.set(key, value).await.unwrap().wait().await.unwrap();
+    client.set(key, value).await.unwrap();
 }
 
 #[async_std::test]
@@ -967,7 +927,7 @@ async fn test_shorthand_publish() {
     let socket = SocketMock::new(164);
     let client = create_mocked_client(&network, socket, &clock, Resp2 {});
 
-    let response = client.publish("colors", "orange").await.unwrap().wait().await.unwrap();
+    let response = client.publish("colors", "orange").await.unwrap();
     assert_eq!(3, response);
 }
 
@@ -983,7 +943,7 @@ async fn test_shorthand_ping() {
     let socket = SocketMock::new(164);
     let client = create_mocked_client(&network, socket, &clock, Resp2 {});
 
-    client.ping().await.unwrap().wait().await.unwrap();
+    client.ping().await.unwrap();
 }
 
 #[async_std::test]
@@ -998,7 +958,7 @@ async fn test_shorthand_bgsave_non_scheduled() {
     let socket = SocketMock::new(164);
     let client = create_mocked_client(&network, socket, &clock, Resp2 {});
 
-    client.bgsave(false).await.unwrap().wait().await.unwrap();
+    client.bgsave(false).await.unwrap();
 }
 
 #[async_std::test]
@@ -1013,7 +973,7 @@ async fn test_shorthand_bgsave_scheduled() {
     let socket = SocketMock::new(164);
     let client = create_mocked_client(&network, socket, &clock, Resp2 {});
 
-    client.bgsave(true).await.unwrap().wait().await.unwrap();
+    client.bgsave(true).await.unwrap();
 }
 
 #[async_std::test]
@@ -1031,7 +991,7 @@ async fn test_shorthand_hset_str_argument() {
     let socket = SocketMock::new(164);
     let client = create_mocked_client(&network, socket, &clock, Resp2 {});
 
-    client.hset("my_hash", "color", "green").await.unwrap().wait().await.unwrap();
+    client.hset("my_hash", "color", "green").await.unwrap();
 }
 
 #[async_std::test]
@@ -1051,9 +1011,6 @@ async fn test_shorthand_hset_string_argument() {
 
     client
         .hset("my_hash".to_string(), "color".to_string(), "green".to_string())
-        .await
-        .unwrap()
-        .wait()
         .await
         .unwrap();
 }
@@ -1080,9 +1037,6 @@ async fn test_shorthand_hset_bytes_argument() {
             Bytes::from_static(b"green"),
         )
         .await
-        .unwrap()
-        .wait()
-        .await
         .unwrap();
 }
 
@@ -1100,16 +1054,7 @@ async fn test_shorthand_hget_str_argument() {
 
     assert_eq!(
         "test_response",
-        client
-            .hget("my_hash", "field")
-            .await
-            .unwrap()
-            .wait()
-            .await
-            .unwrap()
-            .unwrap()
-            .as_str()
-            .unwrap()
+        client.hget("my_hash", "field").await.unwrap().unwrap().as_str().unwrap()
     );
 }
 
@@ -1125,12 +1070,7 @@ async fn test_shorthand_hget_string_argument() {
     let socket = SocketMock::new(164);
     let client = create_mocked_client(&network, socket, &clock, Resp2 {});
 
-    let response = client
-        .hget("my_hash".to_string(), "field".to_string())
-        .await
-        .unwrap()
-        .wait()
-        .await;
+    let response = client.hget("my_hash".to_string(), "field".to_string()).await;
     assert_eq!("test_response", response.unwrap().unwrap().as_str().unwrap());
 }
 
@@ -1146,12 +1086,7 @@ async fn test_shorthand_hget_bytes_argument() {
     let socket = SocketMock::new(164);
     let client = create_mocked_client(&network, socket, &clock, Resp2 {});
 
-    let response = client
-        .hget(Bytes::from_static(b"my_hash"), Bytes::from_static(b"field"))
-        .await
-        .unwrap()
-        .wait()
-        .await;
+    let response = client.hget(Bytes::from_static(b"my_hash"), Bytes::from_static(b"field")).await;
     assert_eq!("test_response", response.unwrap().unwrap().as_str().unwrap());
 }
 
@@ -1169,16 +1104,7 @@ async fn test_shorthand_hgetall_str_argument() {
 
     assert_eq!(
         "green",
-        client
-            .hgetall("my_hash")
-            .await
-            .unwrap()
-            .wait()
-            .await
-            .unwrap()
-            .unwrap()
-            .get_str("color")
-            .unwrap()
+        client.hgetall("my_hash").await.unwrap().unwrap().get_str("color").unwrap()
     );
 }
 
@@ -1198,9 +1124,6 @@ async fn test_shorthand_hgetall_string_argument() {
         "green",
         client
             .hgetall("my_hash".to_string())
-            .await
-            .unwrap()
-            .wait()
             .await
             .unwrap()
             .unwrap()
@@ -1225,9 +1148,6 @@ async fn test_shorthand_hgetall_bytes_argument() {
         "green",
         client
             .hgetall(Bytes::from_static(b"my_hash"))
-            .await
-            .unwrap()
-            .wait()
             .await
             .unwrap()
             .unwrap()

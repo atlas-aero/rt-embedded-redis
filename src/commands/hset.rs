@@ -18,10 +18,10 @@
 //!
 //! let mut connection_handler = ConnectionHandler::resp2(SocketAddr::from_str("127.0.0.1:6379").unwrap());
 //! let client = connection_handler.connect(&stack, Some(&clock)).await.unwrap();
-//!# client.send(CommandBuilder::new("DEL").arg_static("my_hash").to_command()).await.unwrap().wait().await.unwrap();
+//!# client.send(CommandBuilder::new("DEL").arg_static("my_hash").to_command()).await.unwrap();
 //!
 //! let command = HashSetCommand::new("my_hash", "color", "green");
-//! let response = client.send(command).await.unwrap().wait().await.unwrap();
+//! let response = client.send(command).await.unwrap();
 //!
 //! // Returns the number of added fields
 //! assert_eq!(1, response)
@@ -43,13 +43,13 @@
 //!#
 //!# let mut connection_handler = ConnectionHandler::resp2(SocketAddr::from_str("127.0.0.1:6379").unwrap());
 //!# let client = connection_handler.connect(&stack, Some(&clock)).await.unwrap();
-//!# client.send(CommandBuilder::new("DEL").arg_static("my_hash").to_command()).await.unwrap().wait().await.unwrap();
+//!# client.send(CommandBuilder::new("DEL").arg_static("my_hash").to_command()).await.unwrap();
 //!#
 //! let command = HashSetCommand::multiple("my_hash".into(), [
 //!     ("color".into(), "green".into()),
 //!     ("material".into(), "stone".into())
 //! ]);
-//! let response = client.send(command).await.unwrap().wait().await.unwrap();
+//! let response = client.send(command).await.unwrap();
 //!
 //! // Returns the number of added fields
 //! assert_eq!(2, response)
@@ -86,7 +86,7 @@ use crate::commands::builder::{CommandBuilder, ToInteger};
 use crate::commands::hello::HelloCommand;
 use crate::commands::{Command, ResponseTypeError};
 use crate::network::protocol::Protocol;
-use crate::network::{Client, CommandErrors, Future};
+use crate::network::{Client, CommandErrors};
 use bytes::Bytes;
 use embedded_io_async::{Read, Write};
 use embedded_time::Clock;
@@ -146,12 +146,7 @@ where
 {
     /// Shorthand for [HashSetCommand]
     /// For setting multiple fields, use [HashSetCommand] directly instead
-    pub async fn hset<K, F, V>(
-        &self,
-        key: K,
-        field: F,
-        value: V,
-    ) -> Result<Future<'_, T, C, P, HashSetCommand<1>>, CommandErrors>
+    pub async fn hset<K, F, V>(&self, key: K, field: F, value: V) -> Result<i64, CommandErrors>
     where
         Bytes: From<K>,
         Bytes: From<F>,

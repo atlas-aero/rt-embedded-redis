@@ -18,10 +18,10 @@
 //!
 //! let mut connection_handler = ConnectionHandler::resp2(SocketAddr::from_str("127.0.0.1:6379").unwrap());
 //! let client = connection_handler.connect(&stack, Some(&clock)).await.unwrap();
-//! client.hset("test_hash", "color", "green").await.unwrap().wait().await.unwrap();
+//! client.hset("test_hash", "color", "green").await.unwrap();
 //!
 //! let command = HashGetCommand::new("test_hash", "color");
-//! let response = client.send(command).await.unwrap().wait().await.unwrap().unwrap();
+//! let response = client.send(command).await.unwrap().unwrap();
 //!
 //! assert_eq!("green", response.as_str().unwrap())
 //! # });
@@ -46,7 +46,7 @@
 //!# let client = connection_handler.connect(&stack, Some(&clock)).await.unwrap();
 //!#
 //! let command = HashGetCommand::new("not_existing", "field");
-//! let response = client.send(command).await.unwrap().wait().await.unwrap();
+//! let response = client.send(command).await.unwrap();
 //!
 //! assert!(response.is_none())
 //! # });
@@ -70,10 +70,10 @@
 //!# let mut connection_handler = ConnectionHandler::resp2(SocketAddr::from_str("127.0.0.1:6379").unwrap());
 //!# let client = connection_handler.connect(&stack, Some(&clock)).await.unwrap();
 //!#
-//!# let _ = client.send(HashSetCommand::new("hash_key", "hash_field", "example")).await.unwrap().wait().await;
+//!# let _ = client.send(HashSetCommand::new("hash_key", "hash_field", "example")).await;
 //!#
 //! // Using &str arguments
-//! let response = client.hget("hash_key", "hash_field").await.unwrap().wait().await.unwrap().unwrap();
+//! let response = client.hget("hash_key", "hash_field").await.unwrap().unwrap();
 //! assert_eq!("example", response.as_str().unwrap());
 //!
 //! // Using String arguments
@@ -89,7 +89,7 @@ use crate::commands::get::GetResponse;
 use crate::commands::hello::HelloCommand;
 use crate::commands::{Command, ResponseTypeError};
 use crate::network::protocol::Protocol;
-use crate::network::{Client, CommandErrors, Future};
+use crate::network::{Client, CommandErrors};
 use bytes::Bytes;
 use embedded_io_async::{Read, Write};
 use embedded_time::Clock;
@@ -137,11 +137,7 @@ where
     HelloCommand: Command<<P as Protocol>::FrameType>,
 {
     /// Shorthand for [HashGetCommand]
-    pub async fn hget<K, F>(
-        &self,
-        key: K,
-        field: F,
-    ) -> Result<Future<'_, T, C, P, HashGetCommand>, CommandErrors>
+    pub async fn hget<K, F>(&self, key: K, field: F) -> Result<Option<GetResponse>, CommandErrors>
     where
         <P as Protocol>::FrameType: ToStringBytes,
         <P as Protocol>::FrameType: IsNullFrame,

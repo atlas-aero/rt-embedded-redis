@@ -28,7 +28,7 @@
 //! let client = connection_handler.connect(&stack, Some(&clock)).await.unwrap();
 //!
 //! let command = CommandBuilder::new("ECHO").arg_static("Hello World!").to_command();
-//! let response = client.send(command).await.unwrap().wait().await.unwrap();
+//! let response = client.send(command).await.unwrap();
 //! assert_eq!("Hello World!", response.to_string().unwrap());
 //! # });
 //! ```

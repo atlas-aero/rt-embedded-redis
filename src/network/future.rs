@@ -21,15 +21,12 @@ pub(crate) struct Identity {
 }
 
 /// Asynchronous response management for a command sent to Redis.
-pub struct Future<'a, T: Read + Write, C: Clock, P: Protocol, Cmd: Command<P::FrameType>> {
+pub(crate) struct Future<'a, T: Read + Write, C: Clock, P: Protocol, Cmd: Command<P::FrameType>> {
     id: Identity,
     command: Cmd,
     protocol: P,
     network: &'a Network<T, P>,
     timeout: Timeout<'a, C>,
-
-    /// Cached error during work of ready(). Will be returned on wait() call.
-    error: Option<CommandErrors>,
 
     /// Was wait called? Flag is used for destructor.
     wait_called: bool,
@@ -49,19 +46,14 @@ impl<'a, T: Read + Write, C: Clock, P: Protocol, Cmd: Command<P::FrameType>> Fut
             protocol,
             network,
             timeout,
-            error: None,
             wait_called: false,
         }
     }
 
     /// Waits until the response is received and returns it
     /// Returns an error for an invalid response or timeout (if configured).
-    pub async fn wait(mut self) -> Result<Cmd::Response, CommandErrors> {
+    pub(crate) async fn wait(mut self) -> Result<Cmd::Response, CommandErrors> {
         self.wait_called = true;
-
-        if self.error.is_some() {
-            return Err(self.error.clone().unwrap());
-        }
 
         self.process().await?;
 
@@ -72,24 +64,6 @@ impl<'a, T: Read + Write, C: Clock, P: Protocol, Cmd: Command<P::FrameType>> Fut
         match self.command.eval_response(frame) {
             Ok(response) => Ok(response),
             Err(_) => Err(CommandResponseViolation),
-        }
-    }
-
-    /// Waits for incoming data and returns true once the response is ready
-    /// Errors are preserved and returned on wait() call
-    pub async fn ready(&mut self) -> bool {
-        match self.process().await {
-            Ok(_) => match self.network.is_complete(&self.id) {
-                Ok(result) => result,
-                Err(error) => {
-                    self.error = Some(error);
-                    true
-                }
-            },
-            Err(error) => {
-                self.error = Some(error);
-                true
-            }
         }
     }
 

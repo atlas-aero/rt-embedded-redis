@@ -18,11 +18,11 @@
 //!
 //! let mut connection_handler = ConnectionHandler::resp2(SocketAddr::from_str("127.0.0.1:6379").unwrap());
 //! let client = connection_handler.connect(&stack, Some(&clock)).await.unwrap();
-//! client.hset("test_all_hash", "color", "green").await.unwrap().wait().await.unwrap();
-//! client.hset("test_all_hash", "material", "wood").await.unwrap().wait().await.unwrap();
+//! client.hset("test_all_hash", "color", "green").await.unwrap();
+//! client.hset("test_all_hash", "material", "wood").await.unwrap();
 //!
 //! let command = HashGetAllCommand::new("test_all_hash");
-//! let response = client.send(command).await.unwrap().wait().await.unwrap().unwrap();
+//! let response = client.send(command).await.unwrap().unwrap();
 //!
 //! assert_eq!("green", response.get_str("color").unwrap());
 //! assert_eq!("wood", response.get_str("material").unwrap());
@@ -48,7 +48,7 @@
 //!# let client = connection_handler.connect(&stack, Some(&clock)).await.unwrap();
 //!#
 //! let command = HashGetAllCommand::new("not_existing");
-//! let response = client.send(command).await.unwrap().wait().await.unwrap();
+//! let response = client.send(command).await.unwrap();
 //!
 //! assert!(response.is_none())
 //! # });
@@ -73,11 +73,11 @@
 //!# let mut connection_handler = ConnectionHandler::resp2(SocketAddr::from_str("127.0.0.1:6379").unwrap());
 //!# let client = connection_handler.connect(&stack, Some(&clock)).await.unwrap();
 //!#
-//!# let _ = client.send(HashSetCommand::new("multi_hash_key", "first_field", "green")).await.unwrap().wait().await;
-//!# let _ = client.send(HashSetCommand::new("multi_hash_key", "second_field", "wood")).await.unwrap().wait().await;
+//!# let _ = client.send(HashSetCommand::new("multi_hash_key", "first_field", "green")).await;
+//!# let _ = client.send(HashSetCommand::new("multi_hash_key", "second_field", "wood")).await;
 //!#
 //! // Using &str arguments
-//! let response = client.hgetall("multi_hash_key").await.unwrap().wait().await.unwrap().unwrap();
+//! let response = client.hgetall("multi_hash_key").await.unwrap().unwrap();
 //! assert_eq!("green", response.get_str("first_field").unwrap());
 //! assert_eq!("wood", response.get_str("second_field").unwrap());
 //!
@@ -93,7 +93,7 @@ use crate::commands::builder::{CommandBuilder, ToBytesMap};
 use crate::commands::hello::HelloCommand;
 use crate::commands::{Command, ResponseTypeError};
 use crate::network::protocol::Protocol;
-use crate::network::{Client, CommandErrors, Future};
+use crate::network::{Client, CommandErrors};
 use alloc::collections::BTreeMap;
 use bytes::Bytes;
 use embedded_io_async::{Read, Write};
@@ -176,7 +176,7 @@ where
     HelloCommand: Command<<P as Protocol>::FrameType>,
 {
     /// Shorthand for [HashGetAllCommand]
-    pub async fn hgetall<K>(&self, key: K) -> Result<Future<'_, T, C, P, HashGetAllCommand>, CommandErrors>
+    pub async fn hgetall<K>(&self, key: K) -> Result<Option<HashResponse>, CommandErrors>
     where
         <P as Protocol>::FrameType: ToBytesMap,
         <P as Protocol>::FrameType: From<CommandBuilder>,

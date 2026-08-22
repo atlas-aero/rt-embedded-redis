@@ -20,10 +20,10 @@
 //! let mut connection_handler = ConnectionHandler::resp2(SocketAddr::from_str("127.0.0.1:6379").unwrap());
 //! let client = connection_handler.connect(&stack, Some(&clock)).await.unwrap();
 //!#
-//!# let _ = client.send(SetCommand::new("test_key", "test_value")).await.unwrap().wait().await;
+//!# let _ = client.send(SetCommand::new("test_key", "test_value")).await;
 //!
 //! let command = GetCommand::static_key("test_key");
-//! let response = client.send(command).await.unwrap().wait().await.unwrap().unwrap();
+//! let response = client.send(command).await.unwrap().unwrap();
 //! assert_eq!("test_value", response.as_str().unwrap())
 //! # });
 //! ```
@@ -46,7 +46,7 @@
 //!# let client = connection_handler.connect(&stack, Some(&clock)).await.unwrap();
 //!#
 //! let command = GetCommand::static_key("missing_key");
-//! let response = client.send(command).await.unwrap().wait().await.unwrap();
+//! let response = client.send(command).await.unwrap();
 //! assert!(response.is_none())
 //! # });
 //! ```
@@ -69,14 +69,14 @@
 //!# let mut connection_handler = ConnectionHandler::resp2(SocketAddr::from_str("127.0.0.1:6379").unwrap());
 //!# let client = connection_handler.connect(&stack, Some(&clock)).await.unwrap();
 //!#
-//!# let _ = client.send(SetCommand::new("test_key", "test_value")).await.unwrap().wait().await;
+//!# let _ = client.send(SetCommand::new("test_key", "test_value")).await;
 //!#
 //! // Using Bytes object as key
 //! let command = GetCommand::new(Bytes::from_static("large_key".as_bytes()));
 //!
 //! // Using response as Bytes
 //! let command = GetCommand::new("test_key");
-//! let response = client.send(command).await.unwrap().wait().await.unwrap().unwrap();
+//! let response = client.send(command).await.unwrap().unwrap();
 //! let _response_bytes = response.to_bytes();
 //! # });
 //! ```
@@ -97,9 +97,9 @@
 //!# let mut connection_handler = ConnectionHandler::resp2(SocketAddr::from_str("127.0.0.1:6379").unwrap());
 //!# let client = connection_handler.connect(&stack, Some(&clock)).await.unwrap();
 //!#
-//!# let _ = client.send(SetCommand::new("test_key", "test_value")).await.unwrap().wait().await;
+//!# let _ = client.send(SetCommand::new("test_key", "test_value")).await;
 //!#
-//! let response = client.get("test_key").await.unwrap().wait().await.unwrap().unwrap();
+//! let response = client.get("test_key").await.unwrap().unwrap();
 //! assert_eq!("test_value", response.as_str().unwrap())
 //! # });
 //! ```
@@ -108,7 +108,6 @@ use crate::commands::builder::{CommandBuilder, IsNullFrame, ToStringBytes};
 use crate::commands::hello::HelloCommand;
 use crate::commands::{Command, ResponseTypeError};
 use crate::network::client::{Client, CommandErrors};
-use crate::network::future::Future;
 use crate::network::protocol::Protocol;
 use alloc::string::String;
 use bytes::Bytes;
@@ -208,7 +207,7 @@ where
     HelloCommand: Command<<P as Protocol>::FrameType>,
 {
     /// Shorthand for [GetCommand]
-    pub async fn get<K>(&self, key: K) -> Result<Future<'_, T, C, P, GetCommand>, CommandErrors>
+    pub async fn get<K>(&self, key: K) -> Result<Option<GetResponse>, CommandErrors>
     where
         <P as Protocol>::FrameType: ToStringBytes,
         <P as Protocol>::FrameType: IsNullFrame,

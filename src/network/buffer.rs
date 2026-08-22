@@ -19,16 +19,16 @@ pub(crate) struct Network<T: Read + Write, P: Protocol> {
     connection: Mutex<NoopRawMutex, T>,
     buffer: RefCell<ResponseBuffer<P>>,
 
-    /// Current valid Future series
+    /// Current valid pending-response series
     current_series: RefCell<usize>,
 
-    /// Index of next Future
+    /// Index of the next pending response
     next_index: RefCell<usize>,
 
     /// Indicates a pending buffer clearance on fatal errors
     clear_buffer: RefCell<bool>,
 
-    /// List of dropped futures, which did not call wait()
+    /// List of dropped pending responses that were not awaited
     /// For not leaking memory, response data of this futures is dropped on next send() call
     dropped_futures: RefCell<Vec<Identity>>,
 }
@@ -148,7 +148,7 @@ impl<T: Read + Write, P: Protocol> Network<T, P> {
         *self.clear_buffer.borrow_mut() = true;
     }
 
-    /// Future was dropped before fully fetching response data
+    /// Pending response was dropped before fully fetching response data
     pub(crate) fn drop_future(&self, id: Identity) {
         self.dropped_futures.borrow_mut().push(id);
     }
@@ -162,7 +162,7 @@ impl<T: Read + Write, P: Protocol> Network<T, P> {
         let mut buffer = self.buffer.borrow_mut();
 
         self.dropped_futures.borrow_mut().retain(|id| {
-            // Future got invalidated in the meanwhile
+            // Pending response got invalidated in the meanwhile
             if &id.series != self.current_series.borrow().deref() {
                 return false;
             }

@@ -18,7 +18,7 @@
 //! let mut connection_handler = ConnectionHandler::resp2(SocketAddr::from_str("127.0.0.1:6379").unwrap());
 //! let client = connection_handler.connect(&stack, Some(&clock)).await.unwrap();
 //!
-//! let response = client.ping().await.unwrap().wait().await.unwrap();
+//! let response = client.ping().await.unwrap();
 //! # });
 //! ```
 //! # Verbose command
@@ -39,7 +39,7 @@
 //!# let client = connection_handler.connect(&stack, Some(&clock)).await.unwrap();
 //!#
 //! let command = PingCommand::new(None);
-//! let response = client.send(command).await.unwrap().wait().await.unwrap();
+//! let response = client.send(command).await.unwrap();
 //! # });
 //! ```
 //! # Custom argument
@@ -62,7 +62,7 @@
 //!# let client = connection_handler.connect(&stack, Some(&clock)).await.unwrap();
 //!#
 //! let command = PingCommand::new(Some("hello world".into()));
-//! let response = client.send(command).await.unwrap().wait().await.unwrap();
+//! let response = client.send(command).await.unwrap();
 //! # });
 //! ```
 use crate::commands::auth::AuthCommand;
@@ -70,7 +70,7 @@ use crate::commands::builder::{CommandBuilder, ToStringOption};
 use crate::commands::hello::HelloCommand;
 use crate::commands::{Command, ResponseTypeError};
 use crate::network::protocol::Protocol;
-use crate::network::{Client, CommandErrors, Future};
+use crate::network::{Client, CommandErrors};
 use bytes::Bytes;
 use embedded_io_async::{Read, Write};
 use embedded_time::Clock;
@@ -117,7 +117,7 @@ where
     HelloCommand: Command<<P as Protocol>::FrameType>,
 {
     /// Shorthand for [PingCommand]
-    pub async fn ping(&self) -> Result<Future<'_, T, C, P, PingCommand>, CommandErrors>
+    pub async fn ping(&self) -> Result<(), CommandErrors>
     where
         <P as Protocol>::FrameType: ToStringOption,
         <P as Protocol>::FrameType: From<CommandBuilder>,

@@ -79,7 +79,7 @@
 //!#
 //!# let error_string = "ERR AUTH <password> called without any password configured for the default user. Are you sure your configuration is correct?".to_string();
 //! let command = AuthCommand::from(&Credentials::password_only("wrong_password"));
-//! let result = client.send(command).await.unwrap().wait().await.unwrap_err();
+//! let result = client.send(command).await.unwrap_err();
 //! assert_eq!(CommandErrors::ErrorResponse(error_string), result);
 //! # });
 //! ```

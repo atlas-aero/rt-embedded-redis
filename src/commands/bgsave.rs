@@ -20,7 +20,7 @@
 //! let client = connection_handler.connect(&stack, Some(&clock)).await.unwrap();
 //!
 //! let command = BackgroundSaveCommand::default();
-//! let response = client.send(command).await.unwrap().wait().await;
+//! let response = client.send(command).await;
 //!# if let Err(error) = response {
 //!#     assert!(matches!(error, CommandErrors::ErrorResponse(message)
 //!#         if message.contains("Background save already in progress")));
@@ -63,7 +63,7 @@
 //!# let mut connection_handler = ConnectionHandler::resp2(SocketAddr::from_str("127.0.0.1:6379").unwrap());
 //!# let client = connection_handler.connect(&stack, Some(&clock)).await.unwrap();
 //!#
-//! let response = client.bgsave(false).await.unwrap().wait().await;
+//! let response = client.bgsave(false).await;
 //!# if let Err(error) = response {
 //!#     assert!(matches!(error, CommandErrors::ErrorResponse(message)
 //!#         if message.contains("Background save already in progress")));
@@ -75,7 +75,7 @@ use crate::commands::builder::CommandBuilder;
 use crate::commands::hello::HelloCommand;
 use crate::commands::{Command, ResponseTypeError};
 use crate::network::protocol::Protocol;
-use crate::network::{Client, CommandErrors, Future};
+use crate::network::{Client, CommandErrors};
 use bytes::Bytes;
 use embedded_io_async::{Read, Write};
 use embedded_time::Clock;
@@ -120,10 +120,7 @@ where
     HelloCommand: Command<<P as Protocol>::FrameType>,
 {
     /// Shorthand for [BackgroundSaveCommand]
-    pub async fn bgsave(
-        &self,
-        schedule: bool,
-    ) -> Result<Future<'_, T, C, P, BackgroundSaveCommand>, CommandErrors>
+    pub async fn bgsave(&self, schedule: bool) -> Result<(), CommandErrors>
     where
         <P as Protocol>::FrameType: From<CommandBuilder>,
     {

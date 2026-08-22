@@ -26,7 +26,7 @@
 //! let client = connection_handler.connect(&stack, Some(&clock)).await.unwrap();
 //!
 //! let command = HelloCommand{};
-//! let response = client.send(command).await.unwrap().wait().await.unwrap();
+//! let response = client.send(command).await.unwrap();
 //!
 //! assert_eq!("redis", response.server);
 //! assert_eq!("master", response.role);

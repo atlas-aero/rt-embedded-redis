@@ -19,7 +19,7 @@
 //! let client = connection_handler.connect(&stack, Some(&clock)).await.unwrap();
 //!
 //! let command = PublishCommand::new("channel", "message");
-//! let response = client.send(command).await.unwrap().wait().await.unwrap();
+//! let response = client.send(command).await.unwrap();
 //!
 //! // Returns the number of clients that received the message
 //! assert_eq!(0, response)
@@ -49,7 +49,6 @@ use crate::commands::builder::{CommandBuilder, ToInteger};
 use crate::commands::hello::HelloCommand;
 use crate::commands::{Command, ResponseTypeError};
 use crate::network::client::{Client, CommandErrors};
-use crate::network::future::Future;
 use crate::network::protocol::Protocol;
 use bytes::Bytes;
 use embedded_io_async::{Read, Write};
@@ -96,11 +95,7 @@ where
     HelloCommand: Command<<P as Protocol>::FrameType>,
 {
     /// Shorthand for [PublishCommand]
-    pub async fn publish<K, V>(
-        &self,
-        channel: K,
-        message: V,
-    ) -> Result<Future<'_, T, C, P, PublishCommand>, CommandErrors>
+    pub async fn publish<K, V>(&self, channel: K, message: V) -> Result<i64, CommandErrors>
     where
         <P as Protocol>::FrameType: ToInteger,
         <P as Protocol>::FrameType: From<CommandBuilder>,

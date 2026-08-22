@@ -33,8 +33,9 @@ pub enum CommandErrors {
     /// * Network failure. As we are using TCP, only a network stack bug or other exotic causes (e.g. bit flip) is reasonable.
     /// * Is recommended to create a new client/connection in this case*.
     ProtocolViolation,
-    /// Future is no longer valid. This happens on fatal problems like timeouts or faulty responses, on which message<->future
-    /// mapping can no longer be guaranteed
+    /// A pending command operation is no longer valid. This happens on fatal problems like
+    /// timeouts or faulty responses, for which response-to-command mapping can no longer be
+    /// guaranteed.
     /// *Is recommended to create a new client/connection in this case*.
     InvalidFuture,
     /// Low level network error
@@ -72,8 +73,19 @@ where
     AuthCommand: Command<<P as Protocol>::FrameType>,
     HelloCommand: Command<<P as Protocol>::FrameType>,
 {
-    /// Sends the given command asynchronously and returns its pending response.
-    pub async fn send<'b, Cmd>(&'b self, command: Cmd) -> Result<Future<'b, T, C, P, Cmd>, CommandErrors>
+    /// Sends the given command and asynchronously waits for its evaluated response.
+    pub async fn send<Cmd>(&self, command: Cmd) -> Result<Cmd::Response, CommandErrors>
+    where
+        Cmd: Command<P::FrameType>,
+    {
+        self.send_pending(command).await?.wait().await
+    }
+
+    /// Sends a command and returns the internal pending response state.
+    pub(crate) async fn send_pending<'b, Cmd>(
+        &'b self,
+        command: Cmd,
+    ) -> Result<Future<'b, T, C, P, Cmd>, CommandErrors>
     where
         Cmd: Command<P::FrameType>,
     {
@@ -106,12 +118,7 @@ where
     /// Authenticates with the given credentials during client initialization.
     pub(crate) async fn auth(&self, credentials: Option<Credentials>) -> Result<(), ConnectionError> {
         if let Some(credentials) = credentials.as_ref() {
-            self.send(AuthCommand::from(credentials))
-                .await
-                .map_err(auth_error)?
-                .wait()
-                .await
-                .map_err(auth_error)?;
+            self.send(AuthCommand::from(credentials)).await.map_err(auth_error)?;
         }
 
         Ok(())
@@ -125,14 +132,7 @@ where
     {
         self.auth(credentials).await?;
         if self.network.get_protocol().requires_hello() {
-            return Ok(Some(
-                self.send(HelloCommand {})
-                    .await
-                    .map_err(hello_error)?
-                    .wait()
-                    .await
-                    .map_err(hello_error)?,
-            ));
+            return Ok(Some(self.send(HelloCommand {}).await.map_err(hello_error)?));
         }
 
         Ok(None)

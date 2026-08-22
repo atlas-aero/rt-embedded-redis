@@ -138,13 +138,7 @@ where
         client.hello_response = client.init(self.authentication.clone()).await?;
 
         if self.use_ping {
-            client
-                .ping()
-                .await
-                .map_err(|_| TcpConnectionFailed)?
-                .wait()
-                .await
-                .map_err(|_| TcpConnectionFailed)?;
+            client.ping().await.map_err(|_| TcpConnectionFailed)?;
         }
 
         Ok(client)

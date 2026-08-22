@@ -114,7 +114,7 @@
 //!# let mut connection_handler = ConnectionHandler::resp2(SocketAddr::from_str("127.0.0.1:6379").unwrap());
 //!# let client = connection_handler.connect(&stack, Some(&clock)).await.unwrap();
 //!#
-//!# let _ = client.send(SetCommand::new("test_key", "test_value")).await.unwrap().wait().await;
+//!# let _ = client.send(SetCommand::new("test_key", "test_value")).await;
 //!#
 //! // Using &str arguments
 //! let _ = client.set("key", "value").await;
@@ -132,7 +132,6 @@ use crate::commands::builder::{CommandBuilder, IsNullFrame, ToStringBytes, ToStr
 use crate::commands::hello::HelloCommand;
 use crate::commands::{Command, ResponseTypeError};
 use crate::network::client::{Client, CommandErrors};
-use crate::network::future::Future;
 use crate::network::protocol::Protocol;
 use alloc::string::ToString;
 use bytes::Bytes;
@@ -362,11 +361,7 @@ where
 {
     /// Shorthand for [SetCommand]
     /// For using options of SET command, use [SetCommand] directly instead
-    pub async fn set<K, V>(
-        &self,
-        key: K,
-        value: V,
-    ) -> Result<Future<'_, T, C, P, SetCommand<ConfirmationResponse>>, CommandErrors>
+    pub async fn set<K, V>(&self, key: K, value: V) -> Result<ConfirmationResponse, CommandErrors>
     where
         <P as Protocol>::FrameType: ToStringBytes,
         <P as Protocol>::FrameType: ToStringOption,

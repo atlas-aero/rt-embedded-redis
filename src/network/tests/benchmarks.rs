@@ -19,30 +19,14 @@ macro_rules! setup_client {
 }
 
 #[bench]
-fn benchmark_publish_async(bencher: &mut Bencher) {
+fn benchmark_publish(bencher: &mut Bencher) {
     setup_client!(client);
 
     let topic = Bytes::from_static(b"test");
     let data = Bytes::from_static(&[b'A'; 256]);
 
     bencher.iter(|| {
-        let _ = block_on(client.publish(topic.clone(), data.clone()));
-    });
-
-    block_on(client.close());
-}
-
-#[bench]
-fn benchmark_publish_sync(bencher: &mut Bencher) {
-    setup_client!(client);
-
-    let topic = Bytes::from_static(b"test");
-    let data = Bytes::from_static(&[b'A'; 256]);
-
-    bencher.iter(|| {
-        block_on(async {
-            client.publish(topic.clone(), data.clone()).await.unwrap().wait().await.unwrap();
-        });
+        block_on(client.publish(topic.clone(), data.clone())).unwrap();
     });
 
     block_on(client.close());
