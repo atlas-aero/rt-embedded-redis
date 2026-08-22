@@ -1,3 +1,5 @@
+use core::future::poll_fn;
+use core::task::Poll;
 use embedded_time::duration::{Extensions, Microseconds};
 use embedded_time::timer::param::{OneShot, Running};
 use embedded_time::{Clock, Timer};
@@ -38,5 +40,21 @@ impl<'a, C: Clock> Timeout<'a, C> {
             Ok(result) => Ok(result),
             Err(_) => Err(TimeoutError::TimerError),
         }
+    }
+
+    pub fn is_enabled(&self) -> bool {
+        self.timer.is_some()
+    }
+
+    pub async fn wait(&self) -> Result<(), TimeoutError> {
+        poll_fn(|context| match self.expired() {
+            Ok(true) => Poll::Ready(Ok(())),
+            Ok(false) => {
+                context.waker().wake_by_ref();
+                Poll::Pending
+            }
+            Err(error) => Poll::Ready(Err(error)),
+        })
+        .await
     }
 }

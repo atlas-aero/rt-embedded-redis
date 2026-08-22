@@ -4,65 +4,54 @@
 //!
 //! A regular client can be turned to a [Subscription] in the following way.
 //!
-//! ```
+//! ```no_run
+//! # async fn example() {
 //!# use core::str::FromStr;
 //!# use core::net::SocketAddr;
-//!# use std_embedded_nal::Stack;
+//!# use std_embedded_nal_async::Stack;
 //!# use std_embedded_time::StandardClock;
 //!# use embedded_redis::network::ConnectionHandler;
 //!#
-//!# let mut stack = Stack::default();
+//!# let stack = Stack::default();
 //!# let clock = StandardClock::default();
 //!#
 //!# let server_address = SocketAddr::from_str("127.0.0.1:6379").unwrap();
 //!# let mut connection_handler = ConnectionHandler::resp3(server_address);
 //! let client = connection_handler
-//!                 .connect(&mut stack, Some(&clock)).unwrap()
-//!                 .subscribe(["first_channel".into(), "second_channel".into()])
+//!                 .connect(&stack, Some(&clock)).await.unwrap()
+//!                 .subscribe(["first_channel".into(), "second_channel".into()]).await
 //!                 .unwrap();
+//! # }
 //! ```
 //!
-//! If the subscriptions fails, it's recommended to close the connection, as a the
-//! state is undefined. A further reuse of the connection could cause subsequent errors.
+//! If subscribing fails, drop the client so its owned connection is closed; the server-side state
+//! may be undefined.
 //!
 //! ## Receiving messages
 //!
-//! Messages can be received using the `receive()` method. Which returns [Some(Message)](Message) in case a message is pending.
+//! Messages can be received asynchronously using the `receive()` method. It waits until a
+//! publish message arrives and then returns [Some(Message)](Message).
 //!
-//! ```
+//! ```no_run
+//! # async fn example() {
 //!# use core::str::FromStr;
-//!# use std::{thread, time};
 //!# use core::net::SocketAddr;
-//!# use std_embedded_nal::Stack;
+//!# use std_embedded_nal_async::Stack;
 //!# use std_embedded_time::StandardClock;
 //!# use embedded_redis::network::ConnectionHandler;
 //!#
-//!# thread::spawn(|| {
-//!#     let mut stack = Stack::default();
-//!#     let clock = StandardClock::default();
-//!#
-//!#     let server_address = SocketAddr::from_str("127.0.0.1:6379").unwrap();
-//!#     let mut connection_handler = ConnectionHandler::resp3(server_address);
-//!#     let mut  client = connection_handler.connect(&mut stack, Some(&clock)).unwrap();
-//!#
-//!#     loop {
-//!#         client.publish("first_channel", "example payload").unwrap().wait().unwrap();
-//!#         thread::sleep(time::Duration::from_millis(10));
-//!#     }
-//!# });
-//!#
-//!# let mut stack = Stack::default();
+//!# let stack = Stack::default();
 //!# let clock = StandardClock::default();
 //!#
 //!# let server_address = SocketAddr::from_str("127.0.0.1:6379").unwrap();
 //!# let mut connection_handler = ConnectionHandler::resp3(server_address);
 //!# let mut  client = connection_handler
-//!#                 .connect(&mut stack, Some(&clock)).unwrap()
-//!#                 .subscribe(["first_channel".into(), "second_channel".into()])
+//!#                 .connect(&stack, Some(&clock)).await.unwrap()
+//!#                 .subscribe(["first_channel".into(), "second_channel".into()]).await
 //!#                 .unwrap();
 //!#
 //! loop {
-//!     let message = client.receive().unwrap();
+//!     let message = client.receive().await.unwrap();
 //!
 //!     if let Some(message) = message {
 //!         assert_eq!("first_channel", core::str::from_utf8(&message.channel[..]).unwrap());
@@ -70,33 +59,37 @@
 //!         break;
 //!     }
 //! }
+//! # }
 //! ```
 //!
 //! ## Unsubscribing
 //!
 //! To leave a clean connection state, unsubscribe from all channels at the end.
 //!
-//! ```
+//! ```no_run
+//! # async fn example() {
 //!# use core::str::FromStr;
 //!# use core::net::SocketAddr;
-//!# use std_embedded_nal::Stack;
+//!# use std_embedded_nal_async::Stack;
 //!# use std_embedded_time::StandardClock;
 //!# use embedded_redis::network::ConnectionHandler;
 //!#
-//!# let mut stack = Stack::default();
+//!# let stack = Stack::default();
 //!# let clock = StandardClock::default();
 //!#
 //!# let server_address = SocketAddr::from_str("127.0.0.1:6379").unwrap();
 //!# let mut connection_handler = ConnectionHandler::resp3(server_address);
 //!# let client = connection_handler
-//!#                 .connect(&mut stack, Some(&clock)).unwrap()
-//!#                 .subscribe(["first_channel".into(), "second_channel".into()])
+//!#                 .connect(&stack, Some(&clock)).await.unwrap()
+//!#                 .subscribe(["first_channel".into(), "second_channel".into()]).await
 //!#                 .unwrap();
 //!#
-//! client.unsubscribe().unwrap();
+//! client.unsubscribe().await.unwrap();
+//! # }
 //! ```
 //!
-//! *Note: `unsubscribe()` is called automatically when the client is dropped*
+//! Dropping a subscription closes its owned connection. Call `unsubscribe()` when the server's
+//! confirmation is required before closing it.
 pub use client::{Error, Message, Subscription};
 
 pub(crate) mod client;

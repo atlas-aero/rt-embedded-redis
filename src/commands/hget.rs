@@ -3,79 +3,85 @@
 //! For general information about this command, see the [Redis documentation](<https://redis.io/commands/hget/>).
 //!
 //! # Using command object
-//! ```
+//! ```no_run
+//! # async fn example() {
 //!# use core::str::FromStr;
 //!# use core::net::SocketAddr;
-//!# use std_embedded_nal::Stack;
+//!# use std_embedded_nal_async::Stack;
 //!# use std_embedded_time::StandardClock;
 //!# use embedded_redis::commands::builder::CommandBuilder;
 //!# use embedded_redis::commands::hget::HashGetCommand;
 //!# use embedded_redis::network::ConnectionHandler;
 //!#
-//! let mut stack = Stack::default();
+//! let stack = Stack::default();
 //! let clock = StandardClock::default();
 //!
 //! let mut connection_handler = ConnectionHandler::resp2(SocketAddr::from_str("127.0.0.1:6379").unwrap());
-//! let client = connection_handler.connect(&mut stack, Some(&clock)).unwrap();
-//! client.hset("test_hash", "color", "green").unwrap().wait().unwrap();
+//! let client = connection_handler.connect(&stack, Some(&clock)).await.unwrap();
+//! client.hset("test_hash", "color", "green").await.unwrap().wait().await.unwrap();
 //!
 //! let command = HashGetCommand::new("test_hash", "color");
-//! let response = client.send(command).unwrap().wait().unwrap().unwrap();
+//! let response = client.send(command).await.unwrap().wait().await.unwrap().unwrap();
 //!
 //! assert_eq!("green", response.as_str().unwrap())
+//! # }
 //! ```
 //!
 //! # Missing key or field
 //! In case key or field is missing. [None] is returned.
-//! ```
+//! ```no_run
+//! # async fn example() {
 //!# use core::str::FromStr;
 //!# use core::net::SocketAddr;
-//!# use std_embedded_nal::Stack;
+//!# use std_embedded_nal_async::Stack;
 //!# use std_embedded_time::StandardClock;
 //!# use embedded_redis::commands::builder::CommandBuilder;
 //!# use embedded_redis::commands::hget::HashGetCommand;
 //!# use embedded_redis::network::ConnectionHandler;
 //!#
-//!# let mut stack = Stack::default();
+//!# let stack = Stack::default();
 //!# let clock = StandardClock::default();
 //!#
 //!# let mut connection_handler = ConnectionHandler::resp2(SocketAddr::from_str("127.0.0.1:6379").unwrap());
-//!# let client = connection_handler.connect(&mut stack, Some(&clock)).unwrap();
+//!# let client = connection_handler.connect(&stack, Some(&clock)).await.unwrap();
 //!#
 //! let command = HashGetCommand::new("not_existing", "field");
-//! let response = client.send(command).unwrap().wait().unwrap();
+//! let response = client.send(command).await.unwrap().wait().await.unwrap();
 //!
 //! assert!(response.is_none())
+//! # }
 //! ```
 //!
 //! # Shorthand
 //! [Client](Client#method.hget) provides a shorthand method for this command.
-//! ```
+//! ```no_run
+//! # async fn example() {
 //!# use core::str::FromStr;
 //!# use bytes::Bytes;
 //!# use core::net::SocketAddr;
-//!# use std_embedded_nal::Stack;
+//!# use std_embedded_nal_async::Stack;
 //!# use std_embedded_time::StandardClock;
 //!# use embedded_redis::commands::hset::HashSetCommand;
 //!# use embedded_redis::network::ConnectionHandler;
 //!#
-//!# let mut stack = Stack::default();
+//!# let stack = Stack::default();
 //!# let clock = StandardClock::default();
 //!#
 //!# let mut connection_handler = ConnectionHandler::resp2(SocketAddr::from_str("127.0.0.1:6379").unwrap());
-//!# let client = connection_handler.connect(&mut stack, Some(&clock)).unwrap();
+//!# let client = connection_handler.connect(&stack, Some(&clock)).await.unwrap();
 //!#
-//!# let _ = client.send(HashSetCommand::new("hash_key", "hash_field", "example")).unwrap().wait();
+//!# let _ = client.send(HashSetCommand::new("hash_key", "hash_field", "example")).await.unwrap().wait().await;
 //!#
 //! // Using &str arguments
-//! let response = client.hget("hash_key", "hash_field").unwrap().wait().unwrap().unwrap();
+//! let response = client.hget("hash_key", "hash_field").await.unwrap().wait().await.unwrap().unwrap();
 //! assert_eq!("example", response.as_str().unwrap());
 //!
 //! // Using String arguments
-//! let _ = client.hget("hash_key".to_string(), "hash_field".to_string());
+//! let _ = client.hget("hash_key".to_string(), "hash_field".to_string()).await;
 //!
 //! // Using Bytes arguments
-//! let _ = client.hget(Bytes::from_static(b"hash_key"), Bytes::from_static(b"hash_field"));
+//! let _ = client.hget(Bytes::from_static(b"hash_key"), Bytes::from_static(b"hash_field")).await;
+//! # }
 //! ```
 use crate::commands::auth::AuthCommand;
 use crate::commands::builder::{CommandBuilder, IsNullFrame, ToStringBytes};
@@ -85,7 +91,7 @@ use crate::commands::{Command, ResponseTypeError};
 use crate::network::protocol::Protocol;
 use crate::network::{Client, CommandErrors, Future};
 use bytes::Bytes;
-use embedded_nal::TcpClientStack;
+use embedded_io_async::{Read, Write};
 use embedded_time::Clock;
 
 /// Abstraction for HGET command
@@ -125,17 +131,17 @@ where
     }
 }
 
-impl<'a, N: TcpClientStack, C: Clock, P: Protocol> Client<'a, N, C, P>
+impl<'a, T: Read + Write, C: Clock, P: Protocol> Client<'a, T, C, P>
 where
     AuthCommand: Command<<P as Protocol>::FrameType>,
     HelloCommand: Command<<P as Protocol>::FrameType>,
 {
     /// Shorthand for [HashGetCommand]
-    pub fn hget<K, F>(
-        &'a self,
+    pub async fn hget<K, F>(
+        &self,
         key: K,
         field: F,
-    ) -> Result<Future<'a, N, C, P, HashGetCommand>, CommandErrors>
+    ) -> Result<Future<'_, T, C, P, HashGetCommand>, CommandErrors>
     where
         <P as Protocol>::FrameType: ToStringBytes,
         <P as Protocol>::FrameType: IsNullFrame,
@@ -143,6 +149,6 @@ where
         Bytes: From<K>,
         Bytes: From<F>,
     {
-        self.send(HashGetCommand::new(key, field))
+        self.send(HashGetCommand::new(key, field)).await
     }
 }
