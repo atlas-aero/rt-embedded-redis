@@ -6,8 +6,8 @@
 //! * [commands module](crate::commands) for Redis command abstractions
 //! * [subscription module][crate::subscription] for Redis subscription client
 //!
-//! ```no_run
-//! # async fn example() {
+//! ```
+//! # async_std::task::block_on(async {
 //!# use core::str::FromStr;
 //!# use core::net::SocketAddr;
 //!# use std_embedded_nal_async::Stack;
@@ -23,7 +23,7 @@
 //!
 //! let future = client.set("key", "value").await.unwrap();
 //! let response = future.wait().await.unwrap();
-//! # }
+//! # });
 //! ```
 #![cfg_attr(all(not(test), not(feature = "mock")), no_std)]
 #![cfg_attr(feature = "strict", deny(warnings))]
@@ -62,8 +62,8 @@ pub mod commands;
 /// Creating a new connection requires the following two things:
 /// * A network stack implementing [embedded-nal-async](<https://docs.rs/embedded-nal-async/latest/embedded_nal_async/>)
 /// * A clock implementing [embedded-time](<https://docs.rs/embedded-time/latest/embedded_time/>). Optional if no Timeout is configured.
-/// ```no_run
-/// # async fn example() {
+/// ```
+/// # async_std::task::block_on(async {
 ///# use core::str::FromStr;
 ///# use core::net::SocketAddr;
 ///# use std_embedded_nal_async::Stack;
@@ -80,7 +80,7 @@ pub mod commands;
 /// // RESP3 protocol
 /// let mut connection_handler = ConnectionHandler::resp3(SocketAddr::from_str("127.0.0.1:6379").unwrap());
 /// let _client = connection_handler.connect(&network_stack, Some(&clock)).await.unwrap();
-/// # }
+/// # });
 /// ```
 ///
 /// Each `connect()` call opens a new connection owned by the returned client.
@@ -88,8 +88,8 @@ pub mod commands;
 /// ### Authentication
 ///
 /// Authentication is done in the following way:
-/// ```no_run
-/// # async fn example() {
+/// ```
+/// # async_std::task::block_on(async {
 ///# use core::str::FromStr;
 ///# use core::net::SocketAddr;
 ///# use std_embedded_nal_async::Stack;
@@ -111,14 +111,14 @@ pub mod commands;
 /// let mut connection_handler = ConnectionHandler::resp2(server_address);
 /// connection_handler.auth(Credentials::acl("user01", "secret123!"));
 /// # let _client = connection_handler.connect(&network_stack, Some(&clock)).await;
-/// # }
+/// # });
 /// ```
 /// ### Timeout
 ///
 /// The client includes a timeout mechanism. This allows setting a time limit for responses from the Redis server:
 ///
-/// ```no_run
-/// # async fn example() {
+/// ```
+/// # async_std::task::block_on(async {
 ///# use core::str::FromStr;
 ///# use core::net::SocketAddr;
 ///# use std_embedded_nal_async::Stack;
@@ -133,7 +133,7 @@ pub mod commands;
 /// let mut connection_handler = ConnectionHandler::resp2(server_address);
 /// connection_handler.timeout(500_000.microseconds());
 /// # let _client = connection_handler.connect(&network_stack, Some(&clock)).await.unwrap();
-/// # }
+/// # });
 /// ```
 /// ### Ping
 ///
@@ -142,8 +142,8 @@ pub mod commands;
 ///
 /// It is recommended to use this option only if a Timeout is configured.
 ///
-/// ```no_run
-/// # async fn example() {
+/// ```
+/// # async_std::task::block_on(async {
 ///# use core::str::FromStr;
 ///# use core::net::SocketAddr;
 ///# use std_embedded_nal_async::Stack;
@@ -160,7 +160,7 @@ pub mod commands;
 /// connection_handler.use_ping();
 /// # let _client = connection_handler.connect(&network_stack, Some(&clock)).await.unwrap();
 /// # let _client = connection_handler.connect(&network_stack, Some(&clock)).await.unwrap();
-/// # }
+/// # });
 /// ```
 ///
 /// ### Memory optimization
@@ -170,8 +170,8 @@ pub mod commands;
 /// potentially exceed the memory resources.
 /// See [MemoryParameters](crate::network::MemoryParameters) for more details.
 ///
-/// ````no_run
-/// # async fn example() {
+/// ````
+/// # async_std::task::block_on(async {
 ///# use core::str::FromStr;
 ///# use core::net::SocketAddr;
 ///# use std_embedded_nal_async::Stack;
@@ -192,7 +192,7 @@ pub mod commands;
 /// });
 ///
 ///# let client = connection_handler.connect(&stack, Some(&clock)).await.unwrap();
-/// # }
+/// # });
 /// ````
 ///
 /// ### Concurrency
@@ -206,8 +206,8 @@ pub mod commands;
 /// Redis server responses are managed as [Future](crate::network::Future). Sending several
 /// commands before awaiting their responses enables pipelining, and responses can be consumed in
 /// any order:
-/// ```no_run
-/// # async fn example() {
+/// ```
+/// # async_std::task::block_on(async {
 ///# use core::str::FromStr;
 ///# use core::net::SocketAddr;
 ///# use std_embedded_nal_async::Stack;
@@ -226,14 +226,14 @@ pub mod commands;
 ///
 /// let _ = future2.wait().await;
 /// let _ = future1.wait().await;
-/// # }
+/// # });
 /// ```
 ///
 /// ### Ready
 /// The asynchronous `ready()` method waits until the corresponding response arrives or an error
 /// occurs. Errors are retained and returned by the subsequent `wait()` call.
-/// ```no_run
-/// # async fn example() {
+/// ```
+/// # async_std::task::block_on(async {
 ///# use core::str::FromStr;
 ///# use core::net::SocketAddr;
 ///# use std_embedded_nal_async::Stack;
@@ -252,7 +252,7 @@ pub mod commands;
 /// if future.ready().await {
 ///    let _ = future.wait().await;
 /// }
-/// # }
+/// # });
 /// ```
 ///
 /// ### Response type
@@ -271,8 +271,8 @@ pub mod commands;
 /// If futures are dropped without being awaited, `close().await` consumes their pending responses
 /// before the client is dropped. Dropping the client itself closes its owned connection.
 ///
-/// ````no_run
-/// # async fn example() {
+/// ````
+/// # async_std::task::block_on(async {
 ///# use core::str::FromStr;
 ///# use core::net::SocketAddr;
 ///# use std_embedded_nal_async::Stack;
@@ -288,7 +288,7 @@ pub mod commands;
 ///#
 /// let _ = client.set("key", "value").await;
 /// client.close().await;
-/// # }
+/// # });
 /// ````
 pub mod network;
 pub mod subscription;

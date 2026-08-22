@@ -11,8 +11,8 @@
 //!
 //! # Basic usage
 //! The following Example demonstrates execution of [ECHO](<https://redis.io/commands/echo/>) command
-//! ```no_run
-//! # async fn example() {
+//! ```
+//! # async_std::task::block_on(async {
 //!# use core::str::FromStr;
 //!# use core::net::SocketAddr;
 //!# use std_embedded_nal_async::Stack;
@@ -30,7 +30,7 @@
 //! let command = CommandBuilder::new("ECHO").arg_static("Hello World!").to_command();
 //! let response = client.send(command).await.unwrap().wait().await.unwrap();
 //! assert_eq!("Hello World!", response.to_string().unwrap());
-//! # }
+//! # });
 //! ```
 use crate::commands::builder::CommandBuilder;
 use crate::commands::{Command, ResponseTypeError};

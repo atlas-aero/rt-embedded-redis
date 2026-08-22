@@ -3,8 +3,8 @@
 //! For general information about this command, see the [Redis documentation](<https://redis.io/commands/publish/>).
 //!
 //! # Using command object
-//! ```no_run
-//! # async fn example() {
+//! ```
+//! # async_std::task::block_on(async {
 //!# use core::str::FromStr;
 //!# use core::net::SocketAddr;
 //!# use std_embedded_nal_async::Stack;
@@ -23,12 +23,12 @@
 //!
 //! // Returns the number of clients that received the message
 //! assert_eq!(0, response)
-//! # }
+//! # });
 //! ```
 //! # Shorthand
 //! [Client](Client#method.publish) provides a shorthand method.
-//! ```no_run
-//! # async fn example() {
+//! ```
+//! # async_std::task::block_on(async {
 //!# use core::str::FromStr;
 //!# use core::net::SocketAddr;
 //!# use std_embedded_nal_async::Stack;
@@ -42,7 +42,7 @@
 //!# let client = connection_handler.connect(&stack, Some(&clock)).await.unwrap();
 //!#
 //! let _ = client.publish("channel", "message").await;
-//! # }
+//! # });
 //! ```
 use crate::commands::auth::AuthCommand;
 use crate::commands::builder::{CommandBuilder, ToInteger};

@@ -3,8 +3,8 @@
 //! For general information about this command, see the [Redis documentation](<https://redis.io/commands/hget/>).
 //!
 //! # Using command object
-//! ```no_run
-//! # async fn example() {
+//! ```
+//! # async_std::task::block_on(async {
 //!# use core::str::FromStr;
 //!# use core::net::SocketAddr;
 //!# use std_embedded_nal_async::Stack;
@@ -24,13 +24,13 @@
 //! let response = client.send(command).await.unwrap().wait().await.unwrap().unwrap();
 //!
 //! assert_eq!("green", response.as_str().unwrap())
-//! # }
+//! # });
 //! ```
 //!
 //! # Missing key or field
 //! In case key or field is missing. [None] is returned.
-//! ```no_run
-//! # async fn example() {
+//! ```
+//! # async_std::task::block_on(async {
 //!# use core::str::FromStr;
 //!# use core::net::SocketAddr;
 //!# use std_embedded_nal_async::Stack;
@@ -49,13 +49,13 @@
 //! let response = client.send(command).await.unwrap().wait().await.unwrap();
 //!
 //! assert!(response.is_none())
-//! # }
+//! # });
 //! ```
 //!
 //! # Shorthand
 //! [Client](Client#method.hget) provides a shorthand method for this command.
-//! ```no_run
-//! # async fn example() {
+//! ```
+//! # async_std::task::block_on(async {
 //!# use core::str::FromStr;
 //!# use bytes::Bytes;
 //!# use core::net::SocketAddr;
@@ -81,7 +81,7 @@
 //!
 //! // Using Bytes arguments
 //! let _ = client.hget(Bytes::from_static(b"hash_key"), Bytes::from_static(b"hash_field")).await;
-//! # }
+//! # });
 //! ```
 use crate::commands::auth::AuthCommand;
 use crate::commands::builder::{CommandBuilder, IsNullFrame, ToStringBytes};

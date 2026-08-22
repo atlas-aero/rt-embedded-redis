@@ -4,8 +4,8 @@
 //!
 //! # Basic usage
 //! In case of existing key [`Some(GetResponse)`](GetResponse) is returned.
-//! ```no_run
-//! # async fn example() {
+//! ```
+//! # async_std::task::block_on(async {
 //!# use core::str::FromStr;
 //!# use core::net::SocketAddr;
 //!# use std_embedded_nal_async::Stack;
@@ -25,12 +25,12 @@
 //! let command = GetCommand::static_key("test_key");
 //! let response = client.send(command).await.unwrap().wait().await.unwrap().unwrap();
 //! assert_eq!("test_value", response.as_str().unwrap())
-//! # }
+//! # });
 //! ```
 //! # Missing key (NIL/NULL response)
 //! In case of missing key `None` is returned
-//! ```no_run
-//! # async fn example() {
+//! ```
+//! # async_std::task::block_on(async {
 //!# use core::str::FromStr;
 //!# use core::net::SocketAddr;
 //!# use std_embedded_nal_async::Stack;
@@ -48,12 +48,12 @@
 //! let command = GetCommand::static_key("missing_key");
 //! let response = client.send(command).await.unwrap().wait().await.unwrap();
 //! assert!(response.is_none())
-//! # }
+//! # });
 //! ```
 //! # Using Bytes
 //! For best performance (instead of &str or String cloning), especially with large amounts of data, it is recommended to use [Bytes](<https://docs.rs/bytes/latest/bytes/>).
-//! ```no_run
-//! # async fn example() {
+//! ```
+//! # async_std::task::block_on(async {
 //!# use core::str::FromStr;
 //!# use bytes::Bytes;
 //!# use core::net::SocketAddr;
@@ -78,12 +78,12 @@
 //! let command = GetCommand::new("test_key");
 //! let response = client.send(command).await.unwrap().wait().await.unwrap().unwrap();
 //! let _response_bytes = response.to_bytes();
-//! # }
+//! # });
 //! ```
 //! # Shorthand
 //! [Client](Client#method.get) provides a shorthand method for this command.
-//! ```no_run
-//! # async fn example() {
+//! ```
+//! # async_std::task::block_on(async {
 //!# use core::str::FromStr;
 //!# use core::net::SocketAddr;
 //!# use std_embedded_nal_async::Stack;
@@ -101,7 +101,7 @@
 //!#
 //! let response = client.get("test_key").await.unwrap().wait().await.unwrap().unwrap();
 //! assert_eq!("test_value", response.as_str().unwrap())
-//! # }
+//! # });
 //! ```
 use crate::commands::auth::AuthCommand;
 use crate::commands::builder::{CommandBuilder, IsNullFrame, ToStringBytes};

@@ -3,8 +3,8 @@
 //! For general information about this command, see the [Redis documentation](<https://redis.io/commands/set/>).
 //!
 //! # Basic usage
-//! ```no_run
-//! # async fn example() {
+//! ```
+//! # async_std::task::block_on(async {
 //!# use core::str::FromStr;
 //!# use core::net::SocketAddr;
 //!# use std_embedded_nal_async::Stack;
@@ -20,13 +20,13 @@
 //!
 //! let command = SetCommand::new("key", "value");
 //! let _ = client.send(command).await;
-//! # }
+//! # });
 //! ```
 //!
 //! # Expiration (EX, PX, EXAT, PXAT)
 //! Setting TTL can be achieved in the following way. Fore more details s. [ExpirationPolicy] enum.
-//! ```no_run
-//! # async fn example() {
+//! ```
+//! # async_std::task::block_on(async {
 //!# use core::str::FromStr;
 //!# use core::net::SocketAddr;
 //!# use std_embedded_nal_async::Stack;
@@ -44,14 +44,14 @@
 //!  let command = SetCommand::new("key", "value")
 //!      .expires(ExpirationPolicy::Seconds(120));
 //!# let _ = client.send(command).await;
-//! # }
+//! # });
 //! ```
 //! # Exclusive condition (NX/XX)
 //! Manage set condition. Fore more details s. [Exclusivity] enum.
 //!
 //! Using this options affects the return type. s. [ExclusiveSetResponse]
-//! ```no_run
-//! # async fn example() {
+//! ```
+//! # async_std::task::block_on(async {
 //!# use core::str::FromStr;
 //!# use core::net::SocketAddr;
 //!# use std_embedded_nal_async::Stack;
@@ -69,14 +69,14 @@
 //!  let command = SetCommand::new("key", "value")
 //!      .set_exclusive(Exclusivity::SetIfMissing);
 //!# let _ = client.send(command).await;
-//! # }
+//! # });
 //! ```
 //! # Return previous value (!GET)
 //! Returns the previous value stored at the given key.
 //!
 //! Using this options affects the return type. s. [ReturnPreviousResponse]
-//! ```no_run
-//! # async fn example() {
+//! ```
+//! # async_std::task::block_on(async {
 //!# use core::str::FromStr;
 //!# use core::net::SocketAddr;
 //!# use std_embedded_nal_async::Stack;
@@ -94,12 +94,12 @@
 //!  let command = SetCommand::new("key", "value")
 //!      .return_previous();
 //!# let _ = client.send(command).await;
-//! # }
+//! # });
 //! ```
 //! # Shorthand
 //! [Client](Client#method.set) provides a shorthand method for this command.
-//! ```no_run
-//! # async fn example() {
+//! ```
+//! # async_std::task::block_on(async {
 //!# use core::str::FromStr;
 //!# use bytes::Bytes;
 //!# use core::net::SocketAddr;
@@ -124,7 +124,7 @@
 //!
 //! // Using Bytes arguments
 //! let _ = client.set(Bytes::from_static(b"key"), Bytes::from_static(b"value")).await;
-//! # }
+//! # });
 //! ```
 
 use crate::commands::auth::AuthCommand;

@@ -3,8 +3,8 @@
 //! For general information about this command, see the [Redis documentation](<https://redis.io/commands/hset/>).
 //!
 //! # Using command object
-//! ```no_run
-//! # async fn example() {
+//! ```
+//! # async_std::task::block_on(async {
 //!# use core::str::FromStr;
 //!# use core::net::SocketAddr;
 //!# use std_embedded_nal_async::Stack;
@@ -25,11 +25,11 @@
 //!
 //! // Returns the number of added fields
 //! assert_eq!(1, response)
-//! # }
+//! # });
 //! ```
 //! # Setting multiple fields at once
-//! ```no_run
-//! # async fn example() {
+//! ```
+//! # async_std::task::block_on(async {
 //!# use core::str::FromStr;
 //!# use core::net::SocketAddr;
 //!# use std_embedded_nal_async::Stack;
@@ -53,12 +53,12 @@
 //!
 //! // Returns the number of added fields
 //! assert_eq!(2, response)
-//! # }
+//! # });
 //! ```
 //! # Shorthand
 //! [Client](Client#method.hset) provides a shorthand method for this command.
-//! ```no_run
-//! # async fn example() {
+//! ```
+//! # async_std::task::block_on(async {
 //!# use core::str::FromStr;
 //!# use bytes::Bytes;
 //!# use core::net::SocketAddr;
@@ -79,7 +79,7 @@
 //!
 //! // Using Bytes arguments
 //! let _ = client.hset(Bytes::from_static(b"hash"), Bytes::from_static(b"field"), Bytes::from_static(b"value")).await;
-//! # }
+//! # });
 //! ```
 use crate::commands::auth::AuthCommand;
 use crate::commands::builder::{CommandBuilder, ToInteger};

@@ -5,8 +5,8 @@
 //! *Authentication is done automatically by [ConnectionHandler](crate::network::ConnectionHandler), so there is usually no need for manual execution.*
 //!
 //! # Password-only
-//! ```no_run
-//! # async fn example() {
+//! ```
+//! # async_std::task::block_on(async {
 //!# use core::str::FromStr;
 //!# use std::str::Bytes;
 //!# use core::net::SocketAddr;
@@ -28,12 +28,12 @@
 //! // Directly creating Auth command:
 //! let command = AuthCommand::new(None as Option<&str>, "secret123!");
 //! let _ = client.send(command).await;
-//! # }
+//! # });
 //! ```
 //! # Username/Password (ACL based authentication)
 //! *Requires Redis version > 6.0 + serverside ACL configuration*
-//! ```no_run
-//! # async fn example() {
+//! ```
+//! # async_std::task::block_on(async {
 //!# use core::str::FromStr;
 //!# use core::net::SocketAddr;
 //!# use std_embedded_nal_async::Stack;
@@ -54,15 +54,15 @@
 //! // Directly creating Auth command:
 //! let command = AuthCommand::new(Some("user01"), "secret123!");
 //! let _ = client.send(command).await;
-//! # }
+//! # });
 //! ```
 //! # Error handling
 //! Successful execution is terminated by returning `Ok(())` response.
 //!
 //! Authentication errors are normally signalled by Redis with an error response, which is mapped
 //! to [CommandErrors::ErrorResponse](crate::network::CommandErrors::ErrorResponse).
-//! ```no_run
-//! # async fn example() {
+//! ```
+//! # async_std::task::block_on(async {
 //!# use core::str::FromStr;
 //!# use core::net::SocketAddr;
 //!# use std_embedded_nal_async::Stack;
@@ -81,7 +81,7 @@
 //! let command = AuthCommand::from(&Credentials::password_only("wrong_password"));
 //! let result = client.send(command).await.unwrap().wait().await.unwrap_err();
 //! assert_eq!(CommandErrors::ErrorResponse(error_string), result);
-//! # }
+//! # });
 //! ```
 
 use crate::commands::builder::{CommandBuilder, ToStringOption};

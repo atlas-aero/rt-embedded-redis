@@ -3,8 +3,8 @@
 //! For general information about this command, see the [Redis documentation](<https://redis.io/commands/hgetall/>).
 //!
 //! # Using command object
-//! ```no_run
-//! # async fn example() {
+//! ```
+//! # async_std::task::block_on(async {
 //!# use core::str::FromStr;
 //!# use core::net::SocketAddr;
 //!# use std_embedded_nal_async::Stack;
@@ -26,13 +26,13 @@
 //!
 //! assert_eq!("green", response.get_str("color").unwrap());
 //! assert_eq!("wood", response.get_str("material").unwrap());
-//! # }
+//! # });
 //! ```
 //!
 //! # Missing key or field
 //! In case key or field is missing. [None] is returned.
-//! ```no_run
-//! # async fn example() {
+//! ```
+//! # async_std::task::block_on(async {
 //!# use core::str::FromStr;
 //!# use core::net::SocketAddr;
 //!# use std_embedded_nal_async::Stack;
@@ -51,13 +51,13 @@
 //! let response = client.send(command).await.unwrap().wait().await.unwrap();
 //!
 //! assert!(response.is_none())
-//! # }
+//! # });
 //! ```
 //!
 //! # Shorthand
 //! [Client](Client#method.hgetall) provides a shorthand method for this command.
-//! ```no_run
-//! # async fn example() {
+//! ```
+//! # async_std::task::block_on(async {
 //!# use core::str::FromStr;
 //!# use bytes::Bytes;
 //!# use core::net::SocketAddr;
@@ -86,7 +86,7 @@
 //!
 //! // Using Bytes arguments
 //! let _ = client.hgetall(Bytes::from_static(b"multi_hash_key")).await;
-//! # }
+//! # });
 //! ```
 use crate::commands::auth::AuthCommand;
 use crate::commands::builder::{CommandBuilder, ToBytesMap};

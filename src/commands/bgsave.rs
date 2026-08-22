@@ -4,14 +4,14 @@
 //!
 //! # Basic usage
 //! By default no `SCHEDULE` option is used.
-//! ```no_run
-//! # async fn example() {
+//! ```
+//! # async_std::task::block_on(async {
 //!# use core::str::FromStr;
 //!# use core::net::SocketAddr;
 //!# use std_embedded_nal_async::Stack;
 //!# use std_embedded_time::StandardClock;
 //!# use embedded_redis::commands::bgsave::BackgroundSaveCommand;
-//!# use embedded_redis::network::ConnectionHandler;
+//!# use embedded_redis::network::{CommandErrors, ConnectionHandler};
 //!#
 //! let stack = Stack::default();
 //! let clock = StandardClock::default();
@@ -20,13 +20,17 @@
 //! let client = connection_handler.connect(&stack, Some(&clock)).await.unwrap();
 //!
 //! let command = BackgroundSaveCommand::default();
-//! let response = client.send(command).await.unwrap().wait().await.unwrap();
-//! # }
+//! let response = client.send(command).await.unwrap().wait().await;
+//!# if let Err(error) = response {
+//!#     assert!(matches!(error, CommandErrors::ErrorResponse(message)
+//!#         if message.contains("Background save already in progress")));
+//!# }
+//! # });
 //! ```
 //! # Schedule option
 //! Using `SCHEDULE` option by setting constructor flag to `true`.
-//! ```no_run
-//! # async fn example() {
+//! ```
+//! # async_std::task::block_on(async {
 //!# use core::str::FromStr;
 //!# use core::net::SocketAddr;
 //!# use std_embedded_nal_async::Stack;
@@ -41,17 +45,17 @@
 //!# let client = connection_handler.connect(&stack, Some(&clock)).await.unwrap();
 //!#
 //! let command = BackgroundSaveCommand::new(true);
-//! # }
+//! # });
 //! ```
 //! # Shorthand
 //! [Client](Client#method.get) provides a shorthand method for this command.
-//! ```no_run
-//! # async fn example() {
+//! ```
+//! # async_std::task::block_on(async {
 //!# use core::str::FromStr;
 //!# use core::net::SocketAddr;
 //!# use std_embedded_nal_async::Stack;
 //!# use std_embedded_time::StandardClock;
-//!# use embedded_redis::network::ConnectionHandler;
+//!# use embedded_redis::network::{CommandErrors, ConnectionHandler};
 //!#
 //!# let stack = Stack::default();
 //!# let clock = StandardClock::default();
@@ -59,8 +63,12 @@
 //!# let mut connection_handler = ConnectionHandler::resp2(SocketAddr::from_str("127.0.0.1:6379").unwrap());
 //!# let client = connection_handler.connect(&stack, Some(&clock)).await.unwrap();
 //!#
-//! let response = client.bgsave(false).await.unwrap().wait().await.unwrap();
-//! # }
+//! let response = client.bgsave(false).await.unwrap().wait().await;
+//!# if let Err(error) = response {
+//!#     assert!(matches!(error, CommandErrors::ErrorResponse(message)
+//!#         if message.contains("Background save already in progress")));
+//!# }
+//! # });
 //! ```
 use crate::commands::auth::AuthCommand;
 use crate::commands::builder::CommandBuilder;

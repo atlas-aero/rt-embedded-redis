@@ -9,8 +9,8 @@
 //! **Requires RESP3 protocol usage, panics on RESP2**
 //!
 //! Response is mapped to [HelloResponse].
-//! ```no_run
-//! # async fn example() {
+//! ```
+//! # async_std::task::block_on(async {
 //!# use core::str::FromStr;
 //!# use core::net::SocketAddr;
 //!# use std_embedded_nal_async::Stack;
@@ -30,7 +30,7 @@
 //!
 //! assert_eq!("redis", response.server);
 //! assert_eq!("master", response.role);
-//! # }
+//! # });
 //! ```
 use crate::commands::helpers::{CmdStr, RespMap};
 use crate::commands::{Command, ResponseTypeError};

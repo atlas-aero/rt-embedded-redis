@@ -4,8 +4,8 @@
 //!
 //! # Basic usage (client shorthand)
 //! Internally it is checked whether the server answers with PONG. If not, an error is returned.
-//! ```no_run
-//! # async fn example() {
+//! ```
+//! # async_std::task::block_on(async {
 //!# use core::str::FromStr;
 //!# use core::net::SocketAddr;
 //!# use std_embedded_nal_async::Stack;
@@ -19,12 +19,12 @@
 //! let client = connection_handler.connect(&stack, Some(&clock)).await.unwrap();
 //!
 //! let response = client.ping().await.unwrap().wait().await.unwrap();
-//! # }
+//! # });
 //! ```
 //! # Verbose command
 //! Sending a `PingCommand` as alternative to client shorthand.
-//! ```no_run
-//! # async fn example() {
+//! ```
+//! # async_std::task::block_on(async {
 //!# use core::str::FromStr;
 //!# use core::net::SocketAddr;
 //!# use std_embedded_nal_async::Stack;
@@ -40,14 +40,14 @@
 //!#
 //! let command = PingCommand::new(None);
 //! let response = client.send(command).await.unwrap().wait().await.unwrap();
-//! # }
+//! # });
 //! ```
 //! # Custom argument
 //! Optionally, a user-defined argument can be specified.
 //!
 //! The abstraction compares the server's response with the argument and returns an error if there is no match.
-//! ```no_run
-//! # async fn example() {
+//! ```
+//! # async_std::task::block_on(async {
 //!# use core::str::FromStr;
 //!# use core::net::SocketAddr;
 //!# use std_embedded_nal_async::Stack;
@@ -63,7 +63,7 @@
 //!#
 //! let command = PingCommand::new(Some("hello world".into()));
 //! let response = client.send(command).await.unwrap().wait().await.unwrap();
-//! # }
+//! # });
 //! ```
 use crate::commands::auth::AuthCommand;
 use crate::commands::builder::{CommandBuilder, ToStringOption};
