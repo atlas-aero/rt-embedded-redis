@@ -4,51 +4,54 @@
 //!
 //! # Using command object
 //! ```
+//! # async_std::task::block_on(async {
 //!# use core::str::FromStr;
 //!# use core::net::SocketAddr;
-//!# use std_embedded_nal::Stack;
+//!# use std_embedded_nal_async::Stack;
 //!# use std_embedded_time::StandardClock;
 //!# use embedded_redis::commands::publish::PublishCommand;
 //!# use embedded_redis::network::ConnectionHandler;
 //!#
-//! let mut stack = Stack::default();
+//! let stack = Stack::default();
 //! let clock = StandardClock::default();
 //!
 //! let mut connection_handler = ConnectionHandler::resp2(SocketAddr::from_str("127.0.0.1:6379").unwrap());
-//! let client = connection_handler.connect(&mut stack, Some(&clock)).unwrap();
+//! let client = connection_handler.connect(&stack, Some(&clock)).await.unwrap();
 //!
 //! let command = PublishCommand::new("channel", "message");
-//! let response = client.send(command).unwrap().wait().unwrap();
+//! let response = client.send(command).await.unwrap();
 //!
 //! // Returns the number of clients that received the message
 //! assert_eq!(0, response)
+//! # });
 //! ```
 //! # Shorthand
 //! [Client](Client#method.publish) provides a shorthand method.
 //! ```
+//! # async_std::task::block_on(async {
 //!# use core::str::FromStr;
 //!# use core::net::SocketAddr;
-//!# use std_embedded_nal::Stack;
+//!# use std_embedded_nal_async::Stack;
 //!# use std_embedded_time::StandardClock;
 //!# use embedded_redis::network::ConnectionHandler;
 //!#
-//!# let mut stack = Stack::default();
+//!# let stack = Stack::default();
 //!# let clock = StandardClock::default();
 //!#
 //!# let mut connection_handler = ConnectionHandler::resp2(SocketAddr::from_str("127.0.0.1:6379").unwrap());
-//!# let client = connection_handler.connect(&mut stack, Some(&clock)).unwrap();
+//!# let client = connection_handler.connect(&stack, Some(&clock)).await.unwrap();
 //!#
-//! let _ = client.publish("channel", "message");
+//! let _ = client.publish("channel", "message").await;
+//! # });
 //! ```
 use crate::commands::auth::AuthCommand;
 use crate::commands::builder::{CommandBuilder, ToInteger};
 use crate::commands::hello::HelloCommand;
 use crate::commands::{Command, ResponseTypeError};
 use crate::network::client::{Client, CommandErrors};
-use crate::network::future::Future;
 use crate::network::protocol::Protocol;
 use bytes::Bytes;
-use embedded_nal::TcpClientStack;
+use embedded_io_async::{Read, Write};
 use embedded_time::Clock;
 
 /// Abstraction for PUBLISH command
@@ -86,23 +89,19 @@ where
     }
 }
 
-impl<'a, N: TcpClientStack, C: Clock, P: Protocol> Client<'a, N, C, P>
+impl<'a, T: Read + Write, C: Clock, P: Protocol> Client<'a, T, C, P>
 where
     AuthCommand: Command<<P as Protocol>::FrameType>,
     HelloCommand: Command<<P as Protocol>::FrameType>,
 {
     /// Shorthand for [PublishCommand]
-    pub fn publish<K, V>(
-        &'a self,
-        channel: K,
-        message: V,
-    ) -> Result<Future<'a, N, C, P, PublishCommand>, CommandErrors>
+    pub async fn publish<K, V>(&self, channel: K, message: V) -> Result<i64, CommandErrors>
     where
         <P as Protocol>::FrameType: ToInteger,
         <P as Protocol>::FrameType: From<CommandBuilder>,
         Bytes: From<K>,
         Bytes: From<V>,
     {
-        self.send(PublishCommand::new(channel, message))
+        self.send(PublishCommand::new(channel, message)).await
     }
 }

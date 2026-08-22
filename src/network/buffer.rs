@@ -7,42 +7,37 @@ use alloc::vec::Vec;
 use bytes::BytesMut;
 use core::cell::RefCell;
 use core::fmt::{Debug, Formatter};
-use core::ops::{Deref, DerefMut};
-use embedded_nal::TcpClientStack;
+use core::ops::Deref;
+use embassy_sync::blocking_mutex::raw::NoopRawMutex;
+use embassy_sync::mutex::Mutex;
+use embedded_io_async::{Read, Write};
 use redis_protocol::error::RedisProtocolErrorKind::BufferTooSmall;
 
-/// Manges interaction between network stack and response buffer
-pub(crate) struct Network<'a, N: TcpClientStack, P: Protocol> {
+/// Manages interaction between the network connection and response buffer.
+pub(crate) struct Network<T: Read + Write, P: Protocol> {
     protocol: P,
-    stack: RefCell<&'a mut N>,
-    socket: RefCell<&'a mut N::TcpSocket>,
+    connection: Mutex<NoopRawMutex, T>,
     buffer: RefCell<ResponseBuffer<P>>,
 
-    /// Current valid Future series
+    /// Current valid pending-response series
     current_series: RefCell<usize>,
 
-    /// Index of next Future
+    /// Index of the next pending response
     next_index: RefCell<usize>,
 
     /// Indicates a pending buffer clearance on fatal errors
     clear_buffer: RefCell<bool>,
 
-    /// List of dropped futures, which did not call wait()
+    /// List of dropped pending responses that were not awaited
     /// For not leaking memory, response data of this futures is dropped on next send() call
     dropped_futures: RefCell<Vec<Identity>>,
 }
 
-impl<'a, N: TcpClientStack, P: Protocol> Network<'a, N, P> {
-    pub(crate) fn new(
-        stack: RefCell<&'a mut N>,
-        socket: RefCell<&'a mut N::TcpSocket>,
-        protocol: P,
-        memory: MemoryParameters,
-    ) -> Self {
+impl<T: Read + Write, P: Protocol> Network<T, P> {
+    pub(crate) fn new(connection: T, protocol: P, memory: MemoryParameters) -> Self {
         Network {
             protocol: protocol.clone(),
-            stack,
-            socket,
+            connection: Mutex::new(connection),
             buffer: RefCell::new(ResponseBuffer::new(protocol, memory)),
             current_series: RefCell::new(0),
             next_index: RefCell::new(0),
@@ -51,18 +46,17 @@ impl<'a, N: TcpClientStack, P: Protocol> Network<'a, N, P> {
         }
     }
 
-    /// Appends 32 byte to the given buffer
-    pub(crate) fn receive_chunk(&self) -> nb::Result<(), N::Error> {
+    /// Appends up to 32 bytes to the response buffer
+    pub(crate) async fn receive_chunk(&self) -> Result<usize, T::Error> {
         let mut local_buffer: [u8; 32] = [0; 32];
-        let mut stack = self.stack.borrow_mut();
-        let mut socket = self.socket.borrow_mut();
+        let mut connection = self.connection.lock().await;
 
-        match stack.receive(socket.deref_mut(), &mut local_buffer) {
+        match connection.read(&mut local_buffer).await {
             Ok(byte_count) => {
                 self.buffer.borrow_mut().append(&local_buffer[0..byte_count]);
-                Ok(())
+                Ok(byte_count)
             }
-            Err(error) => nb::Result::Err(error),
+            Err(error) => Err(error),
         }
     }
 
@@ -72,8 +66,8 @@ impl<'a, N: TcpClientStack, P: Protocol> Network<'a, N, P> {
     }
 
     /// Encodes and sends the given command
-    pub(crate) fn send(&self, frame: P::FrameType) -> Result<Identity, CommandErrors> {
-        // Seems a fata error invalidated the current series, so everything needs to be cleared
+    pub(crate) async fn send(&self, frame: P::FrameType) -> Result<Identity, CommandErrors> {
+        // A fatal error invalidated the current series, so everything needs to be cleared
         if *self.clear_buffer.borrow().deref() {
             self.clear_socket();
             *self.clear_buffer.borrow_mut() = false;
@@ -82,7 +76,7 @@ impl<'a, N: TcpClientStack, P: Protocol> Network<'a, N, P> {
         // Handle dropped futures for not leaking memory
         self.handle_dropped_futures();
 
-        self.send_frame(frame)?;
+        self.send_frame(frame).await?;
 
         let identity = Identity {
             series: *self.current_series.borrow(),
@@ -93,7 +87,7 @@ impl<'a, N: TcpClientStack, P: Protocol> Network<'a, N, P> {
     }
 
     /// Raw network logic for sending a frame
-    pub(crate) fn send_frame(&self, frame: P::FrameType) -> Result<(), CommandErrors> {
+    pub(crate) async fn send_frame(&self, frame: P::FrameType) -> Result<(), CommandErrors> {
         let mut buffer = BytesMut::new();
 
         // Extend buffer if needed
@@ -105,10 +99,9 @@ impl<'a, N: TcpClientStack, P: Protocol> Network<'a, N, P> {
             }
         }
 
-        let mut stack = self.stack.borrow_mut();
-        let mut socket = self.socket.borrow_mut();
+        let mut connection = self.connection.lock().await;
 
-        if stack.send(socket.deref_mut(), buffer.as_ref()).is_err() {
+        if connection.write_all(buffer.as_ref()).await.is_err() || connection.flush().await.is_err() {
             return Err(CommandErrors::TcpError);
         };
 
@@ -148,14 +141,14 @@ impl<'a, N: TcpClientStack, P: Protocol> Network<'a, N, P> {
         self.buffer.borrow_mut().take_next_frame()
     }
 
-    /// In case of fatal errors alle current futures are invalidated
+    /// Invalidates all current futures after a fatal error.
     pub(crate) fn invalidate_futures(&self) {
         *self.current_series.borrow_mut() += 1;
         *self.next_index.borrow_mut() = 0;
         *self.clear_buffer.borrow_mut() = true;
     }
 
-    /// Future was dropped before fully fetching response data
+    /// Pending response was dropped before fully fetching response data
     pub(crate) fn drop_future(&self, id: Identity) {
         self.dropped_futures.borrow_mut().push(id);
     }
@@ -166,11 +159,10 @@ impl<'a, N: TcpClientStack, P: Protocol> Network<'a, N, P> {
             return;
         }
 
-        self.receive_all();
         let mut buffer = self.buffer.borrow_mut();
 
         self.dropped_futures.borrow_mut().retain(|id| {
-            // Future got invalidated in the meanwhile
+            // Pending response got invalidated in the meanwhile
             if &id.series != self.current_series.borrow().deref() {
                 return false;
             }
@@ -190,31 +182,12 @@ impl<'a, N: TcpClientStack, P: Protocol> Network<'a, N, P> {
         !self.dropped_futures.borrow().is_empty()
     }
 
-    /// Receives all pending socket data
-    pub fn receive_all(&self) {
-        let mut result = Ok(());
-
-        while result.is_ok() {
-            result = self.receive_chunk();
-        }
-    }
-
-    /// Clears buffer and pending socket data
+    /// Clears buffered socket data.
+    ///
+    /// Unlike the non-blocking API, `embedded-nal-async` has no operation for draining only
+    /// currently pending data without waiting. Reads which have not completed are expected to be
+    /// cancellation-safe, so only data already received by this type has to be discarded here.
     fn clear_socket(&self) {
-        let mut stack = self.stack.borrow_mut();
-        let mut socket = self.socket.borrow_mut();
-
-        loop {
-            let mut local_buffer: [u8; 32] = [0; 32];
-
-            match stack.receive(socket.deref_mut(), &mut local_buffer) {
-                Ok(_) => {}
-                Err(_) => {
-                    break;
-                }
-            }
-        }
-
         self.buffer.borrow_mut().clear();
     }
 
@@ -233,7 +206,7 @@ impl<'a, N: TcpClientStack, P: Protocol> Network<'a, N, P> {
     }
 }
 
-impl<N: TcpClientStack, P: Protocol> Debug for Network<'_, N, P> {
+impl<T: Read + Write, P: Protocol> Debug for Network<T, P> {
     fn fmt(&self, f: &mut Formatter<'_>) -> core::fmt::Result {
         f.debug_struct("Network").finish()
     }

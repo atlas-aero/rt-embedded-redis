@@ -4,117 +4,127 @@
 //!
 //! # Basic usage
 //! ```
+//! # async_std::task::block_on(async {
 //!# use core::str::FromStr;
 //!# use core::net::SocketAddr;
-//!# use std_embedded_nal::Stack;
+//!# use std_embedded_nal_async::Stack;
 //!# use std_embedded_time::StandardClock;
 //!# use embedded_redis::commands::set::SetCommand;
 //!# use embedded_redis::network::ConnectionHandler;
 //!#
-//! let mut stack = Stack::default();
+//! let stack = Stack::default();
 //! let clock = StandardClock::default();
 //!
 //! let mut connection_handler = ConnectionHandler::resp2(SocketAddr::from_str("127.0.0.1:6379").unwrap());
-//! let client = connection_handler.connect(&mut stack, Some(&clock)).unwrap();
+//! let client = connection_handler.connect(&stack, Some(&clock)).await.unwrap();
 //!
 //! let command = SetCommand::new("key", "value");
-//! let _ = client.send(command);
+//! let _ = client.send(command).await;
+//! # });
 //! ```
 //!
 //! # Expiration (EX, PX, EXAT, PXAT)
 //! Setting TTL can be achieved in the following way. Fore more details s. [ExpirationPolicy] enum.
 //! ```
+//! # async_std::task::block_on(async {
 //!# use core::str::FromStr;
 //!# use core::net::SocketAddr;
-//!# use std_embedded_nal::Stack;
+//!# use std_embedded_nal_async::Stack;
 //!# use std_embedded_time::StandardClock;
 //!# use embedded_redis::commands::set::{SetCommand, ExpirationPolicy};
 //!# use embedded_redis::network::ConnectionHandler;
 //!#
-//!# let mut stack = Stack::default();
+//!# let stack = Stack::default();
 //!# let clock = StandardClock::default();
 //!#
 //!# let mut connection_handler = ConnectionHandler::resp2(SocketAddr::from_str("127.0.0.1:6379").unwrap());
-//!# let client = connection_handler.connect(&mut stack, Some(&clock)).unwrap();
+//!# let client = connection_handler.connect(&stack, Some(&clock)).await.unwrap();
 //!#
 //!  // Expires in 120 seconds
 //!  let command = SetCommand::new("key", "value")
 //!      .expires(ExpirationPolicy::Seconds(120));
-//!# let _ = client.send(command);
+//!# let _ = client.send(command).await;
+//! # });
 //! ```
 //! # Exclusive condition (NX/XX)
 //! Manage set condition. Fore more details s. [Exclusivity] enum.
 //!
 //! Using this options affects the return type. s. [ExclusiveSetResponse]
 //! ```
+//! # async_std::task::block_on(async {
 //!# use core::str::FromStr;
 //!# use core::net::SocketAddr;
-//!# use std_embedded_nal::Stack;
+//!# use std_embedded_nal_async::Stack;
 //!# use std_embedded_time::StandardClock;
 //!# use embedded_redis::commands::set::{SetCommand, Exclusivity};
 //!# use embedded_redis::network::ConnectionHandler;
 //!#
-//!# let mut stack = Stack::default();
+//!# let stack = Stack::default();
 //!# let clock = StandardClock::default();
 //!#
 //!# let mut connection_handler = ConnectionHandler::resp2(SocketAddr::from_str("127.0.0.1:6379").unwrap());
-//!# let client = connection_handler.connect(&mut stack, Some(&clock)).unwrap();
+//!# let client = connection_handler.connect(&stack, Some(&clock)).await.unwrap();
 //!#
 //!  // Just set the key if its not existing yet
 //!  let command = SetCommand::new("key", "value")
 //!      .set_exclusive(Exclusivity::SetIfMissing);
-//!# let _ = client.send(command);
+//!# let _ = client.send(command).await;
+//! # });
 //! ```
 //! # Return previous value (!GET)
 //! Returns the previous value stored at the given key.
 //!
 //! Using this options affects the return type. s. [ReturnPreviousResponse]
 //! ```
+//! # async_std::task::block_on(async {
 //!# use core::str::FromStr;
 //!# use core::net::SocketAddr;
-//!# use std_embedded_nal::Stack;
+//!# use std_embedded_nal_async::Stack;
 //!# use std_embedded_time::StandardClock;
 //!# use embedded_redis::commands::set::{SetCommand};
 //!# use embedded_redis::network::ConnectionHandler;
 //!#
-//!# let mut stack = Stack::default();
+//!# let stack = Stack::default();
 //!# let clock = StandardClock::default();
 //!#
 //!# let mut connection_handler = ConnectionHandler::resp2(SocketAddr::from_str("127.0.0.1:6379").unwrap());
-//!# let client = connection_handler.connect(&mut stack, Some(&clock)).unwrap();
+//!# let client = connection_handler.connect(&stack, Some(&clock)).await.unwrap();
 //!#
 //!  // Just set the key if its not existing yet
 //!  let command = SetCommand::new("key", "value")
 //!      .return_previous();
-//!# let _ = client.send(command);
+//!# let _ = client.send(command).await;
+//! # });
 //! ```
 //! # Shorthand
 //! [Client](Client#method.set) provides a shorthand method for this command.
 //! ```
+//! # async_std::task::block_on(async {
 //!# use core::str::FromStr;
 //!# use bytes::Bytes;
 //!# use core::net::SocketAddr;
-//!# use std_embedded_nal::Stack;
+//!# use std_embedded_nal_async::Stack;
 //!# use std_embedded_time::StandardClock;
 //!# use embedded_redis::commands::set::SetCommand;
 //!# use embedded_redis::network::ConnectionHandler;
 //!#
-//!# let mut stack = Stack::default();
+//!# let stack = Stack::default();
 //!# let clock = StandardClock::default();
 //!#
 //!# let mut connection_handler = ConnectionHandler::resp2(SocketAddr::from_str("127.0.0.1:6379").unwrap());
-//!# let client = connection_handler.connect(&mut stack, Some(&clock)).unwrap();
+//!# let client = connection_handler.connect(&stack, Some(&clock)).await.unwrap();
 //!#
-//!# let _ = client.send(SetCommand::new("test_key", "test_value")).unwrap().wait();
+//!# let _ = client.send(SetCommand::new("test_key", "test_value")).await;
 //!#
 //! // Using &str arguments
-//! let _ = client.set("key", "value");
+//! let _ = client.set("key", "value").await;
 //!
 //! // Using String arguments
-//! let _ = client.set("key".to_string(), "value".to_string());
+//! let _ = client.set("key".to_string(), "value".to_string()).await;
 //!
 //! // Using Bytes arguments
-//! let _ = client.set(Bytes::from_static(b"key"), Bytes::from_static(b"value"));
+//! let _ = client.set(Bytes::from_static(b"key"), Bytes::from_static(b"value")).await;
+//! # });
 //! ```
 
 use crate::commands::auth::AuthCommand;
@@ -122,12 +132,11 @@ use crate::commands::builder::{CommandBuilder, IsNullFrame, ToStringBytes, ToStr
 use crate::commands::hello::HelloCommand;
 use crate::commands::{Command, ResponseTypeError};
 use crate::network::client::{Client, CommandErrors};
-use crate::network::future::Future;
 use crate::network::protocol::Protocol;
 use alloc::string::ToString;
 use bytes::Bytes;
 use core::marker::PhantomData;
-use embedded_nal::TcpClientStack;
+use embedded_io_async::{Read, Write};
 use embedded_time::Clock;
 
 pub enum ExpirationPolicy {
@@ -345,18 +354,14 @@ impl<R> SetCommand<R> {
     }
 }
 
-impl<'a, N: TcpClientStack, C: Clock, P: Protocol> Client<'a, N, C, P>
+impl<'a, T: Read + Write, C: Clock, P: Protocol> Client<'a, T, C, P>
 where
     AuthCommand: Command<<P as Protocol>::FrameType>,
     HelloCommand: Command<<P as Protocol>::FrameType>,
 {
     /// Shorthand for [SetCommand]
     /// For using options of SET command, use [SetCommand] directly instead
-    pub fn set<K, V>(
-        &'a self,
-        key: K,
-        value: V,
-    ) -> Result<Future<'a, N, C, P, SetCommand<ConfirmationResponse>>, CommandErrors>
+    pub async fn set<K, V>(&self, key: K, value: V) -> Result<ConfirmationResponse, CommandErrors>
     where
         <P as Protocol>::FrameType: ToStringBytes,
         <P as Protocol>::FrameType: ToStringOption,
@@ -365,6 +370,6 @@ where
         Bytes: From<K>,
         Bytes: From<V>,
     {
-        self.send(SetCommand::new(key, value))
+        self.send(SetCommand::new(key, value)).await
     }
 }

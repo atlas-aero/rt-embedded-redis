@@ -6,8 +6,10 @@ use crate::network::timeout::Timeout;
 use crate::network::{Client, CommandErrors};
 use crate::subscription::messages::{DecodeError, Message as PushMessage, ToPushMessage};
 use bytes::Bytes;
-use embedded_nal::TcpClientStack;
+use embedded_io_async::{Read, Write};
 use embedded_time::Clock;
+use futures_util::future::{select, Either};
+use futures_util::pin_mut;
 
 /// Subscription errors
 #[derive(Debug, Eq, PartialEq, Clone)]
@@ -20,8 +22,7 @@ pub enum Error {
     TcpError,
     /// Error while decoding a push message. Either Redis sent invalid data or there is a decoder bug.
     DecodeError,
-    /// Subscription or Unsubscription was not confirmed by Redis within time limit. Its recommended to close/reconnect the socket to avoid
-    /// subsequent errors based on invalid state.
+    /// Subscription or unsubscription was not confirmed by Redis within the time limit.
     Timeout,
 }
 
@@ -39,13 +40,13 @@ pub struct Message {
 ///
 /// L: Number of subscribed topics
 #[derive(Debug)]
-pub struct Subscription<'a, N: TcpClientStack, C: Clock, P: Protocol, const L: usize>
+pub struct Subscription<'a, T: Read + Write, C: Clock, P: Protocol, const L: usize>
 where
     HelloCommand: Command<<P as Protocol>::FrameType>,
     <P as Protocol>::FrameType: From<CommandBuilder>,
     <P as Protocol>::FrameType: ToPushMessage,
 {
-    client: Client<'a, N, C, P>,
+    client: Client<'a, T, C, P>,
 
     /// List of subscribed topics
     channels: [Bytes; L],
@@ -54,16 +55,16 @@ where
     subscribed: bool,
 }
 
-impl<'a, N, C, P, const L: usize> Subscription<'a, N, C, P, L>
+impl<'a, T, C, P, const L: usize> Subscription<'a, T, C, P, L>
 where
-    N: TcpClientStack,
+    T: Read + Write,
     C: Clock,
     P: Protocol,
     HelloCommand: Command<<P as Protocol>::FrameType>,
     <P as Protocol>::FrameType: From<CommandBuilder>,
     <P as Protocol>::FrameType: ToPushMessage,
 {
-    pub fn new(client: Client<'a, N, C, P>, topics: [Bytes; L]) -> Self {
+    pub fn new(client: Client<'a, T, C, P>, topics: [Bytes; L]) -> Self {
         Self {
             client,
             channels: topics,
@@ -71,13 +72,13 @@ where
         }
     }
 
-    /// Receives a message. Returns None in case no message is pending
-    pub fn receive(&mut self) -> Result<Option<Message>, Error> {
+    /// Waits for and receives the next published message.
+    pub async fn receive(&mut self) -> Result<Option<Message>, Error> {
         loop {
-            let message = self.receive_message()?;
+            let message = self.receive_message().await?;
 
             if message.is_none() {
-                return Ok(None);
+                continue;
             }
 
             if let PushMessage::Publish(channel, payload) = message.unwrap() {
@@ -87,14 +88,15 @@ where
     }
 
     /// Starts the subscription and waits for confirmation
-    pub(crate) fn subscribe(mut self) -> Result<Self, Error> {
+    pub(crate) async fn subscribe(mut self) -> Result<Self, Error> {
         let mut cmd = CommandBuilder::new("SUBSCRIBE");
         for topic in &self.channels {
             cmd = cmd.arg(topic);
         }
 
-        self.client.network.send_frame(cmd.into()).map_err(Error::CommandError)?;
-        self.wait_for_confirmation(|message| message == PushMessage::SubConfirmation(self.channels.len()))?;
+        self.client.network.send_frame(cmd.into()).await.map_err(Error::CommandError)?;
+        self.wait_for_confirmation(|message| message == PushMessage::SubConfirmation(self.channels.len()))
+            .await?;
 
         self.subscribed = true;
         Ok(self)
@@ -102,51 +104,70 @@ where
 
     /// Unsubscribes from all topics and waits for confirmation
     ///
-    /// *If this fails, it's recommended to clos the connection to avoid subsequent errors caused by invalid state*
-    pub fn unsubscribe(mut self) -> Result<(), Error> {
-        self.close()
+    /// If this fails, the owned connection is dropped to avoid reusing an undefined state.
+    pub async fn unsubscribe(mut self) -> Result<(), Error> {
+        self.close().await
     }
 
     /// Unsubscribes from all topics and waits for confirmation
-    pub(crate) fn close(&mut self) -> Result<(), Error> {
+    pub(crate) async fn close(&mut self) -> Result<(), Error> {
         self.subscribed = false;
         let cmd = CommandBuilder::new("UNSUBSCRIBE");
 
-        self.client.network.send_frame(cmd.into()).map_err(Error::CommandError)?;
-        self.wait_for_confirmation(|message| message == PushMessage::UnSubConfirmation(0))?;
+        self.client.network.send_frame(cmd.into()).await.map_err(Error::CommandError)?;
+        self.wait_for_confirmation(|message| message == PushMessage::UnSubConfirmation(0))
+            .await?;
 
         Ok(())
     }
 
     /// Waits for the confirmation of all topics
-    fn wait_for_confirmation<F: Fn(PushMessage) -> bool>(&self, is_confirmation: F) -> Result<(), Error> {
+    async fn wait_for_confirmation<F: Fn(PushMessage) -> bool>(
+        &self,
+        is_confirmation: F,
+    ) -> Result<(), Error> {
         let timeout =
             Timeout::new(self.client.clock, self.client.timeout_duration).map_err(|_| Error::ClockError)?;
 
-        while !timeout.expired().map_err(|_| Error::ClockError)? {
-            if let Some(message) = self.receive_message()? {
+        loop {
+            if timeout.is_enabled() {
+                let receive = self.receive_message();
+                let expired = timeout.wait();
+                pin_mut!(receive, expired);
+
+                match select(receive, expired).await {
+                    Either::Left((message, _)) => {
+                        if let Some(message) = message? {
+                            if is_confirmation(message) {
+                                return Ok(());
+                            }
+                        }
+                    }
+                    Either::Right((result, _)) => {
+                        result.map_err(|_| Error::ClockError)?;
+                        return Err(Error::Timeout);
+                    }
+                }
+            } else if let Some(message) = self.receive_message().await? {
                 if is_confirmation(message) {
                     return Ok(());
                 }
             }
         }
-
-        Err(Error::Timeout)
     }
 
     /// Receives and decodes the next message. Returns None in case no message is pending or not complete yet.
-    fn receive_message(&self) -> Result<Option<PushMessage>, Error> {
-        // Receive all pending data
-        loop {
-            if let Err(error) = self.client.network.receive_chunk() {
-                match error {
-                    nb::Error::Other(_) => return Err(Error::TcpError),
-                    nb::Error::WouldBlock => break,
-                };
+    async fn receive_message(&self) -> Result<Option<PushMessage>, Error> {
+        let mut frame = self.client.network.take_next_frame();
+
+        if frame.is_none() {
+            let received = self.client.network.receive_chunk().await.map_err(|_| Error::TcpError)?;
+            if received == 0 {
+                return Err(Error::TcpError);
             }
+            frame = self.client.network.take_next_frame();
         }
 
-        let frame = self.client.network.take_next_frame();
         if frame.is_none() {
             return Ok(None);
         }
@@ -164,21 +185,5 @@ where
     #[cfg(test)]
     pub(crate) fn set_unsubscribed(&mut self) {
         self.subscribed = false;
-    }
-}
-
-impl<N, C, P, const L: usize> Drop for Subscription<'_, N, C, P, L>
-where
-    N: TcpClientStack,
-    C: Clock,
-    P: Protocol,
-    HelloCommand: Command<<P as Protocol>::FrameType>,
-    <P as Protocol>::FrameType: From<CommandBuilder>,
-    <P as Protocol>::FrameType: ToPushMessage,
-{
-    fn drop(&mut self) {
-        if self.subscribed {
-            let _ = self.close();
-        }
     }
 }

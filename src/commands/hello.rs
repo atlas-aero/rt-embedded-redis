@@ -10,25 +10,27 @@
 //!
 //! Response is mapped to [HelloResponse].
 //! ```
+//! # async_std::task::block_on(async {
 //!# use core::str::FromStr;
 //!# use core::net::SocketAddr;
-//!# use std_embedded_nal::Stack;
+//!# use std_embedded_nal_async::Stack;
 //!# use std_embedded_time::StandardClock;
 //!# use embedded_redis::commands::hello::HelloCommand;
 //!# use embedded_redis::network::ConnectionHandler;
 //!#
-//! let mut stack = Stack::default();
+//! let stack = Stack::default();
 //! let clock = StandardClock::default();
 //!
 //! // RESP3 protocol is essential
 //! let mut connection_handler = ConnectionHandler::resp3(SocketAddr::from_str("127.0.0.1:6379").unwrap());
-//! let client = connection_handler.connect(&mut stack, Some(&clock)).unwrap();
+//! let client = connection_handler.connect(&stack, Some(&clock)).await.unwrap();
 //!
 //! let command = HelloCommand{};
-//! let response = client.send(command).unwrap().wait().unwrap();
+//! let response = client.send(command).await.unwrap();
 //!
 //! assert_eq!("redis", response.server);
 //! assert_eq!("master", response.role);
+//! # });
 //! ```
 use crate::commands::helpers::{CmdStr, RespMap};
 use crate::commands::{Command, ResponseTypeError};

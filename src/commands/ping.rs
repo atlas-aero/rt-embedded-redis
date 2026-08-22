@@ -5,68 +5,74 @@
 //! # Basic usage (client shorthand)
 //! Internally it is checked whether the server answers with PONG. If not, an error is returned.
 //! ```
+//! # async_std::task::block_on(async {
 //!# use core::str::FromStr;
 //!# use core::net::SocketAddr;
-//!# use std_embedded_nal::Stack;
+//!# use std_embedded_nal_async::Stack;
 //!# use std_embedded_time::StandardClock;
 //!# use embedded_redis::network::ConnectionHandler;
 //!#
-//! let mut stack = Stack::default();
+//! let stack = Stack::default();
 //! let clock = StandardClock::default();
 //!
 //! let mut connection_handler = ConnectionHandler::resp2(SocketAddr::from_str("127.0.0.1:6379").unwrap());
-//! let client = connection_handler.connect(&mut stack, Some(&clock)).unwrap();
+//! let client = connection_handler.connect(&stack, Some(&clock)).await.unwrap();
 //!
-//! let response = client.ping().unwrap().wait().unwrap();
+//! let response = client.ping().await.unwrap();
+//! # });
 //! ```
 //! # Verbose command
 //! Sending a `PingCommand` as alternative to client shorthand.
 //! ```
+//! # async_std::task::block_on(async {
 //!# use core::str::FromStr;
 //!# use core::net::SocketAddr;
-//!# use std_embedded_nal::Stack;
+//!# use std_embedded_nal_async::Stack;
 //!# use std_embedded_time::StandardClock;
 //!# use embedded_redis::commands::ping::PingCommand;
 //!# use embedded_redis::network::ConnectionHandler;
 //!#
-//!# let mut stack = Stack::default();
+//!# let stack = Stack::default();
 //!# let clock = StandardClock::default();
 //!#
 //!# let mut connection_handler = ConnectionHandler::resp2(SocketAddr::from_str("127.0.0.1:6379").unwrap());
-//!# let client = connection_handler.connect(&mut stack, Some(&clock)).unwrap();
+//!# let client = connection_handler.connect(&stack, Some(&clock)).await.unwrap();
 //!#
 //! let command = PingCommand::new(None);
-//! let response = client.send(command).unwrap().wait().unwrap();
+//! let response = client.send(command).await.unwrap();
+//! # });
 //! ```
 //! # Custom argument
 //! Optionally, a user-defined argument can be specified.
 //!
 //! The abstraction compares the server's response with the argument and returns an error if there is no match.
 //! ```
+//! # async_std::task::block_on(async {
 //!# use core::str::FromStr;
 //!# use core::net::SocketAddr;
-//!# use std_embedded_nal::Stack;
+//!# use std_embedded_nal_async::Stack;
 //!# use std_embedded_time::StandardClock;
 //!# use embedded_redis::commands::ping::PingCommand;
 //!# use embedded_redis::network::ConnectionHandler;
 //!#
-//!# let mut stack = Stack::default();
+//!# let stack = Stack::default();
 //!# let clock = StandardClock::default();
 //!#
 //!# let mut connection_handler = ConnectionHandler::resp2(SocketAddr::from_str("127.0.0.1:6379").unwrap());
-//!# let client = connection_handler.connect(&mut stack, Some(&clock)).unwrap();
+//!# let client = connection_handler.connect(&stack, Some(&clock)).await.unwrap();
 //!#
 //! let command = PingCommand::new(Some("hello world".into()));
-//! let response = client.send(command).unwrap().wait().unwrap();
+//! let response = client.send(command).await.unwrap();
+//! # });
 //! ```
 use crate::commands::auth::AuthCommand;
 use crate::commands::builder::{CommandBuilder, ToStringOption};
 use crate::commands::hello::HelloCommand;
 use crate::commands::{Command, ResponseTypeError};
 use crate::network::protocol::Protocol;
-use crate::network::{Client, CommandErrors, Future};
+use crate::network::{Client, CommandErrors};
 use bytes::Bytes;
-use embedded_nal::TcpClientStack;
+use embedded_io_async::{Read, Write};
 use embedded_time::Clock;
 
 /// Abstraction for PING command
@@ -105,17 +111,17 @@ where
     }
 }
 
-impl<'a, N: TcpClientStack, C: Clock, P: Protocol> Client<'a, N, C, P>
+impl<'a, T: Read + Write, C: Clock, P: Protocol> Client<'a, T, C, P>
 where
     AuthCommand: Command<<P as Protocol>::FrameType>,
     HelloCommand: Command<<P as Protocol>::FrameType>,
 {
     /// Shorthand for [PingCommand]
-    pub fn ping(&'a self) -> Result<Future<'a, N, C, P, PingCommand>, CommandErrors>
+    pub async fn ping(&self) -> Result<(), CommandErrors>
     where
         <P as Protocol>::FrameType: ToStringOption,
         <P as Protocol>::FrameType: From<CommandBuilder>,
     {
-        self.send(PingCommand::new(None))
+        self.send(PingCommand::new(None)).await
     }
 }

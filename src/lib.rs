@@ -1,4 +1,4 @@
-//! This crate offers a non-blocking Redis Client for no_std targets.
+//! This crate offers an asynchronous Redis client for `no_std` targets.
 //! Both RESP2 and RESP3 protocol are supported.
 //!
 //! This crate consists of three parts:
@@ -7,21 +7,22 @@
 //! * [subscription module][crate::subscription] for Redis subscription client
 //!
 //! ```
+//! # async_std::task::block_on(async {
 //!# use core::str::FromStr;
 //!# use core::net::SocketAddr;
-//!# use std_embedded_nal::Stack;
+//!# use std_embedded_nal_async::Stack;
 //!# use std_embedded_time::StandardClock;
 //!# use embedded_redis::network::ConnectionHandler;
 //!#
-//! let mut stack = Stack::default();
+//! let stack = Stack::default();
 //! let clock = StandardClock::default();
 //!
 //! let server_address = SocketAddr::from_str("127.0.0.1:6379").unwrap();
 //! let mut connection_handler = ConnectionHandler::resp2(server_address);
-//! let client = connection_handler.connect(&mut stack, Some(&clock)).unwrap();
+//! let client = connection_handler.connect(&stack, Some(&clock)).await.unwrap();
 //!
-//! let future = client.set("key", "value").unwrap();
-//! let response = future.wait().unwrap();
+//! let response = client.set("key", "value").await.unwrap();
+//! # });
 //! ```
 #![cfg_attr(all(not(test), not(feature = "mock")), no_std)]
 #![cfg_attr(feature = "strict", deny(warnings))]
@@ -58,40 +59,43 @@ pub mod commands;
 /// are supported.
 ///
 /// Creating a new connection requires the following two things:
-/// * A network stack implementing [embedded-nal](<https://docs.rs/embedded-nal/latest/embedded_nal/>)
+/// * A network stack implementing [embedded-nal-async](<https://docs.rs/embedded-nal-async/latest/embedded_nal_async/>)
 /// * A clock implementing [embedded-time](<https://docs.rs/embedded-time/latest/embedded_time/>). Optional if no Timeout is configured.
 /// ```
+/// # async_std::task::block_on(async {
 ///# use core::str::FromStr;
 ///# use core::net::SocketAddr;
-///# use std_embedded_nal::Stack;
+///# use std_embedded_nal_async::Stack;
 ///# use std_embedded_time::StandardClock;
 ///# use embedded_redis::network::ConnectionHandler;
 ///#
-/// let mut network_stack = Stack::default();
+/// let network_stack = Stack::default();
 /// let clock = StandardClock::default();
 ///
 /// // RESP2 protocol
 /// let mut connection_handler = ConnectionHandler::resp2(SocketAddr::from_str("127.0.0.1:6379").unwrap());
-/// let _client = connection_handler.connect(&mut network_stack, Some(&clock)).unwrap();
+/// let _client = connection_handler.connect(&network_stack, Some(&clock)).await.unwrap();
 ///
 /// // RESP3 protocol
 /// let mut connection_handler = ConnectionHandler::resp3(SocketAddr::from_str("127.0.0.1:6379").unwrap());
-/// let _client = connection_handler.connect(&mut network_stack, Some(&clock)).unwrap();
+/// let _client = connection_handler.connect(&network_stack, Some(&clock)).await.unwrap();
+/// # });
 /// ```
 ///
-/// ConnectionHandler is caching the connection, so later recreation of new Clients is cheap.
+/// Each `connect()` call opens a new connection owned by the returned client.
 ///
 /// ### Authentication
 ///
 /// Authentication is done in the following way:
 /// ```
+/// # async_std::task::block_on(async {
 ///# use core::str::FromStr;
 ///# use core::net::SocketAddr;
-///# use std_embedded_nal::Stack;
+///# use std_embedded_nal_async::Stack;
 ///# use std_embedded_time::StandardClock;
 ///# use embedded_redis::network::{ConnectionHandler, Credentials};
 ///#
-///# let mut network_stack = Stack::default();
+///# let network_stack = Stack::default();
 ///# let clock = StandardClock::default();
 ///#
 ///# let server_address = SocketAddr::from_str("127.0.0.1:6379").unwrap();
@@ -99,58 +103,63 @@ pub mod commands;
 /// let mut connection_handler = ConnectionHandler::resp2(server_address);
 /// connection_handler.auth(Credentials::password_only("secret123!"));
 ///
-/// # let _client = connection_handler.connect(&mut network_stack, Some(&clock));
+/// # let _client = connection_handler.connect(&network_stack, Some(&clock)).await;
 ///# let server_address = SocketAddr::from_str("127.0.0.1:6379").unwrap();
 ///
 /// // ACL based authentication
 /// let mut connection_handler = ConnectionHandler::resp2(server_address);
 /// connection_handler.auth(Credentials::acl("user01", "secret123!"));
-/// # let _client = connection_handler.connect(&mut network_stack, Some(&clock));
+/// # let _client = connection_handler.connect(&network_stack, Some(&clock)).await;
+/// # });
 /// ```
 /// ### Timeout
 ///
 /// The client includes a timeout mechanism. This allows setting a time limit for responses from the Redis server:
 ///
 /// ```
+/// # async_std::task::block_on(async {
 ///# use core::str::FromStr;
 ///# use core::net::SocketAddr;
-///# use std_embedded_nal::Stack;
+///# use std_embedded_nal_async::Stack;
 ///# use std_embedded_time::StandardClock;
 ///# use embedded_redis::network::{ConnectionHandler, Credentials};
 ///# use embedded_time::duration::Extensions;
 ///#
-///# let mut network_stack = Stack::default();
+///# let network_stack = Stack::default();
 ///# let clock = StandardClock::default();
 ///#
 ///# let server_address = SocketAddr::from_str("127.0.0.1:6379").unwrap();
 /// let mut connection_handler = ConnectionHandler::resp2(server_address);
 /// connection_handler.timeout(500_000.microseconds());
-/// # let _client = connection_handler.connect(&mut network_stack, Some(&clock)).unwrap();
+/// # let _client = connection_handler.connect(&network_stack, Some(&clock)).await.unwrap();
+/// # });
 /// ```
 /// ### Ping
 ///
 /// Optionally, the PING command can also be used to test the connection.
-/// PING is then used every time `connect()` is called after the socket has been cached.
+/// PING is then used to verify every newly opened connection.
 ///
 /// It is recommended to use this option only if a Timeout is configured.
 ///
 /// ```
+/// # async_std::task::block_on(async {
 ///# use core::str::FromStr;
 ///# use core::net::SocketAddr;
-///# use std_embedded_nal::Stack;
+///# use std_embedded_nal_async::Stack;
 ///# use std_embedded_time::StandardClock;
 ///# use embedded_redis::network::{ConnectionHandler, Credentials};
 ///# use embedded_time::duration::Extensions;
 ///#
-///# let mut network_stack = Stack::default();
+///# let network_stack = Stack::default();
 ///# let clock = StandardClock::default();
 ///#
 ///# let server_address = SocketAddr::from_str("127.0.0.1:6379").unwrap();
 /// let mut connection_handler = ConnectionHandler::resp2(server_address);
 /// connection_handler.timeout(500_000.microseconds());
 /// connection_handler.use_ping();
-/// # let _client = connection_handler.connect(&mut network_stack, Some(&clock)).unwrap();
-/// # let _client = connection_handler.connect(&mut network_stack, Some(&clock)).unwrap();
+/// # let _client = connection_handler.connect(&network_stack, Some(&clock)).await.unwrap();
+/// # let _client = connection_handler.connect(&network_stack, Some(&clock)).await.unwrap();
+/// # });
 /// ```
 ///
 /// ### Memory optimization
@@ -161,14 +170,15 @@ pub mod commands;
 /// See [MemoryParameters](crate::network::MemoryParameters) for more details.
 ///
 /// ````
+/// # async_std::task::block_on(async {
 ///# use core::str::FromStr;
 ///# use core::net::SocketAddr;
-///# use std_embedded_nal::Stack;
+///# use std_embedded_nal_async::Stack;
 ///# use std_embedded_time::StandardClock;
 ///# use embedded_redis::commands::set::SetCommand;
 ///# use embedded_redis::network::{ConnectionHandler, MemoryParameters};
 ///#
-///# let mut stack = Stack::default();
+///# let stack = Stack::default();
 ///# let clock = StandardClock::default();
 ///#
 ///# let server_address = SocketAddr::from_str("127.0.0.1:6379").unwrap();
@@ -180,63 +190,43 @@ pub mod commands;
 ///     memory_limit: Some(4096)
 /// });
 ///
-///# let client = connection_handler.connect(&mut stack, Some(&clock)).unwrap();
+///# let client = connection_handler.connect(&stack, Some(&clock)).await.unwrap();
+/// # });
 /// ````
 ///
 /// ### Concurrency
 ///
-/// While the Client is not Send, the connection handler is.
-/// The handler is designed with the approach that the creation of new clients is cheap.
-/// Thus, the use of short-lived clients in concurrent applications is not a problem.
+/// A client owns one connection. Access to that connection is serialized asynchronously, so
+/// multiple command operations may be polled concurrently on the same executor. Whether a client
+/// can be moved between threads depends on the concrete connection, clock, and protocol types.
 ///
-/// ## Non-blocking response management
+/// ## Asynchronous response management
 ///
-/// Redis server responses are managed as [Future](crate::network::Future). This allows executing multiple commands non-blocking
-/// simultaneously* and handle responses in any order at any point in time:
+/// [`Client::send`](crate::network::Client::send) and the command shorthand methods asynchronously
+/// wait for and return the evaluated Redis response directly. Polling several command operations
+/// concurrently enables pipelining:
 /// ```
+/// # async_std::task::block_on(async {
 ///# use core::str::FromStr;
 ///# use core::net::SocketAddr;
-///# use std_embedded_nal::Stack;
+///# use futures_util::future::join;
+///# use std_embedded_nal_async::Stack;
 ///# use std_embedded_time::StandardClock;
-///# use embedded_redis::commands::set::SetCommand;
 ///# use embedded_redis::network::ConnectionHandler;
 ///#
-///# let mut stack = Stack::default();
+///# let stack = Stack::default();
 ///# let clock = StandardClock::default();
 ///#
 ///# let mut connection_handler = ConnectionHandler::resp2(SocketAddr::from_str("127.0.0.1:6379").unwrap());
-///# let client = connection_handler.connect(&mut stack, Some(&clock)).unwrap();
+///# let client = connection_handler.connect(&stack, Some(&clock)).await.unwrap();
 ///#
-/// let future1 = client.set("key", "value").unwrap();
-/// let future2 = client.set("other", "key").unwrap();
+/// let first = client.set("first_key", "first_value");
+/// let second = client.set("second_key", "second_value");
 ///
-/// let _ = future2.wait();
-/// let _ = future1.wait();
-/// ```
-///
-/// ### Ready
-/// In order to check whether a future is ready, (the corresponding response has arrived),
-/// the method `ready()` can be used.
-/// If `ready()` returns true, then next call to `wait()` is not expected to block.
-/// ```
-///# use core::str::FromStr;
-///# use core::net::SocketAddr;
-///# use std_embedded_nal::Stack;
-///# use std_embedded_time::StandardClock;
-///# use embedded_redis::commands::set::SetCommand;
-///# use embedded_redis::network::ConnectionHandler;
-///#
-///# let mut stack = Stack::default();
-///# let clock = StandardClock::default();
-///#
-///# let mut connection_handler = ConnectionHandler::resp2(SocketAddr::from_str("127.0.0.1:6379").unwrap());
-///# let client = connection_handler.connect(&mut stack, Some(&clock)).unwrap();
-///#
-/// let mut future = client.set("key", "value").unwrap();
-///
-/// if future.ready() {
-///    let _ = future.wait();
-/// }
+/// let (first_response, second_response) = join(first, second).await;
+/// first_response.unwrap();
+/// second_response.unwrap();
+/// # });
 /// ```
 ///
 /// ### Response type
@@ -246,31 +236,34 @@ pub mod commands;
 ///
 /// ### Timeout error
 ///
-/// In the event of a timeout error, all remaining futures will be invalidated, as the assignment of
-/// responses can no longer be guaranteed. In case of a invalidated future [InvalidFuture](crate::network::CommandErrors::InvalidFuture)
-/// error is returned when calling `wait()`.
+/// In the event of a timeout error, all other concurrently pending command operations are
+/// invalidated, as the assignment of responses can no longer be guaranteed. Those operations
+/// return [InvalidFuture](crate::network::CommandErrors::InvalidFuture).
 ///
 /// ### Clean state
 ///
-/// If the futures are not waited for, it is recommended to call the `close` method before client goes out-of-scope.
-/// This ensures a clean state if a new client is later created with the same network connection.
+/// If an in-flight command operation is cancelled after sending its command, `close().await`
+/// consumes its pending response before the client is dropped. Dropping the client itself closes
+/// its owned connection.
 ///
 /// ````
+/// # async_std::task::block_on(async {
 ///# use core::str::FromStr;
 ///# use core::net::SocketAddr;
-///# use std_embedded_nal::Stack;
+///# use std_embedded_nal_async::Stack;
 ///# use std_embedded_time::StandardClock;
 ///# use embedded_redis::commands::set::SetCommand;
 ///# use embedded_redis::network::ConnectionHandler;
 ///#
-///# let mut stack = Stack::default();
+///# let stack = Stack::default();
 ///# let clock = StandardClock::default();
 ///#
 ///# let mut connection_handler = ConnectionHandler::resp2(SocketAddr::from_str("127.0.0.1:6379").unwrap());
-///# let client = connection_handler.connect(&mut stack, Some(&clock)).unwrap();
+///# let client = connection_handler.connect(&stack, Some(&clock)).await.unwrap();
 ///#
-/// let _ = client.set("key", "value");
-/// client.close();
+/// let _ = client.set("key", "value").await;
+/// client.close().await;
+/// # });
 /// ````
 pub mod network;
 pub mod subscription;

@@ -12,23 +12,25 @@
 //! # Basic usage
 //! The following Example demonstrates execution of [ECHO](<https://redis.io/commands/echo/>) command
 //! ```
+//! # async_std::task::block_on(async {
 //!# use core::str::FromStr;
 //!# use core::net::SocketAddr;
-//!# use std_embedded_nal::Stack;
+//!# use std_embedded_nal_async::Stack;
 //!# use std_embedded_time::StandardClock;
 //!# use embedded_redis::commands::builder::CommandBuilder;
 //!# use embedded_redis::network::ConnectionHandler;
 //!# use redis_protocol::resp2::types::Resp2Frame;
 //!#
-//! let mut stack = Stack::default();
+//! let stack = Stack::default();
 //! let clock = StandardClock::default();
 //!
 //! let mut connection_handler = ConnectionHandler::resp2(SocketAddr::from_str("127.0.0.1:6379").unwrap());
-//! let client = connection_handler.connect(&mut stack, Some(&clock)).unwrap();
+//! let client = connection_handler.connect(&stack, Some(&clock)).await.unwrap();
 //!
 //! let command = CommandBuilder::new("ECHO").arg_static("Hello World!").to_command();
-//! let response = client.send(command).unwrap().wait().unwrap();
+//! let response = client.send(command).await.unwrap();
 //! assert_eq!("Hello World!", response.to_string().unwrap());
+//! # });
 //! ```
 use crate::commands::builder::CommandBuilder;
 use crate::commands::{Command, ResponseTypeError};

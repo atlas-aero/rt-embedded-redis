@@ -4,85 +4,91 @@
 //!
 //! # Using command object
 //! ```
+//! # async_std::task::block_on(async {
 //!# use core::str::FromStr;
 //!# use core::net::SocketAddr;
-//!# use std_embedded_nal::Stack;
+//!# use std_embedded_nal_async::Stack;
 //!# use std_embedded_time::StandardClock;
 //!# use embedded_redis::commands::builder::CommandBuilder;
 //! use embedded_redis::commands::hset::HashSetCommand;
 //!# use embedded_redis::network::ConnectionHandler;
 //!#
-//! let mut stack = Stack::default();
+//! let stack = Stack::default();
 //! let clock = StandardClock::default();
 //!
 //! let mut connection_handler = ConnectionHandler::resp2(SocketAddr::from_str("127.0.0.1:6379").unwrap());
-//! let client = connection_handler.connect(&mut stack, Some(&clock)).unwrap();
-//!# client.send(CommandBuilder::new("DEL").arg_static("my_hash").to_command()).unwrap().wait().unwrap();
+//! let client = connection_handler.connect(&stack, Some(&clock)).await.unwrap();
+//!# client.send(CommandBuilder::new("DEL").arg_static("my_hash").to_command()).await.unwrap();
 //!
 //! let command = HashSetCommand::new("my_hash", "color", "green");
-//! let response = client.send(command).unwrap().wait().unwrap();
+//! let response = client.send(command).await.unwrap();
 //!
 //! // Returns the number of added fields
 //! assert_eq!(1, response)
+//! # });
 //! ```
 //! # Setting multiple fields at once
 //! ```
+//! # async_std::task::block_on(async {
 //!# use core::str::FromStr;
 //!# use core::net::SocketAddr;
-//!# use std_embedded_nal::Stack;
+//!# use std_embedded_nal_async::Stack;
 //!# use std_embedded_time::StandardClock;
 //!# use embedded_redis::commands::builder::CommandBuilder;
 //!# use embedded_redis::commands::hset::HashSetCommand;
 //!# use embedded_redis::network::ConnectionHandler;
 //!#
-//!# let mut stack = Stack::default();
+//!# let stack = Stack::default();
 //!# let clock = StandardClock::default();
 //!#
 //!# let mut connection_handler = ConnectionHandler::resp2(SocketAddr::from_str("127.0.0.1:6379").unwrap());
-//!# let client = connection_handler.connect(&mut stack, Some(&clock)).unwrap();
-//!# client.send(CommandBuilder::new("DEL").arg_static("my_hash").to_command()).unwrap().wait().unwrap();
+//!# let client = connection_handler.connect(&stack, Some(&clock)).await.unwrap();
+//!# client.send(CommandBuilder::new("DEL").arg_static("my_hash").to_command()).await.unwrap();
 //!#
 //! let command = HashSetCommand::multiple("my_hash".into(), [
 //!     ("color".into(), "green".into()),
 //!     ("material".into(), "stone".into())
 //! ]);
-//! let response = client.send(command).unwrap().wait().unwrap();
+//! let response = client.send(command).await.unwrap();
 //!
 //! // Returns the number of added fields
 //! assert_eq!(2, response)
+//! # });
 //! ```
 //! # Shorthand
 //! [Client](Client#method.hset) provides a shorthand method for this command.
 //! ```
+//! # async_std::task::block_on(async {
 //!# use core::str::FromStr;
 //!# use bytes::Bytes;
 //!# use core::net::SocketAddr;
-//!# use std_embedded_nal::Stack;
+//!# use std_embedded_nal_async::Stack;
 //!# use std_embedded_time::StandardClock;
 //!# use embedded_redis::network::ConnectionHandler;
 //!#
-//!# let mut stack = Stack::default();
+//!# let stack = Stack::default();
 //!# let clock = StandardClock::default();
 //!#
 //!# let mut connection_handler = ConnectionHandler::resp2(SocketAddr::from_str("127.0.0.1:6379").unwrap());
-//!# let client = connection_handler.connect(&mut stack, Some(&clock)).unwrap();
+//!# let client = connection_handler.connect(&stack, Some(&clock)).await.unwrap();
 //! // Using &str arguments
-//! let _ = client.hset("hash", "field", "value");
+//! let _ = client.hset("hash", "field", "value").await;
 //!
 //! // Using String arguments
-//! let _ = client.hset("hash".to_string(), "field".to_string(), "value".to_string());
+//! let _ = client.hset("hash".to_string(), "field".to_string(), "value".to_string()).await;
 //!
 //! // Using Bytes arguments
-//! let _ = client.hset(Bytes::from_static(b"hash"), Bytes::from_static(b"field"), Bytes::from_static(b"value"));
+//! let _ = client.hset(Bytes::from_static(b"hash"), Bytes::from_static(b"field"), Bytes::from_static(b"value")).await;
+//! # });
 //! ```
 use crate::commands::auth::AuthCommand;
 use crate::commands::builder::{CommandBuilder, ToInteger};
 use crate::commands::hello::HelloCommand;
 use crate::commands::{Command, ResponseTypeError};
 use crate::network::protocol::Protocol;
-use crate::network::{Client, CommandErrors, Future};
+use crate::network::{Client, CommandErrors};
 use bytes::Bytes;
-use embedded_nal::TcpClientStack;
+use embedded_io_async::{Read, Write};
 use embedded_time::Clock;
 
 /// Abstraction of HSET command
@@ -133,19 +139,14 @@ impl<F: From<CommandBuilder> + ToInteger, const N: usize> Command<F> for HashSet
     }
 }
 
-impl<'a, N: TcpClientStack, C: Clock, P: Protocol> Client<'a, N, C, P>
+impl<'a, T: Read + Write, C: Clock, P: Protocol> Client<'a, T, C, P>
 where
     AuthCommand: Command<<P as Protocol>::FrameType>,
     HelloCommand: Command<<P as Protocol>::FrameType>,
 {
     /// Shorthand for [HashSetCommand]
     /// For setting multiple fields, use [HashSetCommand] directly instead
-    pub fn hset<K, F, V>(
-        &'a self,
-        key: K,
-        field: F,
-        value: V,
-    ) -> Result<Future<'a, N, C, P, HashSetCommand<1>>, CommandErrors>
+    pub async fn hset<K, F, V>(&self, key: K, field: F, value: V) -> Result<i64, CommandErrors>
     where
         Bytes: From<K>,
         Bytes: From<F>,
@@ -153,6 +154,6 @@ where
         <P as Protocol>::FrameType: ToInteger,
         <P as Protocol>::FrameType: From<CommandBuilder>,
     {
-        self.send(HashSetCommand::new(key, field, value))
+        self.send(HashSetCommand::new(key, field, value)).await
     }
 }

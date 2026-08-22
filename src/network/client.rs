@@ -12,9 +12,11 @@ use crate::subscription::messages::ToPushMessage;
 use alloc::string::String;
 use bytes::Bytes;
 use core::fmt::{Debug, Formatter};
-use embedded_nal::TcpClientStack;
+use embedded_io_async::{Read, Write};
 use embedded_time::duration::Microseconds;
 use embedded_time::Clock;
+use futures_util::future::{select, Either};
+use futures_util::pin_mut;
 
 /// Error handling for command execution
 #[derive(Debug, Eq, PartialEq, Clone)]
@@ -31,8 +33,9 @@ pub enum CommandErrors {
     /// * Network failure. As we are using TCP, only a network stack bug or other exotic causes (e.g. bit flip) is reasonable.
     /// * Is recommended to create a new client/connection in this case*.
     ProtocolViolation,
-    /// Future is no longer valid. This happens on fatal problems like timeouts or faulty responses, on which message<->future
-    /// mapping can no longer be guaranteed
+    /// A pending command operation is no longer valid. This happens on fatal problems like
+    /// timeouts or faulty responses, for which response-to-command mapping can no longer be
+    /// guaranteed.
     /// *Is recommended to create a new client/connection in this case*.
     InvalidFuture,
     /// Low level network error
@@ -51,31 +54,42 @@ pub enum CommandErrors {
 /// Client to execute Redis commands
 ///
 /// The functionality of the client is best explained by a [command example](crate::commands::get).
-pub struct Client<'a, N: TcpClientStack, C: Clock, P: Protocol>
+pub struct Client<'a, T: Read + Write, C: Clock, P: Protocol>
 where
     HelloCommand: Command<<P as Protocol>::FrameType>,
 {
-    pub(crate) network: Network<'a, N, P>,
+    pub(crate) network: Network<T, P>,
     pub(crate) clock: Option<&'a C>,
 
     /// Max. time waiting for response
     pub(crate) timeout_duration: Microseconds,
 
     /// Response to HELLO command, only used for RESP3
-    pub(crate) hello_response: Option<&'a <HelloCommand as Command<<P as Protocol>::FrameType>>::Response>,
+    pub(crate) hello_response: Option<<HelloCommand as Command<<P as Protocol>::FrameType>>::Response>,
 }
 
-impl<'a, N: TcpClientStack, C: Clock, P: Protocol> Client<'a, N, C, P>
+impl<'a, T: Read + Write, C: Clock, P: Protocol> Client<'a, T, C, P>
 where
     AuthCommand: Command<<P as Protocol>::FrameType>,
     HelloCommand: Command<<P as Protocol>::FrameType>,
 {
-    /// Sends the given command non-blocking
-    pub fn send<Cmd>(&'a self, command: Cmd) -> Result<Future<'a, N, C, P, Cmd>, CommandErrors>
+    /// Sends the given command and asynchronously waits for its evaluated response.
+    pub async fn send<Cmd>(&self, command: Cmd) -> Result<Cmd::Response, CommandErrors>
     where
         Cmd: Command<P::FrameType>,
     {
-        let id = self.network.send(command.encode())?;
+        self.send_pending(command).await?.wait().await
+    }
+
+    /// Sends a command and returns the internal pending response state.
+    pub(crate) async fn send_pending<'b, Cmd>(
+        &'b self,
+        command: Cmd,
+    ) -> Result<Future<'b, T, C, P, Cmd>, CommandErrors>
+    where
+        Cmd: Command<P::FrameType>,
+    {
+        let id = self.network.send(command.encode()).await?;
 
         Ok(Future::new(
             id,
@@ -88,49 +102,44 @@ where
 
     /// Subscribes the given channels and returns a subscription client.
     ///
-    /// *If the subscriptions fails, it's recommended to close the connection, as a the
-    /// state is undefined. A further reuse of the connection could cause subsequent errors*
-    pub fn subscribe<const L: usize>(
+    /// If subscribing fails, drop the client so its connection is closed; the server-side state
+    /// may be undefined.
+    pub async fn subscribe<const L: usize>(
         self,
         channels: [Bytes; L],
-    ) -> Result<Subscription<'a, N, C, P, L>, Error>
+    ) -> Result<Subscription<'a, T, C, P, L>, Error>
     where
         <P as Protocol>::FrameType: ToPushMessage,
         <P as Protocol>::FrameType: From<CommandBuilder>,
     {
-        Subscription::new(self, channels).subscribe()
+        Subscription::new(self, channels).subscribe().await
     }
 
-    /// Authenticates blocking with the given credentials during client initialization
-    pub(crate) fn auth(&'a self, credentials: Option<Credentials>) -> Result<(), ConnectionError> {
+    /// Authenticates with the given credentials during client initialization.
+    pub(crate) async fn auth(&self, credentials: Option<Credentials>) -> Result<(), ConnectionError> {
         if let Some(credentials) = credentials.as_ref() {
-            self.send(AuthCommand::from(credentials))
-                .map_err(auth_error)?
-                .wait()
-                .map_err(auth_error)?;
+            self.send(AuthCommand::from(credentials)).await.map_err(auth_error)?;
         }
 
         Ok(())
     }
 
     /// Prepares the new RESP3 client by authenticating and switching protocol (HELLO command) if needed
-    pub(crate) fn init(
-        &'a self,
+    pub(crate) async fn init(
+        &self,
         credentials: Option<Credentials>,
     ) -> Result<Option<<HelloCommand as Command<<P as Protocol>::FrameType>>::Response>, ConnectionError>
     {
-        self.auth(credentials)?;
+        self.auth(credentials).await?;
         if self.network.get_protocol().requires_hello() {
-            return Ok(Some(
-                self.send(HelloCommand {}).map_err(hello_error)?.wait().map_err(hello_error)?,
-            ));
+            return Ok(Some(self.send(HelloCommand {}).await.map_err(hello_error)?));
         }
 
         Ok(None)
     }
 
     /// Waiting on any dropped futures to leave a clean state
-    pub fn close(&self) {
+    pub async fn close(&self) {
         if !self.network.remaining_dropped_futures() {
             return;
         }
@@ -142,13 +151,34 @@ where
             }
         };
 
-        while self.network.remaining_dropped_futures() && !timer.expired().unwrap_or(true) {
+        while self.network.remaining_dropped_futures() {
             self.network.handle_dropped_futures();
+
+            if !self.network.remaining_dropped_futures() {
+                return;
+            }
+
+            if timer.is_enabled() {
+                let receive = self.network.receive_chunk();
+                let expired = timer.wait();
+                pin_mut!(receive, expired);
+
+                match select(receive, expired).await {
+                    Either::Left((Ok(bytes), _)) if bytes > 0 => {}
+                    Either::Left((Err(_), _)) | Either::Right(_) => return,
+                    Either::Left((Ok(_), _)) => return,
+                }
+            } else {
+                match self.network.receive_chunk().await {
+                    Ok(bytes) if bytes > 0 => {}
+                    _ => return,
+                }
+            }
         }
     }
 }
 
-impl<N: TcpClientStack, C: Clock> Client<'_, N, C, Resp3> {
+impl<T: Read + Write, C: Clock> Client<'_, T, C, Resp3> {
     /// Returns the response to HELLO command executed during connection initialization
     /// [Client HELLO response]
     pub fn get_hello_response(&self) -> &HelloResponse {
@@ -171,7 +201,7 @@ fn hello_error(error: CommandErrors) -> ConnectionError {
     ConnectionError::ProtocolSwitchError(error)
 }
 
-impl<N: TcpClientStack, C: Clock, P: Protocol> Debug for Client<'_, N, C, P>
+impl<T: Read + Write, C: Clock, P: Protocol> Debug for Client<'_, T, C, P>
 where
     HelloCommand: Command<<P as Protocol>::FrameType>,
 {
