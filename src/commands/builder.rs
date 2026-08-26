@@ -276,3 +276,47 @@ impl ToBytesMap for Resp3Frame {
         Some(map)
     }
 }
+
+/// Trait for converting RESP2/RESP3 arrays to a vector of byte strings.
+pub trait ToBytesVec {
+    /// Converts an array frame into a vector of byte strings.
+    ///
+    /// Returns `None` if the frame is not an array or contains an
+    /// unsupported element type.
+    fn to_bytes_vec(&self) -> Option<Vec<Bytes>>;
+}
+
+impl ToBytesVec for Resp2Frame {
+    fn to_bytes_vec(&self) -> Option<Vec<Bytes>> {
+        let array = match self {
+            Resp2Frame::Array(array) => array,
+            _ => return None,
+        };
+
+        array
+            .iter()
+            .map(|frame| match frame {
+                Resp2Frame::SimpleString(value) | Resp2Frame::BulkString(value) => Some(value.clone()),
+                _ => None,
+            })
+            .collect()
+    }
+}
+
+impl ToBytesVec for Resp3Frame {
+    fn to_bytes_vec(&self) -> Option<Vec<Bytes>> {
+        let array = match self {
+            Resp3Frame::Array { data, attributes: _ } => data,
+            _ => return None,
+        };
+
+        array
+            .iter()
+            .map(|frame| match frame {
+                Resp3Frame::SimpleString { data, attributes: _ }
+                | Resp3Frame::BlobString { data, attributes: _ } => Some(data.clone()),
+                _ => None,
+            })
+            .collect()
+    }
+}
