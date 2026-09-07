@@ -7,6 +7,7 @@ pub(crate) mod hello;
 mod hget;
 mod hgetall;
 mod hset;
+mod keys;
 mod ping;
 mod publish;
 mod set;

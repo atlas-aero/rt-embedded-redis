@@ -8,7 +8,6 @@ license = "MIT OR Apache-2.0"
 version = "0.9.0"
 edition = "2021"
 repository = "https://github.com/pegasus-aero/rt-embedded-redis"
-readme = "README.md"
 documentation = "https://docs.rs/embedded-redis"
 
 [dependencies]
