@@ -8,6 +8,7 @@ pub mod helpers;
 pub mod hget;
 pub mod hgetall;
 pub mod hset;
+pub mod keys;
 pub mod ping;
 pub mod publish;
 pub mod set;

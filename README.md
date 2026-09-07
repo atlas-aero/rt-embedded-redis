@@ -14,6 +14,7 @@ Both RESP2 and RESP3 protocol are supported.
 * Popular command examples:
   * [SET command](https://docs.rs/embedded-redis/latest/embedded_redis/commands/set/index.html)
   * [GET command](https://docs.rs/embedded-redis/latest/embedded_redis/commands/get/index.html)
+  * [KEYS command](https://docs.rs/embedded-redis/latest/embedded_redis/commands/keys/index.html)
   * [PUBLISH command](https://docs.rs/embedded-redis/latest/embedded_redis/commands/publish/index.html)
 * [Command abstraction](https://docs.rs/embedded-redis/latest/embedded_redis/commands/index.html)
 * [Custom commands](https://docs.rs/embedded-redis/latest/embedded_redis/commands/custom/index.html)

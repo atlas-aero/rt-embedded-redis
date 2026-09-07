@@ -1155,3 +1155,72 @@ async fn test_shorthand_hgetall_bytes_argument() {
             .unwrap()
     );
 }
+
+#[async_std::test]
+async fn test_shorthand_keys_str_argument() {
+    let clock = TestClock::new(vec![]);
+    let network = NetworkMockBuilder::default()
+        .send(164, "*2\r\n$4\r\nKEYS\r\n$6\r\nuser:*\r\n")
+        .response("*2\r\n$6\r\nuser:1\r\n$6\r\nuser:2\r\n")
+        .into_mock();
+    let client = create_mocked_client(&network, SocketMock::new(164), &clock, Resp2 {});
+
+    assert_eq!(
+        vec![Bytes::from_static(b"user:1"), Bytes::from_static(b"user:2")],
+        client.keys("user:*").await.unwrap()
+    );
+}
+
+#[async_std::test]
+async fn test_shorthand_keys_string_argument() {
+    let clock = TestClock::new(vec![]);
+    let network = NetworkMockBuilder::default()
+        .send(164, "*2\r\n$4\r\nKEYS\r\n$6\r\nuser:*\r\n")
+        .response("*1\r\n$6\r\nuser:1\r\n")
+        .into_mock();
+    let client = create_mocked_client(&network, SocketMock::new(164), &clock, Resp2 {});
+
+    assert_eq!(
+        vec![Bytes::from_static(b"user:1")],
+        client.keys("user:*".to_string()).await.unwrap()
+    );
+}
+
+#[async_std::test]
+async fn test_shorthand_keys_bytes_argument_resp3() {
+    let clock = TestClock::new(vec![]);
+    let network = NetworkMockBuilder::default()
+        .send(164, "*2\r\n$4\r\nKEYS\r\n$6\r\nuser:*\r\n")
+        .response("*1\r\n$6\r\nuser:1\r\n")
+        .into_mock();
+    let client = create_mocked_client(&network, SocketMock::new(164), &clock, Resp3 {});
+
+    assert_eq!(
+        vec![Bytes::from_static(b"user:1")],
+        client.keys(Bytes::from_static(b"user:*")).await.unwrap()
+    );
+}
+
+#[async_std::test]
+async fn test_shorthand_keys_no_matches() {
+    let clock = TestClock::new(vec![]);
+    let network = NetworkMockBuilder::default()
+        .send(164, "*2\r\n$4\r\nKEYS\r\n$6\r\nuser:*\r\n")
+        .response("*0\r\n")
+        .into_mock();
+    let client = create_mocked_client(&network, SocketMock::new(164), &clock, Resp2 {});
+
+    assert!(client.keys("user:*").await.unwrap().is_empty());
+}
+
+#[async_std::test]
+async fn test_shorthand_keys_invalid_response() {
+    let clock = TestClock::new(vec![]);
+    let network = NetworkMockBuilder::default()
+        .send(164, "*2\r\n$4\r\nKEYS\r\n$1\r\n*\r\n")
+        .response("*2\r\n$3\r\nkey\r\n:1\r\n")
+        .into_mock();
+    let client = create_mocked_client(&network, SocketMock::new(164), &clock, Resp3 {});
+
+    assert_eq!(CommandResponseViolation, client.keys("*").await.unwrap_err());
+}

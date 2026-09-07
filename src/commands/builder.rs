@@ -210,6 +210,33 @@ impl ToStringBytes for Resp3Frame {
     }
 }
 
+/// Trait for extracting byte strings from RESP2/3 arrays
+pub trait ToBytesVec {
+    /// Returns the bulk/blob strings in array order, including an empty vector for an empty array.
+    /// Returns None if the frame is not an array or any element is not a bulk/blob string.
+    fn to_vec(&self) -> Option<Vec<Bytes>>;
+}
+
+impl ToBytesVec for Resp2Frame {
+    fn to_vec(&self) -> Option<Vec<Bytes>> {
+        match self {
+            Resp2Frame::Array(data) => data.iter().map(ToStringBytes::to_string_bytes).collect(),
+            _ => None,
+        }
+    }
+}
+
+impl ToBytesVec for Resp3Frame {
+    fn to_vec(&self) -> Option<Vec<Bytes>> {
+        match self {
+            Resp3Frame::Array { data, attributes: _ } => {
+                data.iter().map(ToStringBytes::to_string_bytes).collect()
+            }
+            _ => None,
+        }
+    }
+}
+
 /// Trait for converting RESP2 arrays or RESP3 maps
 pub trait ToBytesMap {
     /// Converts the frame to map
